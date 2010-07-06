@@ -20,6 +20,9 @@ module Swift
     def find model, *args, &block
     end
 
+    def create *resources
+    end
+
     def transaction name = nil, &block
       super(name){ self.dup.instance_eval(&block)}
     end
