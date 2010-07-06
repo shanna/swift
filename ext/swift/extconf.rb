@@ -1,5 +1,4 @@
 #!/usr/bin/ruby
-
 require 'mkmf'
 
 Config::CONFIG['CC']  = 'g++'
@@ -36,4 +35,4 @@ exit 1 unless library_installed? 'pcrecpp', apt_install_hint('libpcre3-dev')
 exit 1 unless library_installed? 'uuid',    apt_install_hint('uuid-dev')
 exit 1 unless library_installed? 'dbic++',  apt_install_hint('dbicpp-dev')
 
-create_makefile 'dbi'
+create_makefile 'swift/dbi'

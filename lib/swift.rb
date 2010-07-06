@@ -1,3 +1,6 @@
+# Extension.
+# require_relative '../ext/swift/dbi'
+
 module Swift
   class << self
     attr_reader :repositories
@@ -16,8 +19,20 @@ module Swift
     end
   end
 
-  class Adapter # < DBI
-    def find model, *args, &block
+  class Adapter < DBI
+    def prepare model, query
+      sth = super query
+      # TODO: Wrap in delegate class so that when execute is called the resulting iterator knows the correct model to
+      # load each row into.
+      sth
+    end
+
+    #--
+    # Tiny sugar for this uber common one.
+    def get model, *ids
+      keys = model.properties.keys.map{|k| "#{k.field} = ?"}.join(', ')
+      # TODO: model.properties.resource
+      prepare(model, "select * from #{model.to_s.downcase} where #{keys}").execute(*ids).first
     end
 
     def create *resources

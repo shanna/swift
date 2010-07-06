@@ -5,6 +5,7 @@
 #define ID_CONST_GET rb_intern("const_get")
 #define CONST_GET(scope, constant) (rb_funcall(scope, ID_CONST_GET, 1, rb_str_new2(constant)))
 
+static VALUE mSwift;
 static VALUE mDBI;
 static VALUE cHandle;
 static VALUE cStatement;
@@ -258,10 +259,7 @@ extern "C" {
         eArgumentError = CONST_GET(rb_mKernel, "ArgumentError");
         eStandardError = CONST_GET(rb_mKernel, "StandardError");
 
-        VALUE mSwift   = CONST_GET(rb_mKernel, "Swift");
-
-        if (mSwift == Qnil) rb_raise(CONST_GET(rb_mKernel, "LoadError"), "Load Swift::DBI via Swift");
-
+        mSwift         = rb_define_module("Swift");
         mDBI           = rb_define_module_under(mSwift, "DBI");
         cHandle        = rb_define_class_under(mDBI, "Handle", rb_cObject);
         cStatement     = rb_define_class_under(mDBI, "Statement", rb_cObject);
