@@ -1,5 +1,5 @@
 # Extension.
-# require_relative '../ext/swift/dbi'
+require_relative '../ext/swift/dbi'
 
 module Swift
   class << self
@@ -19,7 +19,7 @@ module Swift
     end
   end
 
-  class Adapter < DBI
+  class Adapter < DBI::Handle
     def prepare model, query
       sth = super query
       # TODO: Wrap in delegate class so that when execute is called the resulting iterator knows the correct model to
