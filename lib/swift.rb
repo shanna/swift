@@ -22,26 +22,15 @@ module Swift
     end
   end
 
+  class Statement < DBI::Statement; end
+
   class Adapter < DBI::Handle
-    def self.new options
-      # MASSIVE HAX! Barney defining a new in the extension is breaking inheritance. It means allocate and initialize
-      # aren't called in subclasses like Adapter so you end up with the wrong object. I think we need to get rid of
-      # those new singleton methods and replace them with either initialize rb_define_method(cBlah, "initialize"...)
-      # or probably more correctly (I think) an rb_define_alloc_func() for initializing C stuff (if there if you
-      # aren't going to set vars in Ruby land.
-      adapter = self.allocate
-      adapter.send(:initialize)
-      adapter
-    end
-=begin
-    def prepare model, query
-      # TODO: Bugs Barney, getting a random error Expected type Data but got Swift::Adapter.
-      sth = super query
-      # TODO: Wrap in delegate class so that when execute is called the resulting iterator knows the correct model to
-      # load each row into.
+    # TODO: If model is given, wrap in delegate class so that when execute is called the resulting iterator knows
+    #       the correct model to load each row into.
+    def prepare query, model = nil
+      sth = Statement.new(self, query)
       sth
     end
-=end
     #--
     # Tiny sugar for this uber common one.
     def get model, *ids
@@ -53,6 +42,7 @@ module Swift
     def create *resources
     end
 
+    # NOTE: Shane, do we need this at all ?
     def transaction name = nil, &block
       super(name){ self.dup.instance_eval(&block)}
     end
@@ -122,4 +112,3 @@ module Swift
     end
   end
 end
-

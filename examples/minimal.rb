@@ -26,5 +26,5 @@ db = Swift::Adapter.new(user: Etc.getlogin, driver: 'postgresql', db: 'swift')
 Swift.setup :default, db
 # Swift.setup :default, DebugAdapter.new(db)
 
-Swift.db.prepare('select * from users').execute
+Swift.db.prepare('select * from users where id = ?').execute(1) {|r| p r }
 # Swift.db.prepare(User, 'select * from users').execute

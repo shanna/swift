@@ -294,7 +294,7 @@ extern "C" {
 
         rb_define_alloc_func(cStatement, rb_statement_alloc);
 
-        rb_define_method(cStatement, "initialize",  RUBY_METHOD_FUNC(rb_statement_init), 1);
+        rb_define_method(cStatement, "initialize",  RUBY_METHOD_FUNC(rb_statement_init), 2);
         rb_define_method(cStatement, "execute",     RUBY_METHOD_FUNC(rb_statement_execute), -1);
         rb_define_method(cStatement, "each",        RUBY_METHOD_FUNC(rb_statement_each), 0);
         rb_define_method(cStatement, "rows",        RUBY_METHOD_FUNC(rb_statement_rows), 0);
