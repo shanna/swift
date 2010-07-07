@@ -1,10 +1,11 @@
 #!/usr/bin/env ruby
 require_relative '../lib/swift'
-require 'pp'
 require 'delegate'
+require 'etc'
+require 'pp'
 
 class DebugAdapter < DelegateClass(Swift::Adapter)
-  [:find, :create, :transaction].each do |sub|
+  [:prepare, :execute, :get, :transaction].each do |sub|
     define_method(sub) do |*args, &block|
       pp [sub, args, (block_given? ? '&block' : nil)].compact
       super *args, &block
@@ -12,28 +13,18 @@ class DebugAdapter < DelegateClass(Swift::Adapter)
   end
 end
 
-class MemoryAdapter < Swift::Adapter
-  def find model, *args
-    # TODO:
-  end
-
-  def create *resources
-    resources.flatten.each do |resource|
-      # Or something.
-      # @objects["#{resource.model}:#{resource.keys}"] = resource
-    end
-  end
-end # Memory
-
 class User < Swift::Model.meta do
     property :name, String
     property :age,  Integer
   end
 end # User
 
-Swift.setup :default, DebugAdapter.new(MemoryAdapter.new)
+# db1 = Swift::DBI::Handle.new(user: Etc.getlogin, driver: 'postgresql', db: 'swift')
+# db1.prepare('select * from users').execute
 
-Swift.db do
-  create User.new(name: 'fred')
-  find User, name: 'fred'
-end
+db = Swift::Adapter.new(user: Etc.getlogin, driver: 'postgresql', db: 'swift')
+Swift.setup :default, db
+# Swift.setup :default, DebugAdapter.new(db)
+
+Swift.db.prepare('select * from users').execute
+# Swift.db.prepare(User, 'select * from users').execute

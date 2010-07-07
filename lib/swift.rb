@@ -1,5 +1,6 @@
 # Extension.
 require_relative '../ext/swift/dbi'
+require 'pp'
 
 module Swift
   class << self
@@ -7,12 +8,14 @@ module Swift
 
     #--
     # TODO: Setup :default with single argument.
-    def setup name, adapter
+    def setup *args
+      args.unshift :default if args.first.kind_of?(Adapter)
       @repositories ||= {}
-      @repositories[name] = adapter
+      @repositories[args[0]] = args[1]
     end
 
     def db name = :default, &block
+      pp @repositories
       scope = @repositories[name] or raise "Unknown db '#{name}', did you forget to #setup?"
       scope.dup.instance_eval(&block) if block_given?
       scope
@@ -20,13 +23,25 @@ module Swift
   end
 
   class Adapter < DBI::Handle
+    def self.new options
+      # MASSIVE HAX! Barney defining a new in the extension is breaking inheritance. It means allocate and initialize
+      # aren't called in subclasses like Adapter so you end up with the wrong object. I think we need to get rid of
+      # those new singleton methods and replace them with either initialize rb_define_method(cBlah, "initialize"...)
+      # or probably more correctly (I think) an rb_define_alloc_func() for initializing C stuff (if there if you
+      # aren't going to set vars in Ruby land.
+      adapter = self.allocate
+      adapter.send(:initialize)
+      adapter
+    end
+=begin
     def prepare model, query
+      # TODO: Bugs Barney, getting a random error Expected type Data but got Swift::Adapter.
       sth = super query
       # TODO: Wrap in delegate class so that when execute is called the resulting iterator knows the correct model to
       # load each row into.
       sth
     end
-
+=end
     #--
     # Tiny sugar for this uber common one.
     def get model, *ids
