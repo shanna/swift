@@ -2,8 +2,7 @@
 #include <ruby/ruby.h>
 #include <ruby/io.h>
 
-#define ID_CONST_GET rb_intern("const_get")
-#define CONST_GET(scope, constant) (rb_funcall(scope, ID_CONST_GET, 1, rb_str_new2(constant)))
+#define CONST_GET(scope, constant) rb_const_get(scope, rb_intern(constant))
 
 static VALUE mDBI;
 static VALUE cHandle;
@@ -13,8 +12,13 @@ static VALUE eArgumentError;
 static VALUE eStandardError;
 static VALUE fStringify;
 
+char errstr[8192];
+
 #define CSTRING(v) RSTRING_PTR(TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
-#define EXCEPTION(type) (std::exception &e) { rb_raise(eRuntimeError, "%s Error: %s", type, e.what()); }
+#define EXCEPTION(type) (const std::exception &e) { \
+    snprintf(errstr, 4096, "%s", e.what()); \
+    rb_raise(eRuntimeError, "%s Error: %s", type, errstr); \
+}
 
 static VALUE rb_statement_each(VALUE self);
 
@@ -78,8 +82,11 @@ static VALUE rb_handle_new(VALUE klass, VALUE opts) {
 
 static VALUE rb_handle_prepare(VALUE self, VALUE sql) {
     dbi::Handle *h = DBI_HANDLE(self);
-    dbi::Statement *st = new dbi::Statement(h, CSTRING(sql));
-    VALUE rv = Data_Wrap_Struct(cStatement, NULL, free_statement, st);
+    VALUE rv;
+    try {
+        dbi::Statement *st = new dbi::Statement(h, CSTRING(sql));
+        rv = Data_Wrap_Struct(cStatement, NULL, free_statement, st);
+    } catch EXCEPTION("Runtime");
     return rv;
 }
 
@@ -146,14 +153,18 @@ VALUE rb_handle_transaction(int argc, VALUE *argv, VALUE self) {
 
 VALUE rb_statement_new(VALUE klass, VALUE hl, VALUE sql) {
     dbi::Handle *h = DBI_HANDLE(hl);
+    VALUE rv;
 
     if (NIL_P(hl)  || !h)
         rb_raise(eArgumentError, "Statement#new called without a Handle instance");
     if (NIL_P(sql))
         rb_raise(eArgumentError, "Statement#new called without a SQL command");
 
-    dbi::Statement *st = new dbi::Statement(h, CSTRING(sql));
-    VALUE rv = Data_Wrap_Struct(cStatement, NULL, free_statement, st);
+    try {
+        dbi::Statement *st = new dbi::Statement(h, CSTRING(sql));
+        rv = Data_Wrap_Struct(cStatement, NULL, free_statement, st);
+    } catch EXCEPTION("Runtime");
+
     return rv;
 }
 
@@ -259,9 +270,6 @@ extern "C" {
         eStandardError = CONST_GET(rb_mKernel, "StandardError");
 
         VALUE mSwift   = CONST_GET(rb_mKernel, "Swift");
-
-        if (mSwift == Qnil) rb_raise(CONST_GET(rb_mKernel, "LoadError"), "Load Swift::DBI via Swift");
-
         mDBI           = rb_define_module_under(mSwift, "DBI");
         cHandle        = rb_define_class_under(mDBI, "Handle", rb_cObject);
         cStatement     = rb_define_class_under(mDBI, "Statement", rb_cObject);
