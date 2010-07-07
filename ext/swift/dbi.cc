@@ -43,18 +43,20 @@ static void free_statement(dbi::Statement *self) {
     delete self;
 }
 
-VALUE rb_dbi_init(VALUE self, VALUE path) {
-    try { dbi::dbiInitialize(CSTRING(path)); } catch EXCEPTION("Invalid Driver");
-}
-
 void static inline rb_extract_bind_params(int argc, VALUE* argv, std::vector<dbi::Param> &bind) {
     for (int i = 0; i < argc; i++) bind.push_back(dbi::PARAM(CSTRING(argv[i])));
 }
 
-static VALUE rb_handle_new(VALUE klass, VALUE opts) {
-    dbi::Handle *h;
-    VALUE obj;
+VALUE rb_dbi_init(VALUE self, VALUE path) {
+    try { dbi::dbiInitialize(CSTRING(path)); } catch EXCEPTION("Invalid Driver");
+}
 
+VALUE rb_handle_alloc(VALUE klass) {
+    dbi::Handle *h = 0;
+    return Data_Wrap_Struct(klass, NULL, free_connection, h);
+}
+
+VALUE rb_handle_init(VALUE self, VALUE opts) {
     VALUE db       = rb_hash_aref(opts, ID2SYM(rb_intern("db")));
     VALUE host     = rb_hash_aref(opts, ID2SYM(rb_intern("host")));
     VALUE port     = rb_hash_aref(opts, ID2SYM(rb_intern("port")));
@@ -71,14 +73,13 @@ static VALUE rb_handle_new(VALUE klass, VALUE opts) {
     password = NIL_P(password) ? rb_str_new2("") : password;
 
     try {
-        h = new dbi::Handle(
+        DATA_PTR(self) = new dbi::Handle(
             CSTRING(driver), CSTRING(user), CSTRING(password),
             CSTRING(db), CSTRING(host), CSTRING(port)
         );
     } catch EXCEPTION("Connection");
 
-    obj = Data_Wrap_Struct(cHandle, NULL, free_connection, h);
-    return obj;
+    return Qnil;
 }
 
 static VALUE rb_handle_prepare(VALUE self, VALUE sql) {
@@ -152,9 +153,13 @@ VALUE rb_handle_transaction(int argc, VALUE *argv, VALUE self) {
     } catch EXCEPTION("Runtime");
 }
 
-VALUE rb_statement_new(VALUE klass, VALUE hl, VALUE sql) {
+VALUE rb_statement_alloc(VALUE klass) {
+    dbi::Statement *st = 0;
+    return Data_Wrap_Struct(klass, NULL, free_statement, st);
+}
+
+VALUE rb_statement_init(VALUE self, VALUE hl, VALUE sql) {
     dbi::Handle *h = DBI_HANDLE(hl);
-    VALUE rv;
 
     if (NIL_P(hl)  || !h)
         rb_raise(eArgumentError, "Statement#new called without a Handle instance");
@@ -162,11 +167,10 @@ VALUE rb_statement_new(VALUE klass, VALUE hl, VALUE sql) {
         rb_raise(eArgumentError, "Statement#new called without a SQL command");
 
     try {
-        dbi::Statement *st = new dbi::Statement(h, CSTRING(sql));
-        rv = Data_Wrap_Struct(cStatement, NULL, free_statement, st);
+        DATA_PTR(self) = new dbi::Statement(h, CSTRING(sql));
     } catch EXCEPTION("Runtime");
 
-    return rv;
+    return Qnil;
 }
 
 VALUE rb_statement_execute(int argc, VALUE *argv, VALUE self) {
@@ -278,8 +282,9 @@ extern "C" {
         rb_define_module_function(mDBI, "init", RUBY_METHOD_FUNC(rb_dbi_init), 1);
         rb_define_module_function(mDBI, "trace", RUBY_METHOD_FUNC(rb_dbi_trace), -1);
 
-        rb_define_singleton_method(cHandle, "new", RUBY_METHOD_FUNC(rb_handle_new), 1);
+        rb_define_alloc_func(cHandle, rb_handle_alloc);
 
+        rb_define_method(cHandle, "initialize",  RUBY_METHOD_FUNC(rb_handle_init), 1);
         rb_define_method(cHandle, "prepare",     RUBY_METHOD_FUNC(rb_handle_prepare), 1);
         rb_define_method(cHandle, "execute",     RUBY_METHOD_FUNC(rb_handle_execute), -1);
         rb_define_method(cHandle, "begin",       RUBY_METHOD_FUNC(rb_handle_begin), -1);
@@ -287,13 +292,14 @@ extern "C" {
         rb_define_method(cHandle, "rollback",    RUBY_METHOD_FUNC(rb_handle_rollback), -1);
         rb_define_method(cHandle, "transaction", RUBY_METHOD_FUNC(rb_handle_transaction), -1);
 
-        rb_define_singleton_method(cStatement, "new", RUBY_METHOD_FUNC(rb_statement_new), 2);
+        rb_define_alloc_func(cStatement, rb_statement_alloc);
 
-        rb_define_method(cStatement, "execute",  RUBY_METHOD_FUNC(rb_statement_execute), -1);
-        rb_define_method(cStatement, "each",     RUBY_METHOD_FUNC(rb_statement_each), 0);
-        rb_define_method(cStatement, "rows",     RUBY_METHOD_FUNC(rb_statement_rows), 0);
-        rb_define_method(cStatement, "fetchrow", RUBY_METHOD_FUNC(rb_statement_fetchrow), 0);
-        rb_define_method(cStatement, "finish",   RUBY_METHOD_FUNC(rb_statement_finish), 0);
+        rb_define_method(cStatement, "initialize",  RUBY_METHOD_FUNC(rb_statement_init), 1);
+        rb_define_method(cStatement, "execute",     RUBY_METHOD_FUNC(rb_statement_execute), -1);
+        rb_define_method(cStatement, "each",        RUBY_METHOD_FUNC(rb_statement_each), 0);
+        rb_define_method(cStatement, "rows",        RUBY_METHOD_FUNC(rb_statement_rows), 0);
+        rb_define_method(cStatement, "fetchrow",    RUBY_METHOD_FUNC(rb_statement_fetchrow), 0);
+        rb_define_method(cStatement, "finish",      RUBY_METHOD_FUNC(rb_statement_finish), 0);
 
         rb_include_module(cStatement, CONST_GET(rb_mKernel, "Enumerable"));
     }

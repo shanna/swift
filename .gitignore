@@ -1,3 +1,6 @@
 ext/*
 !ext/*.cc
 !ext/*.rb
+ext/swift/*
+!ext/swift/*.cc
+!ext/swift/*.rb
