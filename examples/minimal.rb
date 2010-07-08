@@ -13,18 +13,15 @@ class DebugAdapter < DelegateClass(Swift::Adapter)
   end
 end
 
-class User < Swift::Model.meta do
-    property :name, String
-    property :age,  Integer
+class User < Swift::Model.schema do
+    property :id,    Integer
+    property :name,  String
+    property :email, String
   end
 end # User
 
-# db1 = Swift::DBI::Handle.new(user: Etc.getlogin, driver: 'postgresql', db: 'swift')
-# db1.prepare('select * from users').execute
-
 db = Swift::Adapter.new(user: Etc.getlogin, driver: 'postgresql', db: 'swift')
-Swift.setup :default, db
-# Swift.setup :default, DebugAdapter.new(db)
+Swift.setup :default, DebugAdapter.new(db)
 
-Swift.db.prepare('select * from users where id = ?').execute(1) {|r| p r }
-# Swift.db.prepare(User, 'select * from users').execute
+Swift.db.prepare(User, 'select * from users').execute.each{|a| }
+# Swift.db.prepare(User, "select * from #{User.resource} where #{User.id.field} = ?").execute(1) {|r| p r }

@@ -1,13 +1,14 @@
 # Extension.
 require_relative '../ext/swift/dbi'
+require 'delegate'
 require 'pp'
 
 module Swift
   class << self
-    attr_reader :repositories
+    def model &definition
+      Model.schema(&definition)
+    end
 
-    #--
-    # TODO: Setup :default with single argument.
     def setup *args
       args.unshift :default if args.first.kind_of?(Adapter)
       @repositories ||= {}
@@ -15,34 +16,41 @@ module Swift
     end
 
     def db name = :default, &block
-      pp @repositories
       scope = @repositories[name] or raise "Unknown db '#{name}', did you forget to #setup?"
       scope.dup.instance_eval(&block) if block_given?
       scope
     end
   end
 
-  class Statement < DBI::Statement; end
+  class Statement < DBI::Statement
+    def initialize adapter, model, statement
+      @model = model
+      super adapter, statement
+    end
+
+    def each
+      super{|att| yield @model.load att}
+    end
+  end
 
   class Adapter < DBI::Handle
     # TODO: If model is given, wrap in delegate class so that when execute is called the resulting iterator knows
     #       the correct model to load each row into.
-    def prepare query, model = nil
-      sth = Statement.new(self, query)
-      sth
+    def prepare model, query
+      return super(model) unless model < Model
+      Statement.new(self, model, query)
     end
+
     #--
-    # Tiny sugar for this uber common one.
+    # Sugar for this uber common one.
     def get model, *ids
-      keys = model.properties.keys.map{|k| "#{k.field} = ?"}.join(', ')
-      # TODO: model.properties.resource
-      prepare(model, "select * from #{model.to_s.downcase} where #{keys}").execute(*ids).first
+      keys = model.keys.map{|k| "#{k.field} = ?"}.join(', ')
+      prepare(model, "select * from #{model.resource} where #{keys}").execute(*ids).first
     end
 
     def create *resources
     end
 
-    # NOTE: Shane, do we need this at all ?
     def transaction name = nil, &block
       super(name){ self.dup.instance_eval(&block)}
     end
@@ -51,49 +59,14 @@ module Swift
   class Property
     attr_accessor :name, :field, :type, :key
     alias_method :key?, :key
+
     def initialize name, type, options = {}
       @name, @type, @field, @key = name, type, options.fetch(:field, name), options.fetch(:key, false)
     end
   end # Property
 
-  class Properties < Array
-    def keys;   find{|p| p.key?} end
-    def fields; map(&:field)     end
-    def names;  map(&:name)      end
-  end # Properties
-
   class Model
-    def initialize(attributes = {})
-      attributes.each{|k, v| send("#{k}=", v)}
-    end
     alias_method :model, :class
-
-    def self.select *args
-      (@repository || Om.repositories[:default]).select(self, *args)
-    end
-
-    def self.meta &definition
-      Class.new(self){class_eval &definition}
-    end
-
-    def self.inherited klass
-      klass.properties.push *properties
-    end
-
-    #--
-    # TODO: Dirty tracking? state.get(property, name); state.set(property, name, value)
-    # TODO: State can be used to handle defaults as well.
-    def self.property name, type, options = {}
-      properties << Property.new(name, type, options)
-      class_eval <<-RUBY, __FILE__, __LINE__ + 1
-        def #{name}; @#{name} end
-        def #{name}=(value); @#{name} = value end
-      RUBY
-    end
-
-    def self.properties
-      @properties ||= Properties.new
-    end
 
     def properties by = :property
       return model.properties if by == :property
@@ -103,12 +76,51 @@ module Swift
       end
     end
 
-    def load attributes
-      model.properties.names.zip(attrbitues.values_at(*model.properties.fields))
+    def self.load attributes
+      pp attributes
+      # model.names.zip(attrbitues.values_at(*model.fields))
       # attributes.each{|k, v| instance_variable_set("@#{k}", v) if model.properties.names.include?(k)}
     end
 
     def save
     end
+
+    class << self
+      attr_accessor :properties, :resource
+      def fields;   @fields ||= properties.values.map(&:field) end
+      def names;    @names  ||= properties.keys                end
+      def key;      @key    ||= properties.values.find(&:key?) end
+
+      def inherited klass
+        klass.resource   ||= klass.to_s.downcase.gsub(/[^:]::/, '')
+        klass.properties ||= {}
+        klass.properties.update(properties || {})
+      end
+
+      def schema &definition
+        Dsl.new(self, &definition).model
+      end
+    end
+  end
+
+  class Model::Dsl
+    attr_reader :model
+
+    def initialize model, &definition
+      @model = Class.new(model)
+      instance_eval(&definition)
+    end
+
+    def property name, type, options = {}
+      @model.properties[name] = property = Property.new(name, type, options)
+      (class << @model; self end).send(:define_method, name, lambda{ property})
+      @model.send(:define_method, :name, lambda{ instance_variable_get(:"@#{name}")})
+      @model.send(:define_method, :"#{name}=", lambda{|value| instance_variable_set(:"@#{name}", value)})
+    end
+
+    def resource name
+      @model.resource = name
+    end
   end
 end
+
