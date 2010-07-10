@@ -16,7 +16,7 @@ module Swift
 
     def db name = :default, &block
       scope = @repositories[name] or raise "Unknown db '#{name}', did you forget to #setup?"
-      scope.dup.instance_eval(&block) if block_given?
+      scope.instance_eval(&block) if block_given?
       scope
     end
   end
@@ -61,8 +61,8 @@ module Swift
   end
 
   class Adapter < DBI::Handle
-    def prepare model, query
-      return super(model) unless model < Model
+    def prepare model, query = nil
+      return super(model) unless model.kind_of?(Class) && model < Model
       Statement.new(self, model, query)
     end
 
@@ -75,7 +75,7 @@ module Swift
     end
 
     def transaction name = nil, &block
-      super(name){ self.dup.instance_eval(&block)}
+      super(name){ self.instance_eval(&block)}
     end
   end # Adapter
 
@@ -103,7 +103,7 @@ module Swift
     # TODO: Add IdentityMapp calls.
     def self.load attributes
       obj = new
-      model.names.zip(attrbitues.values_at(*model.fields)).each{|k, v| obj.instance_variable_set("@#{k}", v)}
+      names.zip(attributes.values_at(*fields)).each{|k, v| obj.instance_variable_set("@#{k}", v)}
       obj
     end
 

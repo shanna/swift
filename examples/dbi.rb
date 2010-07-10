@@ -1,19 +1,31 @@
-#!/usr/bin/ruby
-
-module Swift; end
-
-require_relative 'dbi'
-require 'pathname'
+#!/usr/bin/env ruby
+require_relative '../ext/swift/dbi'
+require 'etc'
+require 'pp'
 
 Swift::DBI.trace true
+h = Swift::DBI::Handle.new user: Etc.getlogin, db: 'dbicpp', driver: ARGV[0] || 'postgresql'
 
-h = Swift::DBI::Handle.new user: 'udbicpp', db: 'dbicpp', driver: ARGV[0] || 'postgresql'
+# create table.
+puts 'Creating table'
+puts "--------------\n"
 
-st = h.prepare "SELECT * FROM users WHERE id > ?"
+# create test table
+h.execute('DROP TABLE IF EXISTS users');
+h.execute('CREATE TABLE users(id serial, name text, email text)');
+
+puts ''
+puts 'Inserting test data'
+puts "-------------------\n"
+
+st = h.prepare('insert into users(name, email) values(?, ?)')
+st.execute('Apple Arthurton', 'apple@example.com')
+st.execute('Benny Arthurton', 'benny@example.com')
 
 puts "\nSELECT and print results"
 puts "------------------------\n"
 
+st = h.prepare "SELECT * FROM users WHERE id > ?"
 st.execute(0) {|r| p r }
 
 puts "\nSELECT and print first row"

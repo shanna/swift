@@ -3,6 +3,8 @@ require_relative '../lib/swift'
 require 'etc'
 require 'pp'
 
+Swift::DBI.trace true
+
 require 'delegate'
 class DebugAdapter < DelegateClass(Swift::Adapter)
   [:prepare, :execute, :get, :transaction].each do |sub|
@@ -22,6 +24,13 @@ end # User
 
 Swift.setup user: Etc.getlogin, driver: 'postgresql', db: 'swift'
 Swift.db do
+  execute('drop table if exists users')
+  execute('create table users(id serial, name text, email text)');
+
+  st = prepare('insert into users(name, email) values(?, ?)')
+  st.execute('Apple Arthurton', 'apple@example.com')
+  st.execute('Benny Arthurton', 'benny@example.com')
+
   prepare(User, 'select * from users').execute.each do |a|
     pp a
   end
