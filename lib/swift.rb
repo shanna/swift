@@ -9,10 +9,9 @@ module Swift
       Model.schema(&definition)
     end
 
-    def setup *args
-      args.unshift :default if args.first.kind_of?(Adapter)
-      @repositories ||= {}
-      @repositories[args[0]] = args[1]
+    def setup name, adapter = {}
+      name, adapter = :default, name unless name.kind_of?(Symbol)
+      (@repositories ||= {})[name] = adapter.kind_of?(Adapter) ? adapter : Adapter.new(adapter)
     end
 
     def db name = :default, &block
@@ -23,9 +22,9 @@ module Swift
   end
 
   class Statement < DBI::Statement
-    def initialize adapter, model, statement
+    def initialize adapter, model, query
       @model = model
-      super adapter, statement
+      super adapter, query
     end
 
     def each
@@ -34,15 +33,11 @@ module Swift
   end
 
   class Adapter < DBI::Handle
-    # TODO: If model is given, wrap in delegate class so that when execute is called the resulting iterator knows
-    #       the correct model to load each row into.
     def prepare model, query
       return super(model) unless model < Model
       Statement.new(self, model, query)
     end
 
-    #--
-    # Sugar for this uber common one.
     def get model, *ids
       keys = model.keys.map{|k| "#{k.field} = ?"}.join(', ')
       prepare(model, "select * from #{model.resource} where #{keys}").execute(*ids).first
@@ -77,9 +72,9 @@ module Swift
     end
 
     def self.load attributes
-      pp attributes
-      # model.names.zip(attrbitues.values_at(*model.fields))
-      # attributes.each{|k, v| instance_variable_set("@#{k}", v) if model.properties.names.include?(k)}
+      obj = new
+      model.names.zip(attrbitues.values_at(*model.fields)).each{|k, v| obj.instance_variable_set("@#{k}", v)}
+      obj
     end
 
     def save
