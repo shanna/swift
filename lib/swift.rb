@@ -21,6 +21,34 @@ module Swift
     end
   end
 
+  # Weak hash set.
+  #--
+  # TODO: Is 'hash set' the real name for a hash where both the keys and values must be unique?
+  class IdentityMap
+    def initialize
+      @cache, @reverse_cache, @finalize = {}, {}, method(:finalize)
+    end
+
+    def get key
+      value_id = @cache[key]
+      return ObjectSpace._id2ref(value_id) unless value_id.nil?
+      nil
+    end
+
+    #--
+    # TODO: Barf if the value.object_id already exists in the cache.
+    def set key, value
+      @reverse_cache[value.object_id] = key
+      @cache[key]                     = value.object_id
+      ObjectSpace.define_finalizer(value, @finalize)
+    end
+
+    private
+      def finalize value_id
+        @cache.delete @reverse_cache.delete value_id
+      end
+  end
+
   class Statement < DBI::Statement
     def initialize adapter, model, query
       @model = model
@@ -71,12 +99,16 @@ module Swift
       end
     end
 
+    #--
+    # TODO: Add IdentityMapp calls.
     def self.load attributes
       obj = new
       model.names.zip(attrbitues.values_at(*model.fields)).each{|k, v| obj.instance_variable_set("@#{k}", v)}
       obj
     end
 
+    #--
+    # TODO: Probably want to be able to save ;)
     def save
     end
 
@@ -96,7 +128,7 @@ module Swift
         Dsl.new(self, &definition).model
       end
     end
-  end
+  end # Model
 
   class Model::Dsl
     attr_reader :model
@@ -116,6 +148,6 @@ module Swift
     def resource name
       @model.resource = name
     end
-  end
+  end # Model::Dsl
 end
 
