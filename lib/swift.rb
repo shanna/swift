@@ -100,7 +100,7 @@ module Swift
     end
 
     #--
-    # TODO: Add IdentityMapp calls.
+    # TODO: Add IdentityMap calls.
     def self.load attributes
       obj = new
       names.zip(attributes.values_at(*fields)).each{|k, v| obj.instance_variable_set("@#{k}", v)}
