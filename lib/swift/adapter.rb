@@ -24,7 +24,8 @@ module Swift
         fields     = attributes.keys.join(', ')
         binds      = attributes.values
         supply     = (['?'] * attributes.size).join(', ')
-        if prepare("insert into #{resource.model.resource} (#{fields}) values (#{supply})").execute(*binds)
+        if st = prepare("insert into #{resource.model.resource} (#{fields}) values (#{supply})").execute(*binds)
+          pp st.insert_id
         end
       end
     end

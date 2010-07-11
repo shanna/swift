@@ -204,6 +204,16 @@ VALUE rb_statement_rows(VALUE self) {
     return INT2NUM(rows);
 }
 
+VALUE rb_statement_insert_id(VALUE self) {
+  dbi::Statement *st = DBI_STATEMENT(self);
+  VALUE insert_id    = Qnil;
+  try {
+    if (st->rows() > 0) insert_id = LONG2NUM(st->lastInsertID());
+  } catch EXCEPTION("Runtime");
+
+  return insert_id;
+}
+
 static VALUE rb_statement_each(VALUE self) {
     unsigned int r, c;
     unsigned long l;
@@ -313,6 +323,7 @@ extern "C" {
         rb_define_method(cStatement, "finish",      RUBY_METHOD_FUNC(rb_statement_finish), 0);
         rb_define_method(cStatement, "dup",         RUBY_METHOD_FUNC(rb_statement_dup), 0);
         rb_define_method(cStatement, "clone",       RUBY_METHOD_FUNC(rb_statement_dup), 0);
+        rb_define_method(cStatement, "insert_id",   RUBY_METHOD_FUNC(rb_statement_insert_id), 0);
 
         rb_include_module(cStatement, CONST_GET(rb_mKernel, "Enumerable"));
     }
