@@ -224,6 +224,7 @@ static VALUE rb_statement_each(VALUE self) {
             rb_yield(row);
         }
     } catch EXCEPTION("Runtime");
+    return Qnil;
 }
 
 VALUE rb_statement_fetchrow(VALUE self) {
@@ -266,6 +267,14 @@ VALUE rb_dbi_trace(int argc, VALUE *argv, VALUE self) {
     dbi::trace(flag == Qtrue ? true : false, fd);
 }
 
+VALUE rb_handle_dup(VALUE self) {
+    rb_raise(eRuntimeError, "Unable to Handle#dup or Handle#clone.");
+}
+
+VALUE rb_statement_dup(VALUE self) {
+    rb_raise(eRuntimeError, "Unable to Statement#dup or Statement#clone.");
+}
+
 extern "C" {
     void Init_dbi(void) {
 
@@ -291,6 +300,8 @@ extern "C" {
         rb_define_method(cHandle, "commit",      RUBY_METHOD_FUNC(rb_handle_commit), -1);
         rb_define_method(cHandle, "rollback",    RUBY_METHOD_FUNC(rb_handle_rollback), -1);
         rb_define_method(cHandle, "transaction", RUBY_METHOD_FUNC(rb_handle_transaction), -1);
+        rb_define_method(cHandle, "dup",         RUBY_METHOD_FUNC(rb_handle_dup),0);
+        rb_define_method(cHandle, "clone",       RUBY_METHOD_FUNC(rb_handle_dup),0);
 
         rb_define_alloc_func(cStatement, rb_statement_alloc);
 
@@ -300,6 +311,8 @@ extern "C" {
         rb_define_method(cStatement, "rows",        RUBY_METHOD_FUNC(rb_statement_rows), 0);
         rb_define_method(cStatement, "fetchrow",    RUBY_METHOD_FUNC(rb_statement_fetchrow), 0);
         rb_define_method(cStatement, "finish",      RUBY_METHOD_FUNC(rb_statement_finish), 0);
+        rb_define_method(cStatement, "dup",         RUBY_METHOD_FUNC(rb_statement_dup), 0);
+        rb_define_method(cStatement, "clone",       RUBY_METHOD_FUNC(rb_statement_dup), 0);
 
         rb_include_module(cStatement, CONST_GET(rb_mKernel, "Enumerable"));
     }
