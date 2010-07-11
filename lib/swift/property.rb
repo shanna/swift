@@ -1,10 +1,20 @@
 module Swift
   class Property
-    attr_accessor :name, :field, :type, :key
+    attr_accessor :name, :field, :type, :key, :serial, :default
     alias_method :key?, :key
+    alias_method :serial?, :serial
 
     def initialize name, type, options = {}
-      @name, @type, @field, @key = name, type, options.fetch(:field, name), options.fetch(:key, false)
+      @name    = name
+      @type    = type
+      @field   = options.fetch(:field, name)
+      @key     = options.fetch(:key, false)
+      @serial  = options.fetch(:serial, false)
+      @default = options.fetch(:default, nil)
+    end
+
+    def default
+      @default.respond_to?(:call) ? @default.call : @default
     end
   end # Property
 end # Swift

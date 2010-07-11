@@ -16,11 +16,11 @@ module Swift
 
     #--
     # TODO: This is where it gets suck.
-    # * Optional model first argument for single prepare multiple execute form.
-    # * DB sync, default values, ids?
+    # * Optional model first argument for single prepare multiple execute form?
+    # * Sequence handling since postgres and mysql do it different.
     def create *resources
       resources.each do |resource|
-        attributes = resource.properties :field
+        attributes = resource.properties(:field)
         fields     = attributes.keys.join(', ')
         binds      = attributes.values
         supply     = (['?'] * attributes.size).join(', ')

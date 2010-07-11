@@ -1,32 +1,35 @@
 module Swift
+
+  #--
+  # TODO: Change the property hash to an array. I don't really use the keys where property.name wouldn't do.
   class Model
     alias_method :model, :class
 
     def initialize attributes = {}
-      attributes.each{|k, v| send(:"#{k}=", v)} # TODO: Don't create symbols willy nilly.
+      model.properties.each{|k, v| send(:"#{k}=", attributes.fetch(k, v.default))}
     end
 
     def properties by = :property
       return model.properties if by == :property
       model.properties.values.inject({}) do |ac, p|
-       ac[p.send(by)] = instance_variable_get("@#{p.name}") unless instance_variable_get("@#{p.name}").nil?
-       ac
+        value          = instance_variable_get("@#{p.name}")
+        ac[p.send(by)] = value unless (value.nil? && p.default.nil?)
+        ac
       end
     end
 
     #--
     # TODO: Add IdentityMap calls.
     def self.load attributes
-      obj = new
-      names.zip(attributes.values_at(*fields)).each{|k, v| obj.instance_variable_set("@#{k}", v)}
-      obj
+      names.zip(attributes.values_at(*fields)).inject(new){|o, kv| o.instance_variable_set("@#{kv[0]}", kv[1]); o}
     end
 
     class << self
       attr_accessor :properties, :resource
-      def fields;   @fields ||= properties.values.map(&:field) end
-      def names;    @names  ||= properties.keys                end
-      def key;      @key    ||= properties.values.find(&:key?) end
+      def fields;   @fields ||= properties.values.map(&:field)    end
+      def names;    @names  ||= properties.keys                   end
+      def key;      @key    ||= properties.values.find(&:key?)    end
+      def serial;   @serial ||= properties.values.find(&:serial?) end
 
       def inherited klass
         klass.resource   ||= (resource || klass.to_s.downcase.gsub(/[^:]::/, ''))
