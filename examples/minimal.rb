@@ -16,7 +16,8 @@ class DebugAdapter < DelegateClass(Swift::Adapter)
 end
 
 class User < Swift::Model.schema do
-    property :id,    Integer
+    resource :users
+    property :id,    Integer, key: true, serial: true
     property :name,  String
     property :email, String
   end
@@ -27,9 +28,10 @@ Swift.db do
   execute('drop table if exists users')
   execute('create table users(id serial, name text, email text)');
 
-  st = prepare('insert into users(name, email) values(?, ?)')
-  st.execute('Apple Arthurton', 'apple@example.com')
-  st.execute('Benny Arthurton', 'benny@example.com')
+  create(
+    User.new(name: 'Apple Arthurton', email: 'apple@arthurton.local'),
+    User.new(name: 'Benny Arthurton', email: 'benny@arthurton.local')
+  )
 
   prepare(User, 'select * from users').execute.each do |a|
     pp a

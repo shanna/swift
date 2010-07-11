@@ -47,7 +47,7 @@ module Swift
       def finalize value_id
         @cache.delete @reverse_cache.delete value_id
       end
-  end
+  end # IdentityMap
 
   class Statement < DBI::Statement
     def initialize adapter, model, query
@@ -61,6 +61,10 @@ module Swift
   end
 
   class Adapter < DBI::Handle
+    def identity_map
+      @identity_map ||= IdentityMap.new
+    end
+
     def prepare model, query = nil
       return super(model) unless model.kind_of?(Class) && model < Model
       Statement.new(self, model, query)
@@ -71,7 +75,24 @@ module Swift
       prepare(model, "select * from #{model.resource} where #{keys}").execute(*ids).first
     end
 
+    #--
+    # TODO: This is where it gets suck.
+    # * Optional model first argument for single prepare multiple execute form.
+    # * DB sync, default values, ids?
     def create *resources
+      resources.each do |resource|
+        attributes = resource.properties :field
+        fields     = attributes.keys.join(', ')
+        binds      = attributes.values
+        supply     = (['?'] * attributes.size).join(', ')
+        # TODO: Execute is farked Barney!
+        # if execute("insert into #{resource.model.resource} (#{fields}) values (#{supply})", *binds)
+        if prepare("insert into #{resource.model.resource} (#{fields}) values (#{supply})").execute(*binds)
+        end
+      end
+    end
+
+    def update *resources
     end
 
     def transaction name = nil, &block
@@ -91,9 +112,13 @@ module Swift
   class Model
     alias_method :model, :class
 
+    def initialize attributes = {}
+      attributes.each{|k, v| send(:"#{k}=", v)} # TODO: Don't create symbols willy nilly.
+    end
+
     def properties by = :property
       return model.properties if by == :property
-      model.properties.inject({}) do |ac, p|
+      model.properties.values.inject({}) do |ac, p|
        ac[p.send(by)] = instance_variable_get("@#{p.name}") unless instance_variable_get("@#{p.name}").nil?
        ac
       end
@@ -107,11 +132,6 @@ module Swift
       obj
     end
 
-    #--
-    # TODO: Probably want to be able to save ;)
-    def save
-    end
-
     class << self
       attr_accessor :properties, :resource
       def fields;   @fields ||= properties.values.map(&:field) end
@@ -119,7 +139,7 @@ module Swift
       def key;      @key    ||= properties.values.find(&:key?) end
 
       def inherited klass
-        klass.resource   ||= klass.to_s.downcase.gsub(/[^:]::/, '')
+        klass.resource   ||= (resource || klass.to_s.downcase.gsub(/[^:]::/, ''))
         klass.properties ||= {}
         klass.properties.update(properties || {})
       end
