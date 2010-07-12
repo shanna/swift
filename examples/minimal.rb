@@ -17,21 +17,23 @@ end
 
 class User < Swift::Model.schema do
     resource :users
-    property :id,    Integer, key: true, serial: true
-    property :name,  String
-    property :email, String
+    property :id,       Integer, key: true, serial: true
+    property :name,     String
+    property :email,    String
+    property :optional, String, default: 'woot'
   end
 end # User
 
 Swift.setup user: Etc.getlogin, driver: 'postgresql', db: 'swift'
 Swift.db do
   execute('drop table if exists users')
-  execute('create table users(id serial, name text, email text)');
+  execute('create table users(id serial, name text, email text, optional text)');
 
-  create(
-    User.new(name: 'Apple Arthurton', email: 'apple@arthurton.local'),
-    User.new(name: 'Benny Arthurton', email: 'benny@arthurton.local')
+  create(User,
+    {name: 'Apple Arthurton', email: 'apple@arthurton.local'},
+    {name: 'Benny Arthurton', email: 'benny@arthurton.local'}
   )
+  # Same as: create(User, User.new(...), User.new(...))
 
   prepare(User, 'select * from users').execute.each do |user|
     pp user

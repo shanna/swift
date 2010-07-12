@@ -25,27 +25,34 @@ module Swift
     end
 
     #--
-    # TODO: This is where it gets suck.
-    # * Optional model first argument for single prepare multiple execute form?
-    def create *resources
-      resources.each do |resource|
-        model      = resource.model
-        attributes = resource.properties(:field)
-        fields     = attributes.keys.join(', ')
-        binds      = attributes.values
-        supply     = (['?'] * attributes.size).join(', ')
-        returning  = "returning #{model.serial.field}" if model.serial? and returning?
-        if st = prepare("insert into #{resource.model.resource} (#{fields}) values (#{supply}) #{returning}").execute(*binds)
+    # TODO: Without a model as the first argument demand resources be Model suclass instances, find from cache or
+    # create from a prepared insert statement for each class. Perhaps sort resource by class first if that helps.
+    def create model, *resources
+      raise TypeError, "Expected Model subclass but got '#{model.inspect}'." unless model.kind_of?(Class) && model < Model
+      supply = model.properties.reject(&:serial?).map(&:field)
+      st     = prepare(insert_query(model, supply))
+
+      resources.map do |resource|
+        resource = model.new(resource) unless resource.kind_of?(model)
+        binds    = resource.properties(:field).values_at(*supply)
+        if st.execute(*binds) && model.serial?
           resource.properties = {model.serial.name => st.insert_id}
         end
       end
     end
 
-    def update *resources
+    def update model, *resources
     end
 
     def transaction name = nil, &block
       super(name){ self.instance_eval(&block)}
     end
+
+    protected
+      def insert_query model, fields
+        supply    = (['?'] * fields.size).join(', ')
+        returning = "returning #{model.serial.field}" if model.serial? and returning?
+        "insert into #{model.resource} (#{fields.join(', ')}) values (#{supply}) #{returning}"
+      end
   end # Adapter
 end # Swift
