@@ -18,8 +18,7 @@ module Swift
       end
     end
 
-    # Semi-public, avoids accessors/mutators.
-    def attributes= attributes
+    def properties= attributes
       model.names.each{|name| instance_variable_set("@#{name}", attributes[name]) if attributes.key?(name)}
     end
 

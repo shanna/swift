@@ -36,7 +36,7 @@ module Swift
         supply     = (['?'] * attributes.size).join(', ')
         returning  = "returning #{model.serial.field}" if model.serial? and returning?
         if st = prepare("insert into #{resource.model.resource} (#{fields}) values (#{supply}) #{returning}").execute(*binds)
-          resource.attributes = {model.serial.name => st.insert_id}
+          resource.properties = {model.serial.name => st.insert_id}
         end
       end
     end
