@@ -19,6 +19,7 @@ module Swift
       @pool = Swift::DBI::ConnectionPool.new size, options
       @stop_reactor = EM.reactor_running? ? false : true
       @pending = {}
+      @queue   = []
     end
 
     def attach id
@@ -27,15 +28,24 @@ module Swift
 
     def detach id
       @pending.delete(id)
-      EM.stop if @stop_reactor && @pending.empty?
+      if @queue.empty?
+        EM.stop if @stop_reactor && @pending.empty?
+      else
+        sql, bind, callback = @queue.shift
+        execute(sql, *bind, &callback)
+      end
     end
 
     def execute sql, *bind, &callback
       request = @pool.execute sql, *bind, &callback
-      EM.watch(request.socket, Handler, request, self) do |c|
-        attach c
-        c.notify_writable = false
-        c.notify_readable = true
+      if request
+        EM.watch(request.socket, Handler, request, self) do |c|
+          attach c
+          c.notify_writable = false
+          c.notify_readable = true
+        end
+      else
+        @queue << [ sql, bind, callback ]
       end
     end
 
