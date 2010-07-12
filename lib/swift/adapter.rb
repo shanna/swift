@@ -1,5 +1,14 @@
 module Swift
   class Adapter < DBI::Handle
+
+    # TODO move storing credentials to extension.
+    attr_reader :options, :driver
+    def initialize args
+      @driver  = args[:driver]
+      @options = args
+      super(args)
+    end
+
     def identity_map
       @identity_map ||= IdentityMap.new
     end
