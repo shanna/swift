@@ -32,8 +32,8 @@ module Swift
       attr_accessor :properties, :resource
       def fields;   @fields ||= properties.map(&:field)    end
       def names;    @names  ||= properties.map(&:name)     end
-      def key;      @key    ||= properties.find(&:key?)    end
-      def serial;   @serial ||= properties.find(&:serial?) end
+      def key;      @key    ||= properties.select(&:key?)  end
+      def serial;   @serial ||= properties.find(&:serial?) end # TODO: Multiple PG sequences?
       def key?;    !!key    end
       def serial?; !!serial end
 

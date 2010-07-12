@@ -35,8 +35,12 @@ Swift.db do
   )
   # Same as: create(User, User.new(...), User.new(...))
 
-  prepare(User, 'select * from users').execute.each do |user|
-    pp user
+  users = prepare(User, 'select * from users').execute.map do |user|
+    user.optional = 'testing'
+    user
   end
+
+  update(User, *users)
+
+  pp get(User, 1)
 end
-# Swift.db.prepare(User, "select * from #{User.resource} where #{User.id.field} = ?").execute(1) {|r| p r }
