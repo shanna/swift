@@ -1,10 +1,15 @@
 module Swift
   class Adapter < DBI::Handle
+
     # TODO: DBI::Handle should have this stuff.
+    attr_reader :options, :driver
+
     def initialize options = {}
-      @driver = options.fetch(:driver)
+      @driver  = options.fetch(:driver)
+      @options = options
       super
     end
+
     def returning?
       @driver == 'postgresql'
     end
