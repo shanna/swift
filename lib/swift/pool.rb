@@ -17,6 +17,7 @@ module Swift
 
     def initialize size, options
       @pool = Swift::DBI::ConnectionPool.new size, options
+      @stop_reactor = EM.reactor_running? ? false : true
       @pending = {}
     end
 
@@ -26,7 +27,7 @@ module Swift
 
     def detach id
       @pending.delete(id)
-      EM.stop if @pending.empty?
+      EM.stop if @stop_reactor && @pending.empty?
     end
 
     def execute sql, *bind, &callback
