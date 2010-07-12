@@ -18,6 +18,11 @@ module Swift
       end
     end
 
+    # Semi-public, avoids accessors/mutators.
+    def attributes= attributes
+      model.names.each{|name| instance_variable_set("@#{name}", attributes[name]) if attributes.key?(name)}
+    end
+
     #--
     # TODO: Add IdentityMap calls.
     def self.load attributes
@@ -30,6 +35,8 @@ module Swift
       def names;    @names  ||= properties.keys                   end
       def key;      @key    ||= properties.values.find(&:key?)    end
       def serial;   @serial ||= properties.values.find(&:serial?) end
+      def key?;    !!key    end
+      def serial?; !!serial end
 
       def inherited klass
         klass.resource   ||= (resource || klass.to_s.downcase.gsub(/[^:]::/, ''))
