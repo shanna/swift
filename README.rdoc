@@ -1,2 +1,10 @@
 = Swift
 
+== TODO
+
+* Cache insert, update, get query statements.
+* Identity map.
+* Key handling needs to be cleaner. Perhaps bring back Keys and Properties sets?
+* Assertions for dumb stuff. model < Model for methods in Adapter.
+* Profile. Start moving slow (and easy) stuff to extension.
+* Benchmark against DM (is it worth even looking at AR?).
