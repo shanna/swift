@@ -1,13 +1,19 @@
 module Swift
   class Adapter < DBI::Handle
 
-    # TODO move storing credentials to extension.
+    # TODO: DBI::Handle should have this stuff.
     attr_reader :options, :driver
-    def initialize args
-      @driver  = args[:driver]
-      @options = args
-      super(args)
+
+    def initialize options = {}
+      @driver  = options.fetch(:driver)
+      @options = options
+      super
     end
+
+    def returning?
+      @driver == 'postgresql'
+    end
+    protected :returning?
 
     def identity_map
       @identity_map ||= IdentityMap.new
@@ -26,15 +32,16 @@ module Swift
     #--
     # TODO: This is where it gets suck.
     # * Optional model first argument for single prepare multiple execute form?
-    # * Sequence handling since postgres and mysql do it different.
     def create *resources
       resources.each do |resource|
+        model      = resource.model
         attributes = resource.properties(:field)
         fields     = attributes.keys.join(', ')
         binds      = attributes.values
         supply     = (['?'] * attributes.size).join(', ')
-        if st = prepare("insert into #{resource.model.resource} (#{fields}) values (#{supply})").execute(*binds)
-          pp st.insert_id
+        returning  = "returning #{model.serial.field}" if model.serial? and returning?
+        if st = prepare("insert into #{resource.model.resource} (#{fields}) values (#{supply}) #{returning}").execute(*binds)
+          resource.properties = {model.serial.name => st.insert_id}
         end
       end
     end

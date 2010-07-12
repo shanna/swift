@@ -33,8 +33,8 @@ Swift.db do
     User.new(name: 'Benny Arthurton', email: 'benny@arthurton.local')
   )
 
-  prepare(User, 'select * from users').execute.each do |a|
-    pp a
+  prepare(User, 'select * from users').execute.each do |user|
+    pp user
   end
 end
 # Swift.db.prepare(User, "select * from #{User.resource} where #{User.id.field} = ?").execute(1) {|r| p r }
