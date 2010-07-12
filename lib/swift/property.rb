@@ -14,7 +14,7 @@ module Swift
     end
 
     def default
-      @default.respond_to?(:call) ? @default.call : @default
+      @default.respond_to?(:call) ? @default.call : (@default.nil? ? nil : @default.dup)
     end
   end # Property
 end # Swift
