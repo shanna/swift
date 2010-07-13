@@ -3,7 +3,6 @@
 == TODO
 
 * Type casting! I've been putting this one off for ages.
-* Cache insert, update, get query statements.
 * Identity map.
 * Key handling needs to be cleaner. Perhaps bring back Keys and Properties sets?
 * Assertions for dumb stuff. model < Model for methods in Adapter.

@@ -65,26 +65,26 @@ module Swift
     end
 
     protected
-      def cache model, op, sql
-        @cache ||= {}
-        @cache[model] ||= { insert: nil, update: nil }
-        @cache[model][op] ||= prepare(sql)
+      #--
+      # TODO: Make public?
+      # TODO: Make sql optional so you can fetch prepared statements by model, name (avoid busy work generating sql).
+      def prepare_cached model, name, sql
+        @prepared              ||= Hash.new{|h,k| h[k] = Hash.new}
+        @prepared[model][name] ||= prepare(sql)
       end
 
       def prepare_insert model
         fields    = model.properties.reject(&:serial?).map(&:field)
         binds     = (['?'] * fields.size).join(', ')
         returning = "returning #{model.serial.field}" if model.serial? and returning?
-        cache(model, :insert, "insert into #{model.resource} (#{fields.join(', ')}) values (#{binds}) #{returning}")
+        prepare_cached(model, :insert, "insert into #{model.resource} (#{fields.join(', ')}) values (#{binds}) #{returning}")
       end
 
-      #--
-      # TODO: Gah you can't update keys.
       def prepare_update model
         fields = model.properties.reject(&:key?).map(&:field)
         supply = fields.map{|f| "#{f} = ?"}.join(', ')
         keys   = model.key.map{|k| "#{k.field} = ?"}.join(' and ')
-        cache(model, :update, "update #{model.resource} set #{supply} where #{keys}")
+        prepare_cached(model, :update, "update #{model.resource} set #{supply} where #{keys}")
       end
   end # Adapter
 end # Swift
