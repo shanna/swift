@@ -5,3 +5,6 @@ ext/*
 ext/swift/*
 !ext/swift/*.cc
 !ext/swift/*.rb
+benchmarks/gems/ruby/1.9.1/*
+!benchmarks/gems/ruby/1.9.1/cache
+benchmarks/gems/environment.rb

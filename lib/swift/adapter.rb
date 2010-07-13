@@ -64,11 +64,17 @@ module Swift
     end
 
     protected
+      def cache model, op, sql
+        @cache ||= {}
+        @cache[model] ||= { insert: nil, update: nil }
+        @cache[model][op] ||= prepare(sql)
+      end
+
       def prepare_insert model
         fields    = model.properties.reject(&:serial?).map(&:field)
         binds     = (['?'] * fields.size).join(', ')
         returning = "returning #{model.serial.field}" if model.serial? and returning?
-        prepare("insert into #{model.resource} (#{fields.join(', ')}) values (#{binds}) #{returning}")
+        cache(model, :insert, "insert into #{model.resource} (#{fields.join(', ')}) values (#{binds}) #{returning}")
       end
 
       #--
@@ -77,7 +83,7 @@ module Swift
         fields = model.properties.reject(&:key?).map(&:field)
         supply = fields.map{|f| "#{f} = ?"}.join(', ')
         keys   = model.key.map{|k| "#{k.field} = ?"}.join(' and ')
-        prepare("update #{model.resource} set #{supply} where #{keys}")
+        cache(model, :update, "update #{model.resource} set #{supply} where #{keys}")
       end
   end # Adapter
 end # Swift

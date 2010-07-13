@@ -1,0 +1,15 @@
+# vim: syntax=ruby
+bundle_path 'gems'
+disable_rubygems
+disable_system_gems
+
+# Fork has massive pure Ruby IDNA junk removed.
+gem 'addressable', '2.1.2' # http://github.com/deepfryed/addressable
+
+# Persistence.
+do_version = '>= 0.10.1'
+gem 'data_objects', do_version
+gem 'do_postgres',  do_version
+
+dm_version = '~> 0.10'
+gem 'dm-core',          dm_version
