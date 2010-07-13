@@ -39,13 +39,6 @@ module Swift
       def key?;    !!key    end
       def serial?; !!serial end
 
-      # TODO: Oh boy some interesting method names here Barney.
-      # Given #load and .property= I'm not sure where I'd find these tables useful and indeed when I grepped I can't
-      # see them used. Left over debugging perhaps?
-      def f2n; @f2n ||= Hash[*names.zip(fields).flatten] end
-      def n2f; @n2f ||= Hash[*fields.zip(names).flatten] end
-      protected :f2n, :n2f
-
       def inherited klass
         klass.resource ||= (resource || klass.to_s.downcase.gsub(/[^:]::/, ''))
         (klass.properties ||= []).push *properties

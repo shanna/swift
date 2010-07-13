@@ -4,7 +4,7 @@ require 'etc'
 require 'pp'
 
 Swift::DBI.trace true
-h = Swift::DBI::Handle.new user: Etc.getlogin, db: 'dbicpp', driver: ARGV[0] || 'postgresql'
+h = Swift::DBI::Handle.new user: Etc.getlogin, db: 'swift', driver: ARGV[0] || 'postgresql'
 
 # create table.
 puts 'Creating table'

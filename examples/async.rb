@@ -5,7 +5,7 @@ require 'pp'
 require_relative '../lib/swift'
 require_relative '../lib/swift/pool'
 
-Swift.setup :pg, db: "dbicpp", user: Etc.getlogin, driver: "postgresql"
+Swift.setup :pg, db: 'swift', user: Etc.getlogin, driver: 'postgresql'
 
 # create test table
 Swift.db(:pg).execute('DROP TABLE IF EXISTS users');

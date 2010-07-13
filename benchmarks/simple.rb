@@ -1,14 +1,14 @@
 #!/usr/bin/ruby
 
 require_relative '../lib/swift'
-require_relative '../lib/swift/pool'
-require 'gems/environment'
+require_relative '../lib/swift/sugar'
+require_relative 'gems/environment'
 require 'dm-core'
 require 'benchmark'
 require 'etc'
 
-Swift.setup :default, db: 'dbicpp', user: Etc.getlogin, driver: 'postgresql'
-DataMapper.setup :default, 'postgres://127.0.0.1/dbicpp'
+Swift.setup :default, db: 'swift', user: Etc.getlogin, driver: 'postgresql'
+DataMapper.setup :default, 'postgres://127.0.0.1/swift'
 
 class User
   include DataMapper::Resource
@@ -45,20 +45,12 @@ User.auto_migrate!
 
 Benchmark.bm(10) do |bm|
   bm.report("swift create") do
-    Swift.db do
-      rows.times {|n| create(SwiftUser, { name: "test #{n}", email: "test@example.com" }) }
-    end
+    rows.times {|n| SwiftUser.create(name: "test #{n}", email: "test@example.com") }
   end
   bm.report("swift select") do
-    Swift.db do
-      iter.times {|n| prepare(SwiftUser, "select * from users").execute.map {|m| m } }
-    end
+    iter.times {|n| SwiftUser.all.each {|m| m } }
   end
   bm.report("swift update") do
-    Swift.db do
-      iter.times do |n|
-        update SwiftUser, *prepare(SwiftUser, "select * from users").execute.map {|m| m.name = "foo"; m }
-      end
-    end
+    iter.times {|n| SwiftUser.all.each {|m| m.update(name: "foo", email: "foo@example.com") } }
   end
 end
