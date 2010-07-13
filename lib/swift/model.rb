@@ -1,7 +1,9 @@
 module Swift
 
   #--
-  # TODO: Change the property hash to an array. I don't really use the keys where property.name wouldn't do.
+  # TODO: Save some keystrokes in the adapter by adding more options to property or defining some new methods.
+  # * Fetch only keys as hash by field or by name.
+  # * Fetch only 'entries' (naming ideas?) aka not keys as hash by field or name.
   class Model
     alias_method :model, :class
 
@@ -37,14 +39,16 @@ module Swift
       def key?;    !!key    end
       def serial?; !!serial end
 
+      # TODO: Oh boy some interesting method names here Barney.
+      # Given #load and .property= I'm not sure where I'd find these tables useful and indeed when I grepped I can't
+      # see them used. Left over debugging perhaps?
       def f2n; @f2n ||= Hash[*names.zip(fields).flatten] end
       def n2f; @n2f ||= Hash[*fields.zip(names).flatten] end
       protected :f2n, :n2f
 
       def inherited klass
-        klass.resource   ||= (resource || klass.to_s.downcase.gsub(/[^:]::/, ''))
-        klass.properties ||= []
-        klass.properties.push *properties
+        klass.resource ||= (resource || klass.to_s.downcase.gsub(/[^:]::/, ''))
+        (klass.properties ||= []).push *properties
       end
 
       def schema &definition
