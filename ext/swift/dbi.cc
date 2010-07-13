@@ -34,9 +34,9 @@ static dbi::Handle* DBI_HANDLE(VALUE self) {
     return h;
 }
 
-static dbi::Statement* DBI_STATEMENT(VALUE self) {
-    dbi::Statement *st;
-    Data_Get_Struct(self, dbi::Statement, st);
+static dbi::AbstractStatement* DBI_STATEMENT(VALUE self) {
+    dbi::AbstractStatement *st;
+    Data_Get_Struct(self, dbi::AbstractStatement, st);
     if (!st) rb_raise(eRuntimeError, "Invalid object, did you forget to call #super ?");
     return st;
 }
@@ -106,7 +106,7 @@ VALUE rb_handle_init(VALUE self, VALUE opts) {
     return Qnil;
 }
 
-static void free_statement(dbi::Statement *self) {
+static void free_statement(dbi::AbstractStatement *self) {
     if (self) {
         self->cleanup();
         delete self;
@@ -117,7 +117,7 @@ static VALUE rb_handle_prepare(VALUE self, VALUE sql) {
     dbi::Handle *h = DBI_HANDLE(self);
     VALUE rv;
     try {
-        dbi::Statement *st = new dbi::Statement(h, CSTRING(sql));
+        dbi::AbstractStatement *st = h->conn()->prepare(CSTRING(sql));
         rv = Data_Wrap_Struct(cStatement, NULL, free_statement, st);
     } catch EXCEPTION("Runtime");
     return rv;
@@ -135,7 +135,7 @@ VALUE rb_handle_execute(int argc, VALUE *argv, VALUE self) {
         else {
             dbi::ResultRow bind;
             rb_extract_bind_params(argc, argv+1, bind);
-            dbi::Statement *st = new dbi::Statement(h, CSTRING(argv[0]));
+            dbi::AbstractStatement *st = h->conn()->prepare(CSTRING(argv[0]));
             rows = st->execute(bind);
             delete st;
         }
@@ -186,7 +186,7 @@ VALUE rb_handle_transaction(int argc, VALUE *argv, VALUE self) {
 }
 
 VALUE rb_statement_alloc(VALUE klass) {
-    dbi::Statement *st = 0;
+    dbi::AbstractStatement *st = 0;
     return Data_Wrap_Struct(klass, NULL, free_statement, st);
 }
 
@@ -199,21 +199,26 @@ VALUE rb_statement_init(VALUE self, VALUE hl, VALUE sql) {
         rb_raise(eArgumentError, "Statement#new called without a SQL command");
 
     try {
-        DATA_PTR(self) = new dbi::Statement(h, CSTRING(sql));
+        DATA_PTR(self) = h->conn()->prepare(CSTRING(sql));
     } catch EXCEPTION("Runtime");
 
     return Qnil;
 }
 
 VALUE rb_statement_execute(int argc, VALUE *argv, VALUE self) {
-    dbi::Statement *st = DBI_STATEMENT(self);
+    dbi::AbstractStatement *st = DBI_STATEMENT(self);
     try {
         if (argc == 0) {
+            dbi::ResultRow params;
+            if (dbi::_trace)
+                dbi::logMessage(dbi::_trace_fd, dbi::formatParams(st->command(), params));
             st->execute();
         }
         else {
             dbi::ResultRow bind;
             rb_extract_bind_params(argc, argv, bind);
+            if (dbi::_trace)
+                dbi::logMessage(dbi::_trace_fd, dbi::formatParams(st->command(), bind));
             st->execute(bind);
         }
     } catch EXCEPTION("Runtime");
@@ -223,7 +228,7 @@ VALUE rb_statement_execute(int argc, VALUE *argv, VALUE self) {
 }
 
 VALUE rb_statement_finish(VALUE self) {
-    dbi::Statement *st = DBI_STATEMENT(self);
+    dbi::AbstractStatement *st = DBI_STATEMENT(self);
     try {
         st->finish();
     } catch EXCEPTION("Runtime");
@@ -231,13 +236,13 @@ VALUE rb_statement_finish(VALUE self) {
 
 VALUE rb_statement_rows(VALUE self) {
     unsigned int rows;
-    dbi::Statement *st = DBI_STATEMENT(self);
+    dbi::AbstractStatement *st = DBI_STATEMENT(self);
     try { rows = st->rows(); } catch EXCEPTION("Runtime");
     return INT2NUM(rows);
 }
 
 VALUE rb_statement_insert_id(VALUE self) {
-  dbi::Statement *st = DBI_STATEMENT(self);
+  dbi::AbstractStatement *st = DBI_STATEMENT(self);
   VALUE insert_id    = Qnil;
   try {
     if (st->rows() > 0) insert_id = LONG2NUM(st->lastInsertID());
@@ -250,7 +255,7 @@ static VALUE rb_statement_each(VALUE self) {
     unsigned int r, c;
     unsigned long l;
     const char *vptr;
-    dbi::Statement *st = DBI_STATEMENT(self);
+    dbi::AbstractStatement *st = DBI_STATEMENT(self);
     try {
         VALUE row = rb_hash_new();
         VALUE attrs = rb_ary_new();
@@ -274,7 +279,7 @@ VALUE rb_statement_fetchrow(VALUE self) {
     unsigned int r, c;
     unsigned long l;
     VALUE row = Qnil;
-    dbi::Statement *st = DBI_STATEMENT(self);
+    dbi::AbstractStatement *st = DBI_STATEMENT(self);
     try {
         r = st->currentRow();
         if (r < st->rows()) {
