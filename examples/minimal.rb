@@ -1,9 +1,8 @@
 #!/usr/bin/env ruby
 require_relative '../lib/swift'
+require_relative '../lib/swift/sugar'
 require 'etc'
 require 'pp'
-
-Swift::DBI.trace true
 
 require 'delegate'
 class DebugAdapter < DelegateClass(Swift::Adapter)
@@ -25,6 +24,8 @@ class User < Swift::Model.schema do
 end # User
 
 Swift.setup user: Etc.getlogin, driver: 'postgresql', db: 'swift'
+Swift.trace true
+
 Swift.db do
   execute('drop table if exists users')
   execute('create table users(id serial, name text, email text, optional text)');
@@ -44,3 +45,6 @@ Swift.db do
 
   pp get(User, 1)
 end
+
+User.only(name: 'foo', limit: 1, offset: 2) {|u| pp u }
+pp User.all(':name like ? limit 1 offset 1', '%Arthurton').first

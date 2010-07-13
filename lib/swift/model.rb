@@ -37,6 +37,10 @@ module Swift
       def key?;    !!key    end
       def serial?; !!serial end
 
+      def f2n; @f2n ||= Hash[*names.zip(fields).flatten] end
+      def n2f; @n2f ||= Hash[*fields.zip(names).flatten] end
+      protected :f2n, :n2f
+
       def inherited klass
         klass.resource   ||= (resource || klass.to_s.downcase.gsub(/[^:]::/, ''))
         klass.properties ||= []
@@ -59,7 +63,7 @@ module Swift
       def property name, type, options = {}
         @model.properties << property = Property.new(name, type, options)
         (class << @model; self end).send(:define_method, name, lambda{ property})
-        @model.send(:define_method, :name, lambda{ instance_variable_get(:"@#{name}")})
+        @model.send(:define_method, :"#{name}", lambda{ instance_variable_get(:"@#{name}")})
         @model.send(:define_method, :"#{name}=", lambda{|value| instance_variable_set(:"@#{name}", value)})
       end
 

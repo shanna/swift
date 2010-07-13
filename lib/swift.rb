@@ -22,6 +22,10 @@ module Swift
       scope.instance_eval(&block) if block_given?
       scope
     end
+
+    def trace flag
+      Swift::DBI.trace flag
+    end
   end
 end # Swift
 
