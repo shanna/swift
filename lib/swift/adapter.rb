@@ -46,6 +46,7 @@ module Swift
         if st.execute(*binds) && model.serial?
           resource.properties = {model.serial.name => st.insert_id}
         end
+        resource
       end
     end
 

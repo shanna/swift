@@ -47,4 +47,12 @@ Swift.db do
 end
 
 User.only(name: 'foo', limit: 1, offset: 2) {|u| pp u }
+
 pp User.all(':name like ? limit 1 offset 1', '%Arthurton').first
+
+user = User.create name: 'James Arthurton', email: 'james@arthurton.local'
+
+pp user
+user.update(name: 'Jimmy Arthurton')
+
+pp User.only(name: user.name).first
