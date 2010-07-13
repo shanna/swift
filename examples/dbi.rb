@@ -19,8 +19,9 @@ puts 'Inserting test data'
 puts "-------------------\n"
 
 st = h.prepare('insert into users(name, email) values(?, ?)')
-st.execute('Apple Arthurton', 'apple@example.com')
-st.execute('Benny Arthurton', 'benny@example.com')
+
+sample = DATA.read.split(/\n/).map {|v| v.split(/\t+/) }
+sample.each {|s| st.execute(*s) }
 
 puts "\nSELECT and print results"
 puts "------------------------\n"
@@ -61,3 +62,8 @@ puts "\nSELECT and print results one by one"
 puts "-----------------------------------\n"
 
 st.execute(0) {|r| p r }
+
+__END__
+Apple Arthurton	apple@example.com
+Benny Arthurton	benny@example.com
+James Arthurton	james@example.com
