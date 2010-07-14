@@ -32,7 +32,7 @@ module Swift
 
     def update db = :default, attributes = nil
       db, attributes = [:default, db] unless attributes
-      self.properties = attributes
+      model.properties.each{|p| send(:"#{p.name}=", attributes.fetch(p.name, p.default))}
       Swift.db(db).update(model, self)
     end
   end # Model
