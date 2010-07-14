@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require_relative '../lib/swift'
 require_relative '../lib/swift/sugar'
+require_relative '../lib/swift/migrations'
 require 'etc'
 require 'pp'
 
@@ -25,11 +26,9 @@ end # User
 
 Swift.setup user: Etc.getlogin, driver: 'postgresql', db: 'swift'
 Swift.trace true
+Swift.auto_migrate!
 
 Swift.db do
-  execute('drop table if exists users')
-  execute('create table users(id serial, name text, email text, optional text)');
-
   create(User,
     {name: 'Apple Arthurton', email: 'apple@arthurton.local'},
     {name: 'Benny Arthurton', email: 'benny@arthurton.local'}

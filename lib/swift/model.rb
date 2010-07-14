@@ -40,8 +40,14 @@ module Swift
       def serial?; !!serial end
 
       def inherited klass
+        @@models ||= []
+        @@models << klass if klass.name
         klass.resource ||= (resource || klass.to_s.downcase.gsub(/[^:]::/, ''))
         (klass.properties ||= []).push *properties
+      end
+
+      def models
+        @@models
       end
 
       def schema &definition
