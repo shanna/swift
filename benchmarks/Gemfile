@@ -1,4 +1,5 @@
 # vim: syntax=ruby
+# bundler08
 bundle_path 'gems'
 disable_rubygems
 disable_system_gems
@@ -12,4 +13,4 @@ gem 'data_objects', do_version
 gem 'do_postgres',  do_version
 
 dm_version = '~> 0.10'
-gem 'dm-core',          dm_version
+gem 'dm-core', dm_version
