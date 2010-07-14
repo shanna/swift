@@ -65,12 +65,8 @@ module Swift
     end
 
     protected
-      #--
-      # TODO: Make public?
-      # TODO: Make sql optional so you can fetch prepared statements by model, name (avoid busy work generating sql).
-      # NOTE: ^ Tried that does not change the benchmarks much, maybe if the column # is higher it would.
       def prepare_cached model, name, &block
-        @prepared              ||= Hash.new{|h,k| h[k] = Hash.new}
+        @prepared              ||= Hash.new{|h,k| h[k] = Hash.new} # Autovivification please Matz!
         @prepared[model][name] ||= prepare(yield)
       end
 

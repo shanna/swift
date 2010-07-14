@@ -4,25 +4,26 @@ module Swift
   class Pool
     module Handler
       def initialize request, pool
-        @request = request
-        @pool    = pool
+        @request, @pool = request, pool
       end
+
       def socket
         @request.socket
       end
+
       def notify_readable
         if @request.process
           detach
           @pool.detach self
         end
       end
-    end
+    end # Handler
 
     def initialize size, options
-      @pool = Swift::DBI::ConnectionPool.new size, options
+      @pool         = Swift::DBI::ConnectionPool.new size, options
       @stop_reactor = EM.reactor_running? ? false : true
-      @pending = {}
-      @queue   = []
+      @pending      = {}
+      @queue        = []
     end
 
     def attach c
@@ -40,7 +41,7 @@ module Swift
     end
 
     def attached? fd
-      @pending.keys.select {|c| c.socket == fd }.length > 0
+      @pending.keys.select{|c| c.socket == fd}.length > 0
     end
 
     def execute sql, *bind, &callback
@@ -61,14 +62,13 @@ module Swift
     end
 
     def run &block
-      EM.run { instance_eval(&block) }
+      EM.run{ instance_eval(&block)}
     end
-  end
+  end # Pool
 
-  def self.pool size, name=:default, &block
-    scope = Swift.db(name) or raise RuntimeError, "Unable to initialize a pool for #{name}. Have you done #setup yet ?"
-    pool = Pool.new(size, scope.options)
+  def self.pool size, name = :default, &block
+    pool = Pool.new(size, Swift.db(name).options)
     pool.run(&block) if block_given?
     pool
   end
-end
+end # Swift

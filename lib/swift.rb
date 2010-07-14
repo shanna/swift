@@ -18,9 +18,13 @@ module Swift
     end
 
     def db name = :default, &block
-      scope = @repositories[name] or raise "Unknown db '#{name}', did you forget to #setup?"
-      scope.instance_eval(&block) if block_given?
-      scope
+      repository = @repositories[name] or raise "Unknown db '#{name}', did you forget to #setup?"
+      repository.instance_eval(&block) if block_given?
+      repository
+    end
+
+    def models
+      @@models ||= []
     end
 
     def trace flag

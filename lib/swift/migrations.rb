@@ -26,24 +26,25 @@ module Swift
       migrate_up!   model
     end
 
-    class MySQL < self
+    class MySQL < Migrations
       def typemap
-        super.merge({Time => 'datetime', String => 'varchar(255)'})
+        super.merge(Time => 'datetime', String => 'varchar(255)')
       end
-    end
+    end # MySQL
 
-    class PostgreSQL < self; end
-  end
+    class PostgreSQL < Migrations
+    end # PostgreSQL
+  end # Migrations
 
-  def self.auto_migrate! scope=:default
-    adapter = Swift.db(scope)
-    case adapter.driver.to_sym
-      when :mysql
-        migrator = Swift::Migrations::MySQL.new(adapter)
-        Swift::Model.models.each {|m| migrator.migrate!(m) }
-      when :postgresql
-        migrator = Swift::Migrations::PostgreSQL.new(adapter)
-        Swift::Model.models.each {|m| migrator.migrate!(m) }
+  def self.auto_migrate! db = :default
+    Swift.db(db) do
+      migrator = case driver
+        when 'mysql'      then Swift::Migrations::MySQL.new(self)
+        when 'postgresql' then Swift::Migrations::PostgreSQL.new(self)
+        else raise "Unknown driver '#{driver}'."
+      end
+
+      Swift.models.each{|m| migrator.migrate!(m)}
     end
   end
-end
+end # Swift

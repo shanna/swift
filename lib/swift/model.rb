@@ -20,7 +20,7 @@ module Swift
       end
     end
 
-    def properties= attributes
+    def properties= attributes = {}
       model.names.each{|name| instance_variable_set("@#{name}", attributes[name]) if attributes.key?(name)}
     end
 
@@ -40,14 +40,9 @@ module Swift
       def serial?; !!serial end
 
       def inherited klass
-        @@models ||= []
-        @@models << klass if klass.name
+        Swift.models << klass if klass.name
         klass.resource ||= (resource || klass.to_s.downcase.gsub(/[^:]::/, ''))
         (klass.properties ||= []).push *properties
-      end
-
-      def models
-        @@models
       end
 
       def schema &definition
