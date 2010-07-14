@@ -3,16 +3,24 @@ module Swift
     def initialize adapter
       @adapter = adapter.kind_of?(Adapter) ? adapter : Swift.db(adapter)
     end
+
     def typemap
       { Integer => 'integer', String => 'text', Float => 'float', Time => 'timestamp', serial: 'serial' }
     end
+
     def migrate_up! model
-      fields = model.properties.map {|p| "#{p.field} #{typemap[p.serial ? :serial : p.type]}" }.join(', ')
+      fields = model.properties.map {|p| column_definition(p) }.join(', ')
       @adapter.execute "create table #{model.resource} (#{fields})"
     end
+
+    def column_definition property
+      "#{property.field} #{property.serial ? typemap[:serial] : typemap[property.type] || 'text'}"
+    end
+
     def migrate_down! model
       @adapter.execute "drop table if exists #{model.resource}"
     end
+
     def migrate! model
       migrate_down! model
       migrate_up!   model

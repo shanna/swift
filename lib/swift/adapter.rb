@@ -69,23 +69,27 @@ module Swift
       # TODO: Make public?
       # TODO: Make sql optional so you can fetch prepared statements by model, name (avoid busy work generating sql).
       # NOTE: ^ Tried that does not change the benchmarks much, maybe if the column # is higher it would.
-      def prepare_cached model, name, sql
+      def prepare_cached model, name, &block
         @prepared              ||= Hash.new{|h,k| h[k] = Hash.new}
-        @prepared[model][name] ||= prepare(sql)
+        @prepared[model][name] ||= prepare(yield)
       end
 
       def prepare_insert model
-        fields    = model.properties.reject(&:serial?).map(&:field)
-        binds     = (['?'] * fields.size).join(', ')
-        returning = "returning #{model.serial.field}" if model.serial? and returning?
-        prepare_cached(model, :insert, "insert into #{model.resource} (#{fields.join(', ')}) values (#{binds}) #{returning}")
+        prepare_cached(model, :insert) do
+          fields    = model.properties.reject(&:serial?).map(&:field)
+          binds     = (['?'] * fields.size).join(', ')
+          returning = "returning #{model.serial.field}" if model.serial? and returning?
+          "insert into #{model.resource} (#{fields.join(', ')}) values (#{binds}) #{returning}"
+        end
       end
 
       def prepare_update model
-        fields = model.properties.reject(&:key?).map(&:field)
-        supply = fields.map{|f| "#{f} = ?"}.join(', ')
-        keys   = model.key.map{|k| "#{k.field} = ?"}.join(' and ')
-        prepare_cached(model, :update, "update #{model.resource} set #{supply} where #{keys}")
+        prepare_cached(model, :update) do
+          fields = model.properties.reject(&:key?).map(&:field)
+          supply = fields.map{|f| "#{f} = ?"}.join(', ')
+          keys   = model.key.map{|k| "#{k.field} = ?"}.join(' and ')
+          "update #{model.resource} set #{supply} where #{keys}"
+        end
       end
   end # Adapter
 end # Swift
