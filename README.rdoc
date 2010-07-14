@@ -1,10 +1,25 @@
 = Swift
 
+* http://github.com/shanna/swift
+
+== Description
+
+A rational rudimentary object relational mapper.
+
+== Dependencies
+
+* ruby   ~> 1.9.1
+* dbic++ ~> 0.1
+
 == TODO
 
 * Type casting! I've been putting this one off for ages.
-* Identity map.
 * Key handling needs to be cleaner. Perhaps bring back Keys and Properties sets?
 * Assertions for dumb stuff. model < Model for methods in Adapter.
 * Profile. Start moving slow (and easy) stuff to extension.
-* Benchmark against DM (is it worth even looking at AR?).
+
+== Contributing
+
+Go nuts! There is no style guide and I do not care if you write tests or comment code. If you write something neat just
+send a pull request, tweet, email or yell it at me line by line in person.
+
