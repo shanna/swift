@@ -30,6 +30,10 @@ module Swift
     def trace flag
       Swift::DBI.trace flag
     end
+
+    def init path
+      Swift::DBI.init path
+    end
   end
 end # Swift
 
