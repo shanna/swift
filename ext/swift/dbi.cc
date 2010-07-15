@@ -9,9 +9,10 @@ static VALUE mDBI;
 static VALUE cHandle;
 static VALUE cStatement;
 static VALUE cResultSet;
-static VALUE cCPool;
+static VALUE cPool;
 static VALUE cRequest;
 static VALUE eRuntimeError;
+static VALUE eConnectionError;
 static VALUE eArgumentError;
 static VALUE eStandardError;
 static VALUE fStringify;
@@ -20,9 +21,13 @@ char errstr[8192];
 
 #define CSTRING(v) RSTRING_PTR(TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
 #define TO_STRING(v) (TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
-#define EXCEPTION(type) (const std::exception &e) { \
+#define EXCEPTION(type) (dbi::ConnectionError &e) { \
     snprintf(errstr, 4096, "%s", e.what()); \
-    rb_raise(eRuntimeError, "%s Error: %s", type, errstr); \
+    rb_raise(eConnectionError, "%s : %s", type, errstr); \
+} \
+catch (dbi::Error &e) {\
+    snprintf(errstr, 4096, "%s", e.what()); \
+    rb_raise(eRuntimeError, "%s : %s", type, errstr); \
 }
 
 static VALUE rb_statement_each(VALUE self);
@@ -68,7 +73,7 @@ void static inline rb_extract_bind_params(int argc, VALUE* argv, std::vector<dbi
 }
 
 VALUE rb_dbi_init(VALUE self, VALUE path) {
-    try { dbi::dbiInitialize(CSTRING(path)); } catch EXCEPTION("Invalid Driver");
+    try { dbi::dbiInitialize(CSTRING(path)); } catch EXCEPTION("DBI#init");
 }
 
 static void free_connection(dbi::Handle *self) {
@@ -101,7 +106,7 @@ VALUE rb_handle_init(VALUE self, VALUE opts) {
             CSTRING(driver), CSTRING(user), CSTRING(password),
             CSTRING(db), CSTRING(host), CSTRING(port)
         );
-    } catch EXCEPTION("Connection");
+    } catch EXCEPTION("Handle#new");
 
     return Qnil;
 }
@@ -119,7 +124,7 @@ static VALUE rb_handle_prepare(VALUE self, VALUE sql) {
     try {
         dbi::AbstractStatement *st = h->conn()->prepare(CSTRING(sql));
         rv = Data_Wrap_Struct(cStatement, NULL, free_statement, st);
-    } catch EXCEPTION("Runtime");
+    } catch EXCEPTION("Handle#prepare");
     return rv;
 }
 
@@ -141,7 +146,7 @@ VALUE rb_handle_execute(int argc, VALUE *argv, VALUE self) {
             rows = st->execute(bind);
             delete st;
         }
-    } catch EXCEPTION("Runtime");
+    } catch EXCEPTION("Handle#execute");
     return INT2NUM(rows);
 }
 
@@ -149,21 +154,21 @@ VALUE rb_handle_begin(int argc, VALUE *argv, VALUE self) {
     dbi::Handle *h = DBI_HANDLE(self);
     VALUE save;
     rb_scan_args(argc, argv, "01", &save);
-    try { NIL_P(save) ? h->begin() : h->begin(CSTRING(save)); } catch EXCEPTION("Runtime");
+    try { NIL_P(save) ? h->begin() : h->begin(CSTRING(save)); } catch EXCEPTION("Handle#begin");
 }
 
 VALUE rb_handle_commit(int argc, VALUE *argv, VALUE self) {
     dbi::Handle *h = DBI_HANDLE(self);
     VALUE save;
     rb_scan_args(argc, argv, "01", &save);
-    try { NIL_P(save) ? h->commit() : h->commit(CSTRING(save)); } catch EXCEPTION("Runtime");
+    try { NIL_P(save) ? h->commit() : h->commit(CSTRING(save)); } catch EXCEPTION("Handle#commit");
 }
 
 VALUE rb_handle_rollback(int argc, VALUE *argv, VALUE self) {
     dbi::Handle *h = DBI_HANDLE(self);
     VALUE save_point;
     rb_scan_args(argc, argv, "01", &save_point);
-    try { NIL_P(save_point) ? h->rollback() : h->rollback(CSTRING(save_point)); } catch EXCEPTION("Runtime");
+    try { NIL_P(save_point) ? h->rollback() : h->rollback(CSTRING(save_point)); } catch EXCEPTION("Handle#rollback");
 }
 
 VALUE rb_handle_transaction(int argc, VALUE *argv, VALUE self) {
@@ -184,7 +189,7 @@ VALUE rb_handle_transaction(int argc, VALUE *argv, VALUE self) {
             if (h->transactions().back() == save_point) h->rollback(save_point);
             rb_jump_tag(status);
         }
-    } catch EXCEPTION("Runtime");
+    } catch EXCEPTION("Handle#transaction{}");
 }
 
 VALUE rb_statement_alloc(VALUE klass) {
@@ -202,7 +207,7 @@ VALUE rb_statement_init(VALUE self, VALUE hl, VALUE sql) {
 
     try {
         DATA_PTR(self) = h->conn()->prepare(CSTRING(sql));
-    } catch EXCEPTION("Runtime");
+    } catch EXCEPTION("Statement#new");
 
     return Qnil;
 }
@@ -223,7 +228,7 @@ VALUE rb_statement_execute(int argc, VALUE *argv, VALUE self) {
                 dbi::logMessage(dbi::_trace_fd, dbi::formatParams(st->command(), bind));
             st->execute(bind);
         }
-    } catch EXCEPTION("Runtime");
+    } catch EXCEPTION("Statement#execute");
 
     if (rb_block_given_p()) return rb_statement_each(self);
     return self;
@@ -233,13 +238,13 @@ VALUE rb_statement_finish(VALUE self) {
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
     try {
         st->finish();
-    } catch EXCEPTION("Runtime");
+    } catch EXCEPTION("Statement#finish");
 }
 
 VALUE rb_statement_rows(VALUE self) {
     unsigned int rows;
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
-    try { rows = st->rows(); } catch EXCEPTION("Runtime");
+    try { rows = st->rows(); } catch EXCEPTION("Statement#rows");
     return INT2NUM(rows);
 }
 
@@ -248,7 +253,7 @@ VALUE rb_statement_insert_id(VALUE self) {
   VALUE insert_id    = Qnil;
   try {
     if (st->rows() > 0) insert_id = LONG2NUM(st->lastInsertID());
-  } catch EXCEPTION("Runtime");
+  } catch EXCEPTION("Statement#insert_id");
 
   return insert_id;
 }
@@ -272,7 +277,7 @@ static VALUE rb_statement_each(VALUE self) {
             }
             rb_yield(row);
         }
-    } catch EXCEPTION("Runtime");
+    } catch EXCEPTION("Statment#each");
     return Qnil;
 }
 
@@ -292,9 +297,15 @@ VALUE rb_statement_fetchrow(VALUE self) {
             }
             st->advanceRow();
         }
-    } catch EXCEPTION("Runtime");
+    } catch EXCEPTION("Statement#fetchrow");
 
     return row;
+}
+
+VALUE rb_statement_rewind(VALUE self) {
+    dbi::AbstractStatement *st = DBI_STATEMENT(self);
+    try { st->rewind(); } catch EXCEPTION("Statement#rewind");
+    return Qnil;
 }
 
 VALUE rb_dbi_trace(int argc, VALUE *argv, VALUE self) {
@@ -364,7 +375,7 @@ VALUE rb_cpool_init(VALUE self, VALUE n, VALUE opts) {
         DATA_PTR(self) = new dbi::ConnectionPool(
             n, CSTRING(driver), CSTRING(user), CSTRING(password), CSTRING(db), CSTRING(host), CSTRING(port)
         );
-    } catch EXCEPTION("Runtime");
+    } catch EXCEPTION("ConnectionPool#new");
 
     return Qnil;
 }
@@ -397,7 +408,7 @@ VALUE rb_cpool_execute(int argc, VALUE *argv, VALUE self) {
         // TODO GC mark callback.
         request = rb_request_alloc(cRequest);
         DATA_PTR(request) = cp->execute(CSTRING(sql), bind, rb_cpool_callback, (void*)callback);
-    } catch EXCEPTION("Runtime");
+    } catch EXCEPTION("ConnectionPool#execute");
 
     return request;
 }
@@ -407,7 +418,7 @@ VALUE rb_request_socket(VALUE self) {
     VALUE fd = Qnil;
     try {
         fd = INT2NUM(r->socket());
-    } catch EXCEPTION("Runtime");
+    } catch EXCEPTION("Request#socket");
     return fd;
 }
 
@@ -417,7 +428,7 @@ VALUE rb_request_process(VALUE self) {
 
     try {
         rc = r->process() ? Qtrue : Qfalse;
-    } catch EXCEPTION("Runtime");
+    } catch EXCEPTION("Request#process");
 
     return rc;
 }
@@ -425,18 +436,19 @@ VALUE rb_request_process(VALUE self) {
 extern "C" {
     void Init_dbi(void) {
 
-        fStringify      = rb_intern("to_s");
-        eRuntimeError   = CONST_GET(rb_mKernel, "RuntimeError");
-        eArgumentError  = CONST_GET(rb_mKernel, "ArgumentError");
-        eStandardError  = CONST_GET(rb_mKernel, "StandardError");
+        fStringify       = rb_intern("to_s");
+        eRuntimeError    = CONST_GET(rb_mKernel, "RuntimeError");
+        eArgumentError   = CONST_GET(rb_mKernel, "ArgumentError");
+        eStandardError   = CONST_GET(rb_mKernel, "StandardError");
+        eConnectionError = rb_define_class("ConnectionError", eRuntimeError);
 
-        mSwift          = rb_define_module("Swift");
-        mDBI            = rb_define_module_under(mSwift, "DBI");
-        cHandle         = rb_define_class_under(mDBI, "Handle", rb_cObject);
-        cStatement      = rb_define_class_under(mDBI, "Statement", rb_cObject);
-        cResultSet      = rb_define_class_under(mDBI, "ResultSet", cStatement);
-        cCPool = rb_define_class_under(mDBI, "ConnectionPool", rb_cObject);
-        cRequest        = rb_define_class_under(mDBI, "Request", rb_cObject);
+        mSwift           = rb_define_module("Swift");
+        mDBI             = rb_define_module_under(mSwift, "DBI");
+        cHandle          = rb_define_class_under(mDBI, "Handle", rb_cObject);
+        cStatement       = rb_define_class_under(mDBI, "Statement", rb_cObject);
+        cResultSet       = rb_define_class_under(mDBI, "ResultSet", cStatement);
+        cPool            = rb_define_class_under(mDBI, "ConnectionPool", rb_cObject);
+        cRequest         = rb_define_class_under(mDBI, "Request", rb_cObject);
 
         rb_define_module_function(mDBI, "init", RUBY_METHOD_FUNC(rb_dbi_init), 1);
         rb_define_module_function(mDBI, "trace", RUBY_METHOD_FUNC(rb_dbi_trace), -1);
@@ -464,19 +476,20 @@ extern "C" {
         rb_define_method(cStatement, "dup",         RUBY_METHOD_FUNC(rb_statement_dup), 0);
         rb_define_method(cStatement, "clone",       RUBY_METHOD_FUNC(rb_statement_dup), 0);
         rb_define_method(cStatement, "insert_id",   RUBY_METHOD_FUNC(rb_statement_insert_id), 0);
+        rb_define_method(cStatement, "rewind",      RUBY_METHOD_FUNC(rb_statement_insert_id), 0);
+
+        rb_include_module(cStatement, CONST_GET(rb_mKernel, "Enumerable"));
 
 
-        rb_define_alloc_func(cCPool, rb_cpool_alloc);
+        rb_define_alloc_func(cPool, rb_cpool_alloc);
 
-        rb_define_method(cCPool, "initialize",  RUBY_METHOD_FUNC(rb_cpool_init), 2);
-        rb_define_method(cCPool, "execute",     RUBY_METHOD_FUNC(rb_cpool_execute), -1);
+        rb_define_method(cPool, "initialize",  RUBY_METHOD_FUNC(rb_cpool_init), 2);
+        rb_define_method(cPool, "execute",     RUBY_METHOD_FUNC(rb_cpool_execute), -1);
 
         rb_define_alloc_func(cRequest, rb_request_alloc);
 
         rb_define_method(cRequest, "socket",      RUBY_METHOD_FUNC(rb_request_socket), 0);
         rb_define_method(cRequest, "process",     RUBY_METHOD_FUNC(rb_request_process), 0);
-
-        rb_include_module(cStatement, CONST_GET(rb_mKernel, "Enumerable"));
 
         rb_define_method(cResultSet, "execute", RUBY_METHOD_FUNC(Qnil), 0);
     }
