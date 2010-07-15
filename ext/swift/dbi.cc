@@ -134,8 +134,10 @@ VALUE rb_handle_execute(int argc, VALUE *argv, VALUE self) {
         }
         else {
             dbi::ResultRow bind;
-            rb_extract_bind_params(argc, argv+1, bind);
+            rb_extract_bind_params(argc-1, argv+1, bind);
             dbi::AbstractStatement *st = h->conn()->prepare(CSTRING(argv[0]));
+            if (dbi::_trace)
+                dbi::logMessage(dbi::_trace_fd, dbi::formatParams(CSTRING(argv[0]), bind));
             rows = st->execute(bind);
             delete st;
         }
