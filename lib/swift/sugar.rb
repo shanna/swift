@@ -18,6 +18,14 @@ module Swift
         Swift.db(db).prepare(self, "select * from #{resource} #{where} #{limit} #{offset}").execute(*bind, &block)
       end
 
+      def first db, args = {}
+        only(db, args).first
+      end
+
+      def get db, *id
+        db.kind_of?(Symbol) ? Swift.db(db).get(self, *id) : Swift.db(:default).get(self, db, *id)
+      end
+
       def create db = :default, attrs = nil
         db, attrs = [ :default, db ] unless attrs
         raise ArgumentError, "Use Swift::Adapter#create to create multiple instances." if attrs.kind_of?(Array)
@@ -32,8 +40,16 @@ module Swift
 
     def update db = :default, attributes = nil
       db, attributes = [:default, db] unless attributes
-      model.properties.each{|p| send(:"#{p.name}=", attributes.fetch(p.name, p.default))}
+      model.properties.each{|p| send(:"#{p.name}=", attributes.fetch(p.name, p.default)) if attributes.key?(p.name)}
       Swift.db(db).update(model, self)
+    end
+
+    # TODO should we prepare cache this too ?
+    def destroy db = :default
+      keys  = model.key.map(&:field)
+      bind  = properties(:field).values_at(*keys)
+      where = keys.map {|key| "#{key} = ?" }.join(' and ')
+      Swift.db(db).execute("delete from #{model.resource} where #{where}", *bind)
     end
   end # Model
 end # Swift

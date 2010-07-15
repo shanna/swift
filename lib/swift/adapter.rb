@@ -55,7 +55,8 @@ module Swift
       st     = prepare_update(model)
 
       resources.map do |resource|
-        binds = [resource.properties(:field).values_at(*supply, *model.key.map(&:field))].flatten
+        resource = model.new(resource) unless resource.kind_of?(model)
+        binds    = [resource.properties(:field).values_at(*supply, *model.key.map(&:field))].flatten
         st.execute(*binds)
       end
     end
