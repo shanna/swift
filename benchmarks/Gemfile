@@ -14,3 +14,8 @@ gem 'do_postgres',  do_version
 
 dm_version = '~> 0.10'
 gem 'dm-core', dm_version
+
+gem 'activerecord', '2.3.4'
+gem 'pg', '0.9.0'
+gem 'i18n', '0.4.1'
+gem 'builder', '2.1.2'

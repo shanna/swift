@@ -26,8 +26,9 @@ module Swift
 
     #--
     # TODO: Add IdentityMap calls.
+    # TODO: Get rid of names.zip ... and use a field -> name hash.
     def self.load attributes
-      names.zip(attributes.values_at(*fields)).inject(new){|o, kv| o.instance_variable_set("@#{kv[0]}", kv[1]); o}
+      names.zip(attributes.values_at(*fields)).inject(allocate){|o, kv| o.instance_variable_set("@#{kv[0]}", kv[1]); o}
     end
 
     class << self

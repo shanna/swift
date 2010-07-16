@@ -5,6 +5,10 @@ require_relative '../lib/swift/sugar'
 require_relative 'gems/environment'
 require 'dm-core'
 require 'benchmark'
+require 'i18n'
+require 'active_support'
+require 'active_record'
+require 'pg'
 require 'etc'
 
 Swift.setup :default, db: 'swift', user: Etc.getlogin, driver: 'postgresql'
@@ -25,11 +29,17 @@ class SwiftUser < Swift.model do
   end
 end # SwiftUser
 
+class ARUser < ActiveRecord::Base
+  set_table_name 'users'
+  establish_connection adapter: 'postgresql', host: '127.0.0.1', user: Etc.getlogin, database: 'swift'
+end
+
+
 rows = 2000
 iter = 10
 User.auto_migrate!
 
-Benchmark.bm(10) do |bm|
+Benchmark.bm(12) do |bm|
   bm.report("dm create") do
     rows.times {|n| User.create(name: "test #{n}", email: "test@example.com") }
   end
@@ -43,7 +53,21 @@ end
 
 User.auto_migrate!
 
-Benchmark.bm(10) do |bm|
+Benchmark.bm(12) do |bm|
+  bm.report("ar create") do
+    rows.times {|n| ARUser.create(name: "test #{n}", email: "test@example.com") }
+  end
+  bm.report("ar select") do
+    iter.times {|n| ARUser.find(:all).each {|m| m } }
+  end
+  bm.report("ar update") do
+    iter.times {|n| ARUser.find(:all).each {|m| m.update_attributes(name: "foo", email: "foo@example.com") } }
+  end
+end
+
+User.auto_migrate!
+
+Benchmark.bm(12) do |bm|
   bm.report("swift create") do
     rows.times {|n| SwiftUser.create(name: "test #{n}", email: "test@example.com") }
   end
