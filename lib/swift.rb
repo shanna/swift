@@ -2,14 +2,15 @@
 require_relative '../ext/swift/dbi'
 require_relative 'swift/adapter'
 require_relative 'swift/identity_map'
-require_relative 'swift/model'
+require_relative 'swift/resource'
+require_relative 'swift/properties'
 require_relative 'swift/property'
 require_relative 'swift/statement'
 
 module Swift
   class << self
-    def model &definition
-      Model.schema(&definition)
+    def resource &definition
+      Resource.schema(&definition)
     end
 
     def setup name, adapter = {}
@@ -23,8 +24,8 @@ module Swift
       repository
     end
 
-    def models
-      @@models ||= []
+    def resources
+      @@resources ||= []
     end
 
     def trace flag

@@ -22,42 +22,31 @@ module Swift
     end
 
     def prepare model, query = nil
-      return super(model) unless model.kind_of?(Class) && model < Model
+      return super(model) unless model.kind_of?(Class) && model < Resource
       Statement.new(self, model, query)
     end
 
-    def get model, id
-      id   = {model.key.first.name => id} unless id.is_a?(Hash)
-      id   = Hash[*model.key.map(&:field).zip(id.values_at(*model.key.map(&:name))).flatten]
-      keys = id.keys.map{|k| "#{k} = ?"}.join(' and ')
-      prepare(model, "select * from #{model.resource} where #{keys}").execute(*id.values).first
+    def get model, keys
+      resource = model.new(keys)
+      prepare_get(model).execute(*resource.tuple.values_at(*model.properties.keys)).first
     end
 
-    #--
-    # TODO: Without a model as the first argument demand resources be Model suclass instances, find from cache or
-    # create from a prepared insert statement for each class. Perhaps sort resource by class first if that helps.
     def create model, *resources
-      supply = model.properties.reject(&:serial?).map(&:field)
-      st     = prepare_insert(model)
-
+      statement = prepare_create(model)
       resources.map do |resource|
         resource = model.new(resource) unless resource.kind_of?(model)
-        binds    = resource.properties(:field).values_at(*supply)
-        if st.execute(*binds) && model.serial?
-          resource.properties = {model.serial.name => st.insert_id}
+        if statement.execute(*resource.tuple.values_at(*model.properties.insertable)) && model.properties.serial?
+          resource.tuple[model.properties.serial] = statement.insert_id
         end
         resource
       end
     end
 
     def update model, *resources
-      supply = model.properties.reject(&:key?).map(&:field)
-      st     = prepare_update(model)
-
+      statement = prepare_update(model)
       resources.map do |resource|
         resource = model.new(resource) unless resource.kind_of?(model)
-        binds    = [resource.properties(:field).values_at(*supply, *model.key.map(&:field))].flatten
-        st.execute(*binds)
+        statement.execute(*resource.tuple.values_at(*model.properties.updatable, *model.properties.keys))
       end
     end
 
@@ -68,24 +57,29 @@ module Swift
     protected
       def prepare_cached model, name, &block
         @prepared              ||= Hash.new{|h,k| h[k] = Hash.new} # Autovivification please Matz!
-        @prepared[model][name] ||= prepare(yield)
+        @prepared[model][name] ||= prepare(model, yield)
       end
 
-      def prepare_insert model
-        prepare_cached(model, :insert) do
-          fields    = model.properties.reject(&:serial?).map(&:field)
-          binds     = (['?'] * fields.size).join(', ')
-          returning = "returning #{model.serial.field}" if model.serial? and returning?
-          "insert into #{model.resource} (#{fields.join(', ')}) values (#{binds}) #{returning}"
+      def prepare_get model
+        prepare_cached(model, :get) do
+          where = model.properties.keys.map{|key| "#{key} = ?"}.join(' and ')
+          "select * from #{model.store} where #{where} limit 1"
+        end
+      end
+
+      def prepare_create model
+        prepare_cached(model, :create) do
+          values    = (['?'] * model.properties.insertable.size).join(', ')
+          returning = "returning #{model.properties.serial}" if model.properties.serial? and returning?
+          "insert into #{model.store} (#{model.properties.insertable.join(', ')}) values (#{values}) #{returning}"
         end
       end
 
       def prepare_update model
         prepare_cached(model, :update) do
-          fields = model.properties.reject(&:key?).map(&:field)
-          supply = fields.map{|f| "#{f} = ?"}.join(', ')
-          keys   = model.key.map{|k| "#{k.field} = ?"}.join(' and ')
-          "update #{model.resource} set #{supply} where #{keys}"
+          set   = model.properties.updatable.map{|field| "#{field} = ?"}.join(', ')
+          where = model.properties.keys.map{|key| "#{key} = ?"}.join(' and ')
+          "update #{model.store} set #{set} where #{where}"
         end
       end
   end # Adapter
