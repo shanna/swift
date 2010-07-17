@@ -12,16 +12,16 @@ puts "--------------\n"
 
 # create test table
 h.execute('DROP TABLE IF EXISTS users');
-h.execute('CREATE TABLE users(id serial, name text, email text)');
+h.execute('CREATE TABLE users(id serial, name text, email text, created_at timestamp)');
 
 puts ''
 puts 'Inserting test data'
 puts "-------------------\n"
 
-st = h.prepare('insert into users(name, email) values(?, ?)')
+st = h.prepare('insert into users(name, email, created_at) values(?, ?, ?)')
 
 sample = DATA.read.split(/\n/).map {|v| v.split(/\t+/) }
-sample.each {|s| st.execute(*s) }
+sample.each {|s| st.execute(*s, Time.now) }
 
 puts "\nSELECT and print results"
 puts "------------------------\n"

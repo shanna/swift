@@ -18,14 +18,15 @@ static VALUE eRuntimeError;
 static VALUE eArgumentError;
 static VALUE eStandardError;
 static VALUE eConnectionError;
-
 static VALUE fStringify;
-static VALUE fLocal;
 
 char errstr[8192];
+static time_t tzoffset;
+static pcrecpp::RE tm_cleanup_regex("(\\.\\d+)(\\+\\d+)?");
 
 #define CSTRING(v) RSTRING_PTR(TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
 #define TO_STRING(v) (TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
+
 #define EXCEPTION(type) (dbi::ConnectionError &e) { \
     snprintf(errstr, 4096, "%s", e.what()); \
     rb_raise(eConnectionError, "%s : %s", type, errstr); \
@@ -34,19 +35,6 @@ catch (dbi::Error &e) {\
     snprintf(errstr, 4096, "%s", e.what()); \
     rb_raise(eRuntimeError, "%s : %s", type, errstr); \
 }
-
-/* cheating - allows direct hack of the time object */
-struct time_object {
-    struct timespec ts;
-    struct tm tm;
-    int gmt;
-    int tm_got;
-};
-
-#define GetTimeval(obj, tobj) \
-    Data_Get_Struct(obj, struct time_object, tobj)
-
-static VALUE rb_statement_each(VALUE self);
 
 static dbi::Handle* DBI_HANDLE(VALUE self) {
     dbi::Handle *h;
@@ -229,6 +217,8 @@ VALUE rb_statement_init(VALUE self, VALUE hl, VALUE sql) {
     return Qnil;
 }
 
+static VALUE rb_statement_each(VALUE self);
+
 VALUE rb_statement_execute(int argc, VALUE *argv, VALUE self) {
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
     try {
@@ -275,15 +265,52 @@ VALUE rb_statement_insert_id(VALUE self) {
   return insert_id;
 }
 
-static VALUE rb_statement_each(VALUE self) {
-    unsigned int r, c;
-    unsigned long l;
-    const char *vptr;
-
+VALUE rb_field_typecast(int type, const char *data, unsigned long len) {
     double usec;
     time_t epoch, offset;
     struct tm tm;
     string time_str, offset_str, offset_hour, offset_min;
+
+    switch(type) {
+        case DBI_TYPE_INT:
+            return rb_cstr2inum(data, 10);
+        case DBI_TYPE_TEXT:
+            return rb_str_new(data, len);
+        case DBI_TYPE_TIME:
+            time_str   = data;
+            usec       = 0;
+            offset_str = "+0000";
+            memset(&tm, 0, sizeof(struct tm));
+            if (tm_cleanup_regex.PartialMatch(time_str, &usec, &offset_str))
+                tm_cleanup_regex.Replace("", &time_str);
+            if (strptime(time_str.c_str(), "%F %T", &tm)) {
+                offset = 0;
+                epoch  = mktime(&tm);
+                const char *offset_ptr = offset_str.c_str() + 1;
+                if (strcmp(offset_ptr, "0000") != 0 && strcmp(offset_ptr, "00") != 0) {
+                    offset_hour = offset_str.substr(1, 2);
+                    offset_min  = offset_str.substr(3, 2);
+                    offset      = offset_str[0] == '+' ?
+                          atol(offset_hour.c_str()) * -3600 + atol(offset_min.c_str()) * -60
+                        : atol(offset_hour.c_str()) * 3600  + atol(offset_min.c_str()) * 60;
+                    offset      += tzoffset;
+                }
+                return rb_time_new(epoch + offset, usec*1000000);
+            }
+            else {
+                fprintf(stderr, "typecast failed to parse date: %s\n", data);
+                return rb_str_new(data, len);
+            }
+        case DBI_TYPE_FLOAT:
+        case DBI_TYPE_NUMERIC:
+            return rb_float_new(atof(data));
+    }
+}
+
+static VALUE rb_statement_each(VALUE self) {
+    unsigned int r, c;
+    unsigned long len;
+    const char *data;
 
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
     try {
@@ -291,56 +318,16 @@ static VALUE rb_statement_each(VALUE self) {
         VALUE attrs = rb_ary_new();
         std::vector<string> fields = st->fields();
         std::vector<int> types = st->types();
-        pcrecpp::RE tm_regex("(\\.\\d+)(\\+\\d+)?");
         for (c = 0; c < fields.size(); c++) {
             rb_ary_push(attrs, ID2SYM(rb_intern(fields[c].c_str())));
         }
         for (r = 0; r < st->rows(); r++) {
             for (c = 0; c < st->columns(); c++) {
-                vptr = (const char*)st->fetchValue(r,c, &l);
-                if (vptr) {
-                    switch(types[c]) {
-                        case DBI_TYPE_INT:
-                            rb_hash_aset(row, rb_ary_entry(attrs, c), rb_cstr2inum(vptr, 10)); break;
-                        case DBI_TYPE_TEXT:
-                            rb_hash_aset(row, rb_ary_entry(attrs, c), rb_str_new(vptr, l)); break;
-                        case DBI_TYPE_TIME:
-                            time_str   = vptr;
-                            usec       = 0;
-                            offset_str = "+0000";
-                            memset(&tm, 0, sizeof(struct tm));
-                            if (tm_regex.PartialMatch(time_str, &usec, &offset_str))
-                                tm_regex.Replace("", &time_str);
-                            if (strptime(time_str.c_str(), "%F %T", &tm)) {
-                                offset = 0;
-                                epoch  = mktime(&tm);
-                                const char *offset_ptr = offset_str.c_str() + 1;
-                                if (strcmp(offset_ptr, "0000") != 0 && strcmp(offset_ptr, "00") != 0) {
-                                    offset_hour = offset_str.substr(1, 2);
-                                    offset_min  = offset_str.substr(3, 2);
-                                    offset      = offset_str[0] == '+' ?
-                                          atol(offset_hour.c_str()) * -3600 + atol(offset_min.c_str()) * -60
-                                        : atol(offset_hour.c_str()) * 3600  + atol(offset_min.c_str()) * 60;
-                                }
-                                struct time_object *tobj;
-                                VALUE tv = rb_time_new(epoch, usec*1000000);
-                                GetTimeval(tv, tobj);
-                                tobj->gmt = 1;
-                                rb_hash_aset(row, rb_ary_entry(attrs, c), rb_funcall(tv, fLocal, 0));
-                            }
-                            else {
-                                fprintf(stderr, "Statement#each - failed to parse date: %s\n", vptr);
-                                rb_hash_aset(row, rb_ary_entry(attrs, c), rb_str_new(vptr, l));
-                            }
-                            break;
-                        case DBI_TYPE_FLOAT:
-                        case DBI_TYPE_NUMERIC:
-                            rb_hash_aset(row, rb_ary_entry(attrs, c), rb_float_new(atof(vptr))); break;
-                    }
-                }
-                else {
+                data = (const char*)st->fetchValue(r,c, &len);
+                if (data)
+                    rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(types[c], data, len));
+                else
                     rb_hash_aset(row, rb_ary_entry(attrs, c), Qnil);
-                }
             }
             rb_yield(row);
         }
@@ -349,9 +336,9 @@ static VALUE rb_statement_each(VALUE self) {
 }
 
 VALUE rb_statement_fetchrow(VALUE self) {
-    const char *vptr;
+    const char *data;
     unsigned int r, c;
-    unsigned long l;
+    unsigned long len;
     VALUE row = Qnil;
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
     try {
@@ -359,8 +346,8 @@ VALUE rb_statement_fetchrow(VALUE self) {
         if (r < st->rows()) {
             row = rb_ary_new();
             for (c = 0; c < st->columns(); c++) {
-                vptr = (const char*)st->fetchValue(r, c, &l);
-                rb_ary_push(row, vptr ? rb_str_new(vptr, l) : Qnil);
+                data = (const char*)st->fetchValue(r, c, &len);
+                rb_ary_push(row, data ? rb_str_new(data, len) : Qnil);
             }
             st->advanceRow();
         }
@@ -502,9 +489,9 @@ VALUE rb_request_process(VALUE self) {
 
 extern "C" {
     void Init_dbi(void) {
+        struct tm tm;
 
         fStringify       = rb_intern("to_s");
-        fLocal           = rb_intern("localtime");
         eRuntimeError    = CONST_GET(rb_mKernel, "RuntimeError");
         eArgumentError   = CONST_GET(rb_mKernel, "ArgumentError");
         eStandardError   = CONST_GET(rb_mKernel, "StandardError");
@@ -560,5 +547,9 @@ extern "C" {
         rb_define_method(cRequest, "process",     RUBY_METHOD_FUNC(rb_request_process), 0);
 
         rb_define_method(cResultSet, "execute", RUBY_METHOD_FUNC(Qnil), 0);
+
+        memset(&tm, 0, sizeof(struct tm));
+        strptime("1970-01-01 00:00:00", "%F %T", &tm);
+        tzoffset = mktime(&tm) * -1;
     }
 }
