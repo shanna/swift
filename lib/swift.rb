@@ -18,14 +18,28 @@ module Swift
       (@repositories ||= {})[name] = adapter.kind_of?(Adapter) ? adapter : Adapter.new(adapter)
     end
 
-    def db name = :default, &block
-      repository = @repositories[name] or raise "Unknown db '#{name}', did you forget to #setup?"
-      repository.instance_eval(&block) if block_given?
+    def db name = nil, &block
+      # I pilfered the logic from DM but I don't really understand what is/isn't thread safe.
+      scopes     = (Thread.current[:swift_db] ||= [])
+      repository = if name || scopes.empty?
+        @repositories[name || :default] or raise "Unknown db '#{name || :default}', did you forget to #setup?"
+      else
+        scopes.last
+      end
+
+      if block_given?
+        begin
+          scopes.push(repository)
+          repository.instance_eval(&block)
+        ensure
+          scopes.pop
+        end
+      end
       repository
     end
 
     def resources
-      @@resources ||= []
+      @resources ||= []
     end
 
     def trace flag

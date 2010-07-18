@@ -16,7 +16,7 @@ module Swift
     end
 
     def insertable
-      @_insertalbe ||= all - [serial]
+      @_insertable ||= all - [serial]
     end
 
     def updatable
