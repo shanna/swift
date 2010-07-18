@@ -13,12 +13,14 @@ static VALUE cStatement;
 static VALUE cResultSet;
 static VALUE cPool;
 static VALUE cRequest;
+static VALUE cBigDecimal;
 
 static VALUE eRuntimeError;
 static VALUE eArgumentError;
 static VALUE eStandardError;
 static VALUE eConnectionError;
 static VALUE fStringify;
+static VALUE fNew;
 
 char errstr[8192];
 static time_t tzoffset;
@@ -277,8 +279,8 @@ VALUE rb_field_typecast(int type, const char *data, unsigned long len) {
         case DBI_TYPE_TEXT:
             return rb_str_new(data, len);
         case DBI_TYPE_TIME:
-            time_str   = data;
             usec       = 0;
+            time_str   = data;
             offset_str = "+0000";
             memset(&tm, 0, sizeof(struct tm));
             if (tm_cleanup_regex.PartialMatch(time_str, &usec, &offset_str))
@@ -301,8 +303,10 @@ VALUE rb_field_typecast(int type, const char *data, unsigned long len) {
                 fprintf(stderr, "typecast failed to parse date: %s\n", data);
                 return rb_str_new(data, len);
             }
-        case DBI_TYPE_FLOAT:
+        // does bigdecimal solve all floating point woes ? dunno :)
         case DBI_TYPE_NUMERIC:
+            return rb_funcall(cBigDecimal, fNew, 1, rb_str_new2(data));
+        case DBI_TYPE_FLOAT:
             return rb_float_new(atof(data));
     }
 }
@@ -491,10 +495,14 @@ extern "C" {
     void Init_dbi(void) {
         struct tm tm;
 
+        rb_require("bigdecimal");
+
+        fNew             = rb_intern("new");
         fStringify       = rb_intern("to_s");
         eRuntimeError    = CONST_GET(rb_mKernel, "RuntimeError");
         eArgumentError   = CONST_GET(rb_mKernel, "ArgumentError");
         eStandardError   = CONST_GET(rb_mKernel, "StandardError");
+        cBigDecimal      = CONST_GET(rb_mKernel, "BigDecimal");
         eConnectionError = rb_define_class("ConnectionError", eRuntimeError);
 
         mSwift           = rb_define_module("Swift");
