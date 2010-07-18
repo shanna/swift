@@ -2,7 +2,6 @@
 #include <ruby/ruby.h>
 #include <ruby/io.h>
 #include <time.h>
-#include <pcrecpp.h>
 
 #define CONST_GET(scope, constant) rb_const_get(scope, rb_intern(constant))
 
@@ -24,7 +23,6 @@ static VALUE fNew;
 
 char errstr[8192];
 static time_t tzoffset;
-static pcrecpp::RE tm_cleanup_regex("(\\.\\d+)(\\+\\d+)?");
 
 #define CSTRING(v) RSTRING_PTR(TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
 #define TO_STRING(v) (TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
@@ -268,10 +266,12 @@ VALUE rb_statement_insert_id(VALUE self) {
 }
 
 VALUE rb_field_typecast(int type, const char *data, unsigned long len) {
-    double usec;
     time_t epoch, offset;
     struct tm tm;
-    string time_str, offset_str, offset_hour, offset_min;
+
+    char datetime[512], tzsign = '+';
+    int hour = 0, min = 0, sec = 0, tzhour = 0, tzmin = 0;
+    double usec = 0;
 
     switch(type) {
         case DBI_TYPE_INT:
@@ -279,23 +279,18 @@ VALUE rb_field_typecast(int type, const char *data, unsigned long len) {
         case DBI_TYPE_TEXT:
             return rb_str_new(data, len);
         case DBI_TYPE_TIME:
-            usec       = 0;
-            time_str   = data;
-            offset_str = "+0000";
+            sscanf(data, "%s %d:%d:%d%lf%c%02d%02d",
+                datetime, &hour, &min, &sec, &usec, &tzsign, &tzhour, &tzmin);
+            sprintf(datetime, "%s %02d:%02d:%02d", datetime, hour, min, sec);
             memset(&tm, 0, sizeof(struct tm));
-            if (tm_cleanup_regex.PartialMatch(time_str, &usec, &offset_str))
-                tm_cleanup_regex.Replace("", &time_str);
-            if (strptime(time_str.c_str(), "%F %T", &tm)) {
+            if (strptime(datetime, "%F %T", &tm)) {
                 offset = 0;
                 epoch  = mktime(&tm);
-                const char *offset_ptr = offset_str.c_str() + 1;
-                if (strcmp(offset_ptr, "0000") != 0 && strcmp(offset_ptr, "00") != 0) {
-                    offset_hour = offset_str.substr(1, 2);
-                    offset_min  = offset_str.substr(3, 2);
-                    offset      = offset_str[0] == '+' ?
-                          atol(offset_hour.c_str()) * -3600 + atol(offset_min.c_str()) * -60
-                        : atol(offset_hour.c_str()) * 3600  + atol(offset_min.c_str()) * 60;
-                    offset      += tzoffset;
+                if (tzhour > 0 || tzmin > 0) {
+                    offset = tzsign == '+' ?
+                          (time_t)tzhour * -3600 + (time_t)tzmin * -60
+                        : (time_t)tzhour *  3600 + (time_t)tzmin *  60;
+                    offset += tzoffset;
                 }
                 return rb_time_new(epoch + offset, usec*1000000);
             }
