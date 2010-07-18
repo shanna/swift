@@ -113,6 +113,7 @@ VALUE rb_handle_init(VALUE self, VALUE opts) {
         );
     } catch EXCEPTION("Handle#new");
 
+    rb_iv_set(self, "@options", opts);
     return Qnil;
 }
 

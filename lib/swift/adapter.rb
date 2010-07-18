@@ -1,21 +1,6 @@
 module Swift
-  #--
-  # TODO: Golf, DRY and cache the SQL stuff.
   class Adapter < DBI::Handle
-
-    # TODO: DBI::Handle should have this stuff.
-    attr_reader :options, :driver
-
-    def initialize options = {}
-      @driver  = options.fetch(:driver)
-      @options = options
-      super
-    end
-
-    def returning?
-      @driver == 'postgresql'
-    end
-    protected :returning?
+    attr_reader :options
 
     def identity_map
       @identity_map ||= IdentityMap.new
@@ -54,7 +39,15 @@ module Swift
       super(name){ self.instance_eval(&block)}
     end
 
+    def driver
+      @options[:driver]
+    end
+
     protected
+      def returning?
+        @returning ||= !!(driver == 'postgresql')
+      end
+
       def prepare_cached model, name, &block
         @prepared              ||= Hash.new{|h,k| h[k] = Hash.new} # Autovivification please Matz!
         @prepared[model][name] ||= prepare(model, yield)
