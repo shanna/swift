@@ -12,7 +12,16 @@ puts "--------------\n"
 
 # create test table
 h.execute('DROP TABLE IF EXISTS users');
-h.execute('CREATE TABLE users(id serial, name text, email text, balance numeric, created_at timestamp)');
+h.execute <<-SQL
+  CREATE TABLE users (
+    id         serial,
+    name       text,
+    email      text,
+    balance    numeric(6,4),
+    admin      boolean not null default false,
+    created_at timestamp
+  )
+SQL
 
 puts ''
 puts 'Inserting test data'

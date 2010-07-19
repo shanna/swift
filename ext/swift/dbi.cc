@@ -275,6 +275,8 @@ VALUE rb_field_typecast(int type, const char *data, unsigned long len) {
     double usec = 0;
 
     switch(type) {
+        case DBI_TYPE_BOOLEAN:
+            return strcmp(data, "t") == 0 || strcmp(data, "1") == 0 ? Qtrue : Qfalse;
         case DBI_TYPE_INT:
             return rb_cstr2inum(data, 10);
         case DBI_TYPE_TEXT:
