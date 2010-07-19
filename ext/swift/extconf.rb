@@ -25,6 +25,8 @@ def library_installed? name, hint
 
       sudo add-apt-repository ppa:deepfryed
 
+      to install dbic++-dev and associated drivers dbic++-mysql or dbic++-pg
+
     ERROR
     false
   end

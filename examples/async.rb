@@ -18,7 +18,7 @@ ins = Swift.db(:pg).prepare('insert into users(name, email) values(?, ?)')
 
 Swift.pool(5, :pg) do
   (1..10).each do |n|
-    execute("select pg_sleep(#{rand(50)/200.0}), * from users where id = ?", n) {|r| pp r.fetchrow }
+    execute("select pg_sleep(#{(20-n)/40.0}), * from users where id = ?", n) {|r| pp r.fetchrow }
   end
 end
 
