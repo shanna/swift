@@ -42,6 +42,6 @@ Swift.db do
   pp prepare(User, 'select * from users').execute.to_a
 
   puts '', '-- get --'
-  pp get(User, {:id => 1})
+  pp get(User, id: 1)
 end
 

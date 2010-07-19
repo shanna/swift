@@ -11,6 +11,86 @@ A rational rudimentary database abstraction.
 * ruby   >= 1.9.1
 * dbic++ >= 0.1.6
 
+== Features
+
+* Multiple databases.
+* Prepared statements.
+* Bind values.
+* Transactions and named save points.
+* EventMachine asynchronous interface.
+* Resource mapping.
+
+Common higher level ORM stuff like migrations, SQL abstraction and more live (or will live) in Swift ORM.
+
+http://github.com/shanna/swift-orm
+
+== Synopsis
+
+=== DBI
+
+  require 'swift'
+  require 'etc'
+
+  Swift.trace true # Debugging.
+
+  Swift.setup user: Etc.getlogin, driver: 'postgresql', db: 'swift'
+  Swift.db.execute('drop table if exists users')
+
+  # Block form db context.
+  Swift.db do
+    execute('create table users(id serial, name text, email text')
+
+    # Save points are supported.
+    transaction :named_save_point do
+      st = prepare('insert into users (name, email) values (?, ?)')
+      puts st.execute('Apple Arthurton', 'apple@arthurton.local').insert_id
+      puts st.execute('Benny Arthurton', 'benny@arthurton.local').insert_id
+    end
+
+    # Block result iteration.
+    prepare('select * from users').execute do |row|
+      puts row.inspect
+    end
+
+    # Enumerable.
+    result = prepare('select * from users where name like ?').execute('Benny%')
+    puts result.first
+  end
+
+=== Resources
+
+Rudimentary object mapping. Provides a definition to the db methods for prepared (and cached) statements plus native
+primitive Ruby type conversion.
+
+  require 'swift'
+  require 'etc'
+
+  Swift.trace true # Debugging.
+
+  Swift.setup user: Etc.getlogin, driver: 'postgresql', db: 'swift'
+
+  class User < Swift.resource do
+      store    :users
+      property :id,         Integer, serial: true, key: true
+      property :name,       String
+      property :email,      String
+      property :updated_at, Time
+    end
+  end # User
+
+  Swift.db do
+    # Select Resource instead of Hash.
+    users = prepare(User, 'select * from users limit 1').execute
+
+    # Make a change and update.
+    users.each{|user| user.updated_at = Time.now}
+    update(User, *users)
+
+    # Get a specific user by id.
+    user = get(User, id: 1)
+    puts user.name, user.email
+  end
+
 == TODO
 
 * Types.
