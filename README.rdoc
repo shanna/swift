@@ -10,6 +10,7 @@ A rational rudimentary database abstraction.
 
 * ruby   >= 1.9.1
 * dbic++ >= 0.1.6
+* mysql  >= 5.0.17 or postgresql >= 8.4
 
 == Features
 
@@ -23,6 +24,15 @@ A rational rudimentary database abstraction.
 Common higher level ORM stuff like migrations, SQL abstraction and more live (or will live) in Swift ORM.
 
 http://github.com/shanna/swift-orm
+
+== Performance
+
+Swift prefers performance when it doesn't compromise the Ruby-ish interface. It's unfair to compare Swift to DataMapper
+and ActiveRecord which suffer under the weight of support for many more databases and legacy/alternative Ruby
+implementations. That said obviously if Swift were slower it would be redundant so benchmark code does exist in the
+Swift ORM repository.
+
+http://github.com/shanna/swift-orm/tree/master/benchmarks
 
 == Synopsis
 
