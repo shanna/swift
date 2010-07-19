@@ -13,6 +13,8 @@ A rational rudimentary database abstraction.
 
 == TODO
 
+* Types.
+* Tests.
 * Naming. Is it a model, resource, tuple, records, row etc.
 * Tighter coupling of extension. Remove more wrapping, subclassing and re-opening.
 * Assertions for dumb stuff. model < Model for methods in Adapter.

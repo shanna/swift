@@ -5,12 +5,12 @@
 
 Gem::Specification.new do |s|
   s.name = %q{swift}
-  s.version = "0.0.0"
+  s.version = "0.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-  s.date = %q{2010-07-14}
-  s.description = %q{A rational rudimentary object relational mapper.}
+  s.date = %q{2010-07-19}
+  s.description = %q{A rational rudimentary database abstraction.}
   s.email = ["shane.hanna@gmail.com", "deepfryed@gmail.com"]
   s.extensions = ["ext/swift/extconf.rb"]
   s.extra_rdoc_files = [
@@ -18,39 +18,32 @@ Gem::Specification.new do |s|
      "README.rdoc"
   ]
   s.files = [
-    ".gitignore",
+    "LICENSE",
      "README.rdoc",
+     "Rakefile",
      "VERSION",
-     "benchmarks/Gemfile",
-     "benchmarks/gems/ruby/1.9.1/cache/addressable-2.1.2.gem",
-     "benchmarks/gems/ruby/1.9.1/cache/data_objects-0.10.2.gem",
-     "benchmarks/gems/ruby/1.9.1/cache/dm-core-0.10.2.gem",
-     "benchmarks/gems/ruby/1.9.1/cache/do_postgres-0.10.2.gem",
-     "benchmarks/gems/ruby/1.9.1/cache/extlib-0.9.15.gem",
-     "benchmarks/simple.rb",
-     "examples/async.rb",
-     "examples/dbi.rb",
-     "examples/minimal.rb",
      "ext/swift/dbi.cc",
      "ext/swift/extconf.rb",
      "lib/swift.rb",
      "lib/swift/adapter.rb",
      "lib/swift/identity_map.rb",
-     "lib/swift/migrations.rb",
-     "lib/swift/model.rb",
      "lib/swift/pool.rb",
+     "lib/swift/properties.rb",
      "lib/swift/property.rb",
+     "lib/swift/resource.rb",
      "lib/swift/statement.rb",
-     "lib/swift/sugar.rb"
+     "swift.gemspec",
+     "test/helper.rb",
+     "test/test_resource.rb"
   ]
   s.homepage = %q{http://github.com/shanna/swift}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.6}
-  s.summary = %q{A rational rudimentary object relational mapper.}
+  s.summary = %q{A rational rudimentary database abstraction.}
   s.test_files = [
-    "test/test_swift-core.rb",
-     "test/helper.rb",
+    "test/helper.rb",
+     "test/test_resource.rb",
      "examples/dbi.rb",
      "examples/async.rb",
      "examples/minimal.rb"
@@ -61,12 +54,9 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
-      s.add_development_dependency(%q<minitest>, [">= 0"])
     else
-      s.add_dependency(%q<minitest>, [">= 0"])
     end
   else
-    s.add_dependency(%q<minitest>, [">= 0"])
   end
 end
 
