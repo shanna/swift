@@ -4,19 +4,19 @@
 
 == Description
 
-A rational rudimentary object relational mapper.
+A rational rudimentary database abstraction.
 
 == Dependencies
 
-* ruby   ~> 1.9.1
-* dbic++ ~> 0.1
+* ruby   >= 1.9.1
+* dbic++ >= 0.1.6
 
 == TODO
 
-* Type casting! I've been putting this one off for ages.
-* Key handling needs to be cleaner. Perhaps bring back Keys and Properties sets?
+* Naming. Is it a model, resource, tuple, records, row etc.
+* Tighter coupling of extension. Remove more wrapping, subclassing and re-opening.
 * Assertions for dumb stuff. model < Model for methods in Adapter.
-* Profile. Start moving slow (and easy) stuff to extension.
+* Profile.
 
 == Contributing
 

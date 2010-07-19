@@ -4,13 +4,11 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name        = 'swift'
-    gem.summary     = %q{A rational rudimentary object relational mapper.}
-    gem.description = %q{A rational rudimentary object relational mapper.}
+    gem.summary     = %q{A rational rudimentary database abstraction.}
+    gem.description = %q{A rational rudimentary database abstraction.}
     gem.email       = %w{shane.hanna@gmail.com deepfryed@gmail.com}
     gem.homepage    = 'http://github.com/shanna/swift'
     gem.authors     = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
-
     gem.extensions = FileList['ext/**/extconf.rb']
   end
   Jeweler::GemcutterTasks.new
