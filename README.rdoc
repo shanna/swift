@@ -38,7 +38,7 @@ http://github.com/shanna/swift-orm
 
   # Block form db context.
   Swift.db do
-    execute('create table users(id serial, name text, email text')
+    execute('create table users(id serial, name text, email text)')
 
     # Save points are supported.
     transaction :named_save_point do
@@ -79,6 +79,9 @@ primitive Ruby type conversion.
   end # User
 
   Swift.db do
+    execute('drop table if exists users')
+    execute('create table users(id serial, name text, email text)')
+
     # Select Resource instead of Hash.
     users = prepare(User, 'select * from users limit 1').execute
 
