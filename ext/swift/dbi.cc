@@ -117,6 +117,14 @@ VALUE rb_handle_init(VALUE self, VALUE opts) {
     return Qnil;
 }
 
+VALUE rb_handle_close(VALUE self) {
+    dbi::Handle *h = DBI_HANDLE(self);
+    try {
+        h->close();
+    } catch EXCEPTION("Handle#close");
+    return Qtrue;
+}
+
 static void free_statement(dbi::AbstractStatement *self) {
     if (self) {
         self->cleanup();
@@ -511,7 +519,7 @@ extern "C" {
         cPool            = rb_define_class_under(mDBI, "ConnectionPool", rb_cObject);
         cRequest         = rb_define_class_under(mDBI, "Request", rb_cObject);
 
-        rb_define_module_function(mDBI, "init", RUBY_METHOD_FUNC(rb_dbi_init), 1);
+        rb_define_module_function(mDBI, "init",  RUBY_METHOD_FUNC(rb_dbi_init), 1);
         rb_define_module_function(mDBI, "trace", RUBY_METHOD_FUNC(rb_dbi_trace), -1);
 
         rb_define_alloc_func(cHandle, rb_handle_alloc);
@@ -523,6 +531,7 @@ extern "C" {
         rb_define_method(cHandle, "commit",      RUBY_METHOD_FUNC(rb_handle_commit), -1);
         rb_define_method(cHandle, "rollback",    RUBY_METHOD_FUNC(rb_handle_rollback), -1);
         rb_define_method(cHandle, "transaction", RUBY_METHOD_FUNC(rb_handle_transaction), -1);
+        rb_define_method(cHandle, "close",       RUBY_METHOD_FUNC(rb_handle_close),0);
         rb_define_method(cHandle, "dup",         RUBY_METHOD_FUNC(rb_handle_dup),0);
         rb_define_method(cHandle, "clone",       RUBY_METHOD_FUNC(rb_handle_dup),0);
 
