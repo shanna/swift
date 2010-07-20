@@ -12,6 +12,8 @@ A rational rudimentary database abstraction.
 * dbic++ >= 0.1.6
 * mysql  >= 5.0.17 or postgresql >= 8.4
 
+dbic++ can be found here http://github.com/deepfryed/dbicpp
+
 == Features
 
 * Multiple databases.
