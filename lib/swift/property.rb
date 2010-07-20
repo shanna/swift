@@ -11,6 +11,15 @@ module Swift
       @key     = options.fetch(:key, false)
       @serial  = options.fetch(:serial, false)
       @default = options.fetch(:default, nil)
+      @index   = options.fetch(:index, nil)
+    end
+
+    def index
+      [ @index == true ? @field : @index, @field ]
+    end
+
+    def index?
+      !!@index
     end
 
     def default

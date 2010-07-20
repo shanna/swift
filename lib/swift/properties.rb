@@ -41,6 +41,10 @@ module Swift
       @_keys ||= select(&:key?).map(&:field)
     end
 
+    def indexes
+      @_indexes ||= select(&:index?).map(&:index).inject({}) {|i, (n, f)| (i[n] ||= []) << f; i }
+    end
+
     def each &block
       @properties.values.each{|v| yield v}
     end
