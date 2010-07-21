@@ -1,20 +1,51 @@
 module Swift
   class Property
-    attr_accessor :name, :field, :type, :key, :serial, :default
+    attr_accessor :name, :field, :key, :default
     alias_method :key?, :key
-    alias_method :serial?, :serial
 
-    def initialize name, type, options = {}
+    def initialize model, name, options = {}
       @name    = name
-      @type    = type
       @field   = options.fetch(:field, name)
       @key     = options.fetch(:key, false)
-      @serial  = options.fetch(:serial, false)
       @default = options.fetch(:default, nil)
+      define_model_methods(model)
     end
 
     def default
       @default.respond_to?(:call) ? @default.call : (@default.nil? ? nil : @default.dup)
+    end
+
+    def define_model_methods model
+      model.class_eval <<-RUBY, __FILE__, __LINE__ + 1
+        def #{name}; tuple.fetch(:#{field}) end
+        def #{name}=(value); tuple.store(:#{field}, value) end
+      RUBY
+    end
+
+    # TODO: Do something more interesting with types.
+    class Serial < Property
+    end
+
+    class String < Property
+    end
+
+    class Integer < Property
+    end
+
+    class Float < Property
+    end
+
+    class Fixnum < Property
+    end
+
+    class BigDecimal < Property
+    end
+
+    # TODO: Barf in mutator if someone tries to set a value not in the set option.
+    class Enum < Property
+    end
+
+    class Time < Property
     end
   end # Property
 end # Swift

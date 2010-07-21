@@ -3,35 +3,30 @@ require_relative '../lib/swift'
 require 'etc'
 require 'pp'
 
-require 'delegate'
-class DebugAdapter < DelegateClass(Swift::Adapter)
-  [:prepare, :execute, :get, :transaction].each do |sub|
-    define_method(sub) do |*args, &block|
-      pp [sub, args, (block_given? ? '&block' : nil)].compact
-      super *args, &block
-    end
-  end
-end
-
 class User < Swift.resource do
     store    :users
-    property :id,       Integer, key: true, serial: true
-    property :name,     String
-    property :email,    String
+    property :id,    Serial, key: true
+    property :name,  String
+    property :email, String
+    property :mood,  Enum,   set: %w{happy sad}
   end
 end # User
+
+pp User.properties
 
 Swift.setup user: Etc.getlogin, driver: 'postgresql', db: 'swift'
 Swift.trace true
 
 Swift.db do
-  execute('drop table if exists users')
-  execute('create table users(id serial, name text, email text)')
+  execute(%q{drop table if exists users})
+  execute(%q{drop type if exists users_mood_type})
+  execute(%q{create type users_mood_type as enum('happy', 'sad')}) # A full range of emotions :P
+  execute(%q{create table users(id serial, name text, email text, mood users_mood_type)})
 
   puts '-- create --'
   create(User,
-    {name: 'Apple Arthurton', email: 'apple@arthurton.local'},
-    {name: 'Benny Arthurton', email: 'benny@arthurton.local'}
+    {name: 'Apple Arthurton', email: 'apple@arthurton.local', mood: 'happy'},
+    {name: 'Benny Arthurton', email: 'benny@arthurton.local', mood: 'sad'}
   )
 
   puts '', '-- select --'

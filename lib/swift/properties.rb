@@ -28,7 +28,7 @@ module Swift
     end
 
     def serial
-      @_serial ||= find(&:serial?).field
+      @_serial ||= find{|f| f.kind_of?(Swift::Property::Serial)}.field rescue nil
     end
 
     def serial?
