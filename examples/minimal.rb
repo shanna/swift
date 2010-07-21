@@ -21,7 +21,7 @@ class User < Swift.resource do
   end
 end # User
 
-Swift.setup user: Etc.getlogin, driver: 'postgresql', db: 'swift'
+Swift.setup user: Etc.getlogin, db: 'swift', driver: ARGV[0] || 'postgresql'
 Swift.trace true
 
 Swift.db do
