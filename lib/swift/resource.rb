@@ -40,21 +40,28 @@ module Swift
     class Dsl
       attr_reader :resource
 
+      def self.const_missing klass
+        Property.const_get(klass)
+      end
+
       def initialize model, &definition
         @resource = Class.new(model)
         instance_eval(&definition)
       end
 
       def property name, type, options = {}
-        @resource.properties.push(property = Property.new(name, type, options))
+        @resource.properties.push(property = property_type(type).new(@resource, name, options))
         (class << @resource; self end).send(:define_method, name, lambda{ property})
-        @resource.send(:define_method, :"#{name}", lambda{ tuple.fetch(property.field)})
-        @resource.send(:define_method, :"#{name}=", lambda{|value| tuple.store(property.field, value)})
-      end
+     end
 
       def store name
         @resource.store = name
       end
+
+      protected
+        def property_type klass
+          klass < Property ? klass : Property.const_get(:"#{klass}")
+        end
     end # Dsl
   end # Resource
 end # Swift

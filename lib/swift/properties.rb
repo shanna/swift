@@ -28,9 +28,9 @@ module Swift
     end
 
     def serial
-      # TODO maybe rescue slows it a bit and we should be doing
-      #      select(&:serial?).map(:&field).first instead ?
-      @_serial ||= find(&:serial?).field rescue nil
+      return @_serial if defined? @_serial
+      serial = find{|f| f.kind_of?(Swift::Property::Serial)}
+      @_serial = serial ? serial.field : nil
     end
 
     def serial?
