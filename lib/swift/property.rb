@@ -1,14 +1,23 @@
 module Swift
   class Property
     attr_accessor :name, :field, :key, :default
+    attr_reader :set, :max, :min, :length, :precision, :scale
     alias_method :key?, :key
 
     def initialize model, name, options = {}
-      @name    = name
-      @field   = options.fetch(:field, name)
-      @key     = options.fetch(:key, false)
-      @default = options.fetch(:default, nil)
-      @index   = options.fetch(:index, nil)
+      @name      = name
+      @field     = options.fetch(:field, name)
+      @key       = options.fetch(:key, false)
+      @default   = options.fetch(:default, nil)
+      @index     = options.fetch(:index, nil)
+
+      # the following are only used for migrations
+      @set       = options.fetch(:set, [])
+      @min       = options.fetch(:min, nil)
+      @max       = options.fetch(:max, nil)
+      @precision = options.fetch(:precision, 16)
+      @scale     = options.fetch(:scale, 8)
+      @length    = options.fetch(:length, 255)
       define_model_methods(model)
     end
 
@@ -44,10 +53,10 @@ module Swift
     class Float < Property
     end
 
-    class Fixnum < Property
+    class Double < Property
     end
 
-    class BigDecimal < Property
+    class Numeric < Property
     end
 
     # TODO: Barf in mutator if someone tries to set a value not in the set option.
@@ -55,6 +64,9 @@ module Swift
     end
 
     class Time < Property
+    end
+
+    class Boolean < Property
     end
   end # Property
 end # Swift
