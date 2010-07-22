@@ -83,7 +83,7 @@ primitive Ruby type conversion.
 
   class User < Swift.resource do
       store    :users
-      property :id,         Integer, serial: true, key: true
+      property :id,         Serial, key: true
       property :name,       String
       property :email,      String
       property :updated_at, Time
@@ -108,6 +108,8 @@ primitive Ruby type conversion.
 
 == TODO
 
+* Explicitly register types (less magic if you wish to create your own types).
+* Adapter factory and explicit registration (same as types).
 * Actually hook up the IdentityMap.
 * Tests.
 * Naming. Is it a model, resource, tuple, records, row etc.
