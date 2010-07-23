@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-  s.date = %q{2010-07-19}
+  s.date = %q{2010-07-23}
   s.description = %q{A rational rudimentary database abstraction.}
   s.email = ["shane.hanna@gmail.com", "deepfryed@gmail.com"]
   s.extensions = ["ext/swift/extconf.rb"]
@@ -46,7 +46,8 @@ Gem::Specification.new do |s|
      "test/test_resource.rb",
      "examples/dbi.rb",
      "examples/async.rb",
-     "examples/minimal.rb"
+     "examples/resource.rb",
+     "examples/db.rb"
   ]
 
   if s.respond_to? :specification_version then
