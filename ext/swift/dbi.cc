@@ -437,7 +437,7 @@ VALUE rb_cpool_init(VALUE self, VALUE n, VALUE opts) {
 
     try {
         DATA_PTR(self) = new dbi::ConnectionPool(
-            n, CSTRING(driver), CSTRING(user), CSTRING(password), CSTRING(db), CSTRING(host), CSTRING(port)
+            NUM2INT(n), CSTRING(driver), CSTRING(user), CSTRING(password), CSTRING(db), CSTRING(host), CSTRING(port)
         );
     } catch EXCEPTION("ConnectionPool#new");
 
@@ -446,7 +446,8 @@ VALUE rb_cpool_init(VALUE self, VALUE n, VALUE opts) {
 
 void rb_cpool_callback(dbi::AbstractResultSet *rs) {
     VALUE callback = (VALUE)rs->context;
-    rb_proc_call(callback, rb_ary_new3(1, Data_Wrap_Struct(cResultSet, 0, 0, rs)));
+    if (!NIL_P(callback))
+        rb_proc_call(callback, rb_ary_new3(1, Data_Wrap_Struct(cResultSet, 0, 0, rs)));
 }
 
 VALUE rb_cpool_execute(int argc, VALUE *argv, VALUE self) {
@@ -459,7 +460,7 @@ VALUE rb_cpool_execute(int argc, VALUE *argv, VALUE self) {
 
     rb_scan_args(argc, argv, "1*&", &sql, &args, &callback);
     try {
-        std::vector<dbi::Param> bind;
+        dbi::ResultRow bind;
         for (n = 0; n < RARRAY_LEN(args); n++) {
             VALUE arg = rb_ary_entry(args, n);
             if (arg == Qnil)
@@ -474,7 +475,7 @@ VALUE rb_cpool_execute(int argc, VALUE *argv, VALUE self) {
         DATA_PTR(request) = cp->execute(CSTRING(sql), bind, rb_cpool_callback, (void*)callback);
     } catch EXCEPTION("ConnectionPool#execute");
 
-    return request;
+    return DATA_PTR(request) ? request : Qnil;
 }
 
 VALUE rb_request_socket(VALUE self) {
