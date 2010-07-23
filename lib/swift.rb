@@ -42,8 +42,8 @@ module Swift
       @resources ||= []
     end
 
-    def migrate!
-      resources.each(&:migrate!)
+    def migrate! name = nil
+      db(name){ resources.each(&:migrate!)}
     end
 
     def trace flag
