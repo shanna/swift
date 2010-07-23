@@ -547,7 +547,7 @@ extern "C" {
         rb_define_method(cStatement, "dup",         RUBY_METHOD_FUNC(rb_statement_dup), 0);
         rb_define_method(cStatement, "clone",       RUBY_METHOD_FUNC(rb_statement_dup), 0);
         rb_define_method(cStatement, "insert_id",   RUBY_METHOD_FUNC(rb_statement_insert_id), 0);
-        rb_define_method(cStatement, "rewind",      RUBY_METHOD_FUNC(rb_statement_insert_id), 0);
+        rb_define_method(cStatement, "rewind",      RUBY_METHOD_FUNC(rb_statement_rewind), 0);
 
         rb_include_module(cStatement, CONST_GET(rb_mKernel, "Enumerable"));
 
