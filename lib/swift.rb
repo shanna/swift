@@ -42,6 +42,10 @@ module Swift
       @resources ||= []
     end
 
+    def migrate!
+      resources.each(&:migrate!)
+    end
+
     def trace flag
       Swift::DBI.trace flag
     end
