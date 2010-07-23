@@ -29,7 +29,7 @@ module Swift
 
     def serial
       return @_serial if defined? @_serial
-      serial = find{|f| f.kind_of?(Swift::Property::Serial)}
+      serial   = find(&:serial?)
       @_serial = serial ? serial.field : nil
     end
 
@@ -39,10 +39,6 @@ module Swift
 
     def keys
       @_keys ||= select(&:key?).map(&:field)
-    end
-
-    def indexes
-      @_indexes ||= select(&:index?).map(&:index).inject({}) {|i, (n, f)| (i[n] ||= []) << f; i }
     end
 
     def each &block
