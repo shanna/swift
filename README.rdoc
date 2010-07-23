@@ -4,7 +4,7 @@
 
 == Description
 
-A rational rudimentary object relational maptter.
+A rational rudimentary object relational mapper.
 
 == Dependencies
 
