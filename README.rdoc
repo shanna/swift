@@ -4,7 +4,7 @@
 
 == Description
 
-A rational rudimentary database abstraction.
+A rational rudimentary object relational maptter.
 
 == Dependencies
 
@@ -21,24 +21,18 @@ dbic++ can be found here http://github.com/deepfryed/dbicpp
 * Bind values.
 * Transactions and named save points.
 * EventMachine asynchronous interface.
-* Resource mapping.
-
-Common higher level ORM stuff like migrations, SQL abstraction and more live (or will live) in Swift ORM.
-
-http://github.com/shanna/swift-orm
+* Migrations.
 
 == Performance
 
 Swift prefers performance when it doesn't compromise the Ruby-ish interface. It's unfair to compare Swift to DataMapper
 and ActiveRecord which suffer under the weight of support for many more databases and legacy/alternative Ruby
-implementations. That said obviously if Swift were slower it would be redundant so benchmark code does exist in the
-Swift ORM repository.
-
-http://github.com/shanna/swift-orm/tree/master/benchmarks
+implementations. That said obviously if Swift were slower it would be redundant so benchmark code does exist in
+http://github.com/shanna/swift/tree/master/benchmarks
 
 == Synopsis
 
-=== DBI
+=== DB
 
   require 'swift'
   require 'etc'
@@ -46,10 +40,10 @@ http://github.com/shanna/swift-orm/tree/master/benchmarks
   Swift.trace true # Debugging.
 
   Swift.setup user: Etc.getlogin, driver: 'postgresql', db: 'swift'
-  Swift.db.execute('drop table if exists users')
 
   # Block form db context.
   Swift.db do
+    execute('drop table if exists users')
     execute('create table users(id serial, name text, email text)')
 
     # Save points are supported.
@@ -69,7 +63,7 @@ http://github.com/shanna/swift-orm/tree/master/benchmarks
     puts result.first
   end
 
-=== Resources
+=== DB Resources
 
 Rudimentary object mapping. Provides a definition to the db methods for prepared (and cached) statements plus native
 primitive Ruby type conversion.
@@ -83,7 +77,7 @@ primitive Ruby type conversion.
 
   class User < Swift.resource do
       store    :users
-      property :id,         Serial, key: true
+      property :id,         Integer, serial: true, key: true
       property :name,       String
       property :email,      String
       property :updated_at, Time
@@ -91,8 +85,7 @@ primitive Ruby type conversion.
   end # User
 
   Swift.db do
-    execute('drop table if exists users')
-    execute('create table users(id serial, name text, email text)')
+    migrate! User
 
     # Select Resource instead of Hash.
     users = prepare(User, 'select * from users limit 1').execute
@@ -105,6 +98,59 @@ primitive Ruby type conversion.
     user = get(User, id: 1)
     puts user.name, user.email
   end
+
+=== Resources CRUD
+
+  require 'swift'
+  require 'etc'
+
+  Swift.setup user: Etc.getlogin, driver: 'postgresql', db: swift
+
+  # Resource
+  class User < Swift.resource do
+      store    :users
+      property :id,    Integer, serial: true, key: true
+      property :name,  String
+      property :email, String
+    end
+  end # User
+
+  # Migrate it.
+  User.migrate!
+
+  # Create
+  User.create name: 'Apple Arthurton', email: 'apple@arthurton.local' # => User
+
+  # Get by key.
+  user = User.get id: 1
+
+  # Alter attribute and update in one.
+  user.update name: 'Jimmy Arthurton'
+
+  # Alter attributes and update.
+  user.name = 'Apple Arthurton'
+  user.update
+
+  # Destroy
+  user.destroy
+
+=== Conditions SQL syntax.
+
+SQL is easy and most people know it so Swift ORM provides a simple symbol like syntax to convert resource
+names to field names.
+
+  class User < Swift.resource do
+      store    :users
+      property :id,    Integer, serial: true, key: true
+      property :age,   Integer, field: 'ega'
+      property :name,  String,  field: 'eman'
+      property :email, String,  field: 'liame'
+    end
+  end # User
+
+  # Convert :name and :age to fields.
+  # select * from users where eman like '%Arthurton' and ega > 20
+  users = User.all(':name like ? and :age > ?', '%Arthurton', 20)
 
 == TODO
 
