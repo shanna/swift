@@ -1,4 +1,6 @@
 module Swift
+  #--
+  # TODO: Driver specific subclasses and factory.
   class Adapter < DBI::Handle
     attr_reader :options
 
@@ -43,6 +45,15 @@ module Swift
       @options[:driver]
     end
 
+    def migrate! model
+      keys   =  model.properties.keys
+      fields =  model.properties.map{|p| field_definition(p)}.join(', ')
+      fields += ", primary key (#{keys.join(', ')})" unless keys.empty?
+
+      execute("drop table if exists #{model.store}")
+      execute("create table #{model.store} (#{fields})")
+    end
+
     protected
       def returning?
         @returning ||= !!(driver == 'postgresql')
@@ -73,6 +84,18 @@ module Swift
           set   = model.properties.updatable.map{|field| "#{field} = ?"}.join(', ')
           where = model.properties.keys.map{|key| "#{key} = ?"}.join(' and ')
           "update #{model.store} set #{set} where #{where}"
+        end
+      end
+
+      def field_definition property
+        "#{property.field} " + case property
+          when Property::String     then 'text'
+          when Property::Integer    then property.serial? ? 'serial' : 'integer'
+          when Property::Float      then 'float'
+          when Property::BigDecimal then 'numeric'
+          when Property::Time       then 'timestamp'
+          when Property::Boolean    then 'boolean'
+          else 'text'
         end
       end
   end # Adapter

@@ -15,9 +15,7 @@ Swift.setup user: Etc.getlogin, db: 'swift', driver: ARGV[0] || 'postgresql'
 Swift.trace true
 
 Swift.db do
-  # TODO: Automigrate takes care of this in swift-orm.
-  execute(%q{drop table if exists users})
-  execute %q{create table users(id serial, name text, email text)}
+  migrate! User
 
   puts '-- create --'
   create(User,

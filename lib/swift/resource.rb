@@ -49,6 +49,10 @@ module Swift
         @store ||= (name ? name.to_s.downcase.gsub(/[^:]+::/, '') : nil)
       end
 
+      def migrate!
+        Swift.db.migrate!(self)
+      end
+
       def create attributes = {}
         Swift.db.create(self, attributes)
       end
@@ -94,6 +98,10 @@ module Swift
 
       def store name
         @resource.store = name
+      end
+
+      def migrate &migration
+        (class << @resource; self end).send(:define_method, :migrate!, lambda{ Swift.db.instance_eval(&migration)})
       end
 
       protected
