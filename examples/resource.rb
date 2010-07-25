@@ -26,9 +26,10 @@ Swift.db do
   User.create name: 'Benny Arthurton', email: 'benny@arthurton.local'
 
   puts '', '-- all --'
-  User.all(':name like ? limit 1 offset 1', '%Arthurton').first
+  pp User.all(':name like ? limit 1 offset 1', '%Arthurton').first
 
   puts '', '-- get --'
+  pp user = User.get(id: 2)
   pp user = User.get(id: 2)
 
   puts '', '-- update --'

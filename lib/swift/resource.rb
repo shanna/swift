@@ -32,8 +32,12 @@ module Swift
       end
 
       def load tuple
-        resource = allocate
-        resource.tuple.update(tuple)
+        im = [self, *tuple.values_at(*properties.keys)]
+        unless resource = Swift.db.identity_map.get(im)
+          resource = allocate
+          resource.tuple.update(tuple)
+          Swift.db.identity_map.set(im, resource)
+        end
         resource
       end
 
