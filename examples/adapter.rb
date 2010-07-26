@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require_relative '../lib/swift'
 require 'etc'
+require 'stringio'
 
 Swift.setup user: Etc.getlogin, db: 'swift', driver: ARGV[0] || 'postgresql'
 Swift.trace true
@@ -57,11 +58,16 @@ Swift.db do
   end
 
   puts ''
+  puts '-- bulk loading data -- '
+  data = StringIO.new "Sally Arthurton\tsally@local\t0\nJonas Arthurton\tjonas@local\t0\n"
+  rows = write('users', *%w(name email balance)) { data.read }
+
+  puts ''
   puts '-- select and print results one by one -- '
   st.execute(0) {|r| p r }
 end
 
 __END__
-Apple Arthurton	apple@example.com
-Benny Arthurton	benny@example.com
-James Arthurton	james@example.com
+Apple Arthurton	apple@local
+Benny Arthurton	benny@local
+James Arthurton	james@local

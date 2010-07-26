@@ -36,6 +36,38 @@ catch (dbi::Error &e) {\
     rb_raise(eRuntimeError, "%s : %s", type, errstr); \
 }
 
+
+class IOStream : public dbi::IOStream {
+    private:
+    string empty;
+    string data;
+    VALUE callback;
+    public:
+    IOStream(VALUE cb) {
+        callback = cb;
+    }
+    string& read() {
+        VALUE stream = rb_proc_call(callback, rb_ary_new());
+        if (stream == Qnil)
+            return empty;
+        else {
+            data = string(RSTRING_PTR(stream), RSTRING_LEN(stream));
+            return data;
+        }
+    }
+
+    void write(const char *str) {
+        rb_proc_call(callback, rb_ary_new3(1, rb_str_new2(str)));
+    }
+    void write(const char *str, unsigned long l) {
+        rb_proc_call(callback, rb_ary_new3(1, rb_str_new(str, l)));
+    }
+    void truncate() {
+        data = "";
+    }
+};
+
+
 static dbi::Handle* DBI_HANDLE(VALUE self) {
     dbi::Handle *h;
     Data_Get_Struct(self, dbi::Handle, h);
@@ -204,6 +236,27 @@ VALUE rb_handle_transaction(int argc, VALUE *argv, VALUE self) {
             rb_jump_tag(status);
         }
     } catch EXCEPTION("Handle#transaction{}");
+}
+
+VALUE rb_handle_write(int argc, VALUE *argv, VALUE self) {
+    VALUE callback, table, fields;
+    unsigned long rows = 0;
+    rb_scan_args(argc, argv, "1*&", &table, &fields, &callback);
+    if (NIL_P(callback))
+        rb_raise(eArgumentError, "Handle#write called without a block");
+
+    dbi::Handle *h = DBI_HANDLE(self);
+    IOStream io(callback);
+    try {
+        dbi::ResultRow rfields;
+        for (int n = 0; n < RARRAY_LEN(fields); n++) {
+            VALUE f = rb_ary_entry(fields, n);
+            rfields << std::string(RSTRING_PTR(f), RSTRING_LEN(f));
+        }
+        rows = h->copyIn(RSTRING_PTR(table), rfields, &io);
+    } catch EXCEPTION("Handle#write");
+
+    return ULONG2NUM(rows);
 }
 
 VALUE rb_statement_alloc(VALUE klass) {
@@ -532,9 +585,10 @@ extern "C" {
         rb_define_method(cHandle, "commit",      RUBY_METHOD_FUNC(rb_handle_commit), -1);
         rb_define_method(cHandle, "rollback",    RUBY_METHOD_FUNC(rb_handle_rollback), -1);
         rb_define_method(cHandle, "transaction", RUBY_METHOD_FUNC(rb_handle_transaction), -1);
-        rb_define_method(cHandle, "close",       RUBY_METHOD_FUNC(rb_handle_close),0);
-        rb_define_method(cHandle, "dup",         RUBY_METHOD_FUNC(rb_handle_dup),0);
-        rb_define_method(cHandle, "clone",       RUBY_METHOD_FUNC(rb_handle_dup),0);
+        rb_define_method(cHandle, "close",       RUBY_METHOD_FUNC(rb_handle_close), 0);
+        rb_define_method(cHandle, "dup",         RUBY_METHOD_FUNC(rb_handle_dup), 0);
+        rb_define_method(cHandle, "clone",       RUBY_METHOD_FUNC(rb_handle_dup), 0);
+        rb_define_method(cHandle, "write",       RUBY_METHOD_FUNC(rb_handle_write), -1);
 
         rb_define_alloc_func(cStatement, rb_statement_alloc);
 
