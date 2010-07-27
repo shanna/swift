@@ -28,6 +28,7 @@ static time_t tzoffset;
 #define TO_STRING(v) (TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
 
 #define EXCEPTION(type) (dbi::ConnectionError &e) { \
+    rb_gc_enable(); \
     snprintf(errstr, 4096, "%s", e.what()); \
     rb_raise(eConnectionError, "%s : %s", type, errstr); \
 } \
@@ -51,6 +52,9 @@ class IOStream : public dbi::IOStream {
         if (stream == Qnil)
             return empty;
         else {
+            if (TYPE(stream) != T_STRING)
+                rb_raise(eArgumentError,
+                    "Handle#write can only process string data. You need to stringify values returned in the callback.");
             data = string(RSTRING_PTR(stream), RSTRING_LEN(stream));
             return data;
         }
@@ -248,12 +252,14 @@ VALUE rb_handle_write(int argc, VALUE *argv, VALUE self) {
     dbi::Handle *h = DBI_HANDLE(self);
     IOStream io(callback);
     try {
+        rb_gc_disable();
         dbi::ResultRow rfields;
         for (int n = 0; n < RARRAY_LEN(fields); n++) {
             VALUE f = rb_ary_entry(fields, n);
             rfields << std::string(RSTRING_PTR(f), RSTRING_LEN(f));
         }
         rows = h->copyIn(RSTRING_PTR(table), rfields, &io);
+        rb_gc_enable();
     } catch EXCEPTION("Handle#write");
 
     return ULONG2NUM(rows);
