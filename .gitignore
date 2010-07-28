@@ -9,3 +9,5 @@ benchmarks/gems/ruby/1.9.1/*
 !benchmarks/gems/ruby/1.9.1/cache
 benchmarks/gems/environment.rb
 pkg/*
+memory/driver
+memory/driver.o
