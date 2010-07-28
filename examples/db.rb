@@ -5,9 +5,9 @@ require 'pp'
 
 class User < Swift.resource do
     store    :users
-    property :id,    Integer, serial: true, key: true
-    property :name,  String
-    property :email, String
+    attribute :id,    Integer, serial: true, key: true
+    attribute :name,  String
+    attribute :email, String
   end
 end # User
 

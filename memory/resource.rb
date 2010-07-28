@@ -9,10 +9,10 @@ Swift.setup :default, db: 'swift', user: Etc.getlogin, driver: $driver
 
 class SwiftUser < Swift.resource do
     store    :users
-    property :id,         Integer, serial: true, key: true
-    property :name,       String
-    property :email,      String
-    property :updated_at, Time
+    attribute :id,         Integer, serial: true, key: true
+    attribute :name,       String
+    attribute :email,      String
+    attribute :updated_at, Time
   end
 end # SwiftUser
 

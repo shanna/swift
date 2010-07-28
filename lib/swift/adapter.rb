@@ -15,15 +15,15 @@ module Swift
 
     def get model, keys
       resource = model.new(keys)
-      prepare_get(model).execute(*resource.tuple.values_at(*model.properties.keys)).first
+      prepare_get(model).execute(*resource.tuple.values_at(*model.attributes.keys)).first
     end
 
     def create model, *resources
       statement = prepare_create(model)
       resources.map do |resource|
         resource = model.new(resource) unless resource.kind_of?(model)
-        if statement.execute(*resource.tuple.values_at(*model.properties.insertable)) && model.properties.serial?
-          resource.tuple[model.properties.serial] = statement.insert_id
+        if statement.execute(*resource.tuple.values_at(*model.attributes.insertable)) && model.attributes.serial?
+          resource.tuple[model.attributes.serial] = statement.insert_id
         end
         resource
       end
@@ -33,7 +33,7 @@ module Swift
       statement = prepare_update(model)
       resources.map do |resource|
         resource = model.new(resource) unless resource.kind_of?(model)
-        statement.execute(*resource.tuple.values_at(*model.properties.updatable, *model.properties.keys))
+        statement.execute(*resource.tuple.values_at(*model.attributes.updatable, *model.attributes.keys))
       end
     end
 
@@ -46,8 +46,8 @@ module Swift
     end
 
     def migrate! model
-      keys   =  model.properties.keys
-      fields =  model.properties.map{|p| field_definition(p)}.join(', ')
+      keys   =  model.attributes.keys
+      fields =  model.attributes.map{|p| field_definition(p)}.join(', ')
       fields += ", primary key (#{keys.join(', ')})" unless keys.empty?
 
       execute("drop table if exists #{model.store}")
@@ -66,35 +66,35 @@ module Swift
 
       def prepare_get model
         prepare_cached(model, :get) do
-          where = model.properties.keys.map{|key| "#{key} = ?"}.join(' and ')
+          where = model.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
           "select * from #{model.store} where #{where} limit 1"
         end
       end
 
       def prepare_create model
         prepare_cached(model, :create) do
-          values    = (['?'] * model.properties.insertable.size).join(', ')
-          returning = "returning #{model.properties.serial}" if model.properties.serial? and returning?
-          "insert into #{model.store} (#{model.properties.insertable.join(', ')}) values (#{values}) #{returning}"
+          values    = (['?'] * model.attributes.insertable.size).join(', ')
+          returning = "returning #{model.attributes.serial}" if model.attributes.serial? and returning?
+          "insert into #{model.store} (#{model.attributes.insertable.join(', ')}) values (#{values}) #{returning}"
         end
       end
 
       def prepare_update model
         prepare_cached(model, :update) do
-          set   = model.properties.updatable.map{|field| "#{field} = ?"}.join(', ')
-          where = model.properties.keys.map{|key| "#{key} = ?"}.join(' and ')
+          set   = model.attributes.updatable.map{|field| "#{field} = ?"}.join(', ')
+          where = model.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
           "update #{model.store} set #{set} where #{where}"
         end
       end
 
-      def field_definition property
-        "#{property.field} " + case property
-          when Property::String     then 'text'
-          when Property::Integer    then property.serial? ? 'serial' : 'integer'
-          when Property::Float      then 'float'
-          when Property::BigDecimal then 'numeric'
-          when Property::Time       then 'timestamp'
-          when Property::Boolean    then 'boolean'
+      def field_definition attribute
+        "#{attribute.field} " + case attribute
+          when Attribute::String     then 'text'
+          when Attribute::Integer    then attribute.serial? ? 'serial' : 'integer'
+          when Attribute::Float      then 'float'
+          when Attribute::BigDecimal then 'numeric'
+          when Attribute::Time       then 'timestamp'
+          when Attribute::Boolean    then 'boolean'
           else 'text'
         end
       end

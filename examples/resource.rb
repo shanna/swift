@@ -5,12 +5,12 @@ require 'pp'
 
 class User < Swift.resource do
     store    :users
-    property :id,       Integer, serial: true, key: true
-    property :name,     String
-    property :email,    String
-    property :active,   Boolean
-    property :created,  Time,   default: proc { Time.now }
-    property :optional, String, default: 'woot'
+    attribute :id,       Integer, serial: true, key: true
+    attribute :name,     String
+    attribute :email,    String
+    attribute :active,   Boolean
+    attribute :created,  Time,   default: proc { Time.now }
+    attribute :optional, String, default: 'woot'
   end
 end # User
 

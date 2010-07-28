@@ -1,5 +1,5 @@
 module Swift
-  class Property
+  class Attribute
     attr_accessor :name, :field, :key, :default, :serial
     alias_method :key?, :key
     alias_method :serial?, :serial
@@ -25,22 +25,22 @@ module Swift
       RUBY
     end
 
-    class String < Property
+    class String < Attribute
     end
 
-    class Integer < Property
+    class Integer < Attribute
     end
 
-    class Float < Property
+    class Float < Attribute
     end
 
-    class BigDecimal < Property
+    class BigDecimal < Attribute
     end
 
-    class Time < Property
+    class Time < Attribute
     end
 
-    class Boolean < Property
+    class Boolean < Attribute
     end
-  end # Property
+  end # Attribute
 end # Swift

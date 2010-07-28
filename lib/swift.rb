@@ -3,8 +3,8 @@ require_relative '../ext/swift/dbi'
 require_relative 'swift/adapter'
 require_relative 'swift/identity_map'
 require_relative 'swift/resource'
-require_relative 'swift/properties'
-require_relative 'swift/property'
+require_relative 'swift/attributes'
+require_relative 'swift/attribute'
 require_relative 'swift/statement'
 
 module Swift

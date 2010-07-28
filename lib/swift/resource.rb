@@ -6,7 +6,7 @@ module Swift
     alias_method :model, :class
 
     def tuple
-      @tuple ||= model.properties.new_tuple
+      @tuple ||= model.attributes.new_tuple
     end
 
     def update attributes = {}
@@ -18,8 +18,8 @@ module Swift
     # TODO: Adapter should be the only place with SQL. Add an Adapter#destory method.
     # This will pay off when we add mongo, sphinx etc.
     def destroy
-      where = model.properties.keys.map{|key| "#{key} = ?"}.join(' and ')
-      Swift.db.execute("delete from #{model.store} where #{where}", *tuple.values_at(*model.properties.keys))
+      where = model.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
+      Swift.db.execute("delete from #{model.store} where #{where}", *tuple.values_at(*model.attributes.keys))
     end
 
     class << self
@@ -27,12 +27,12 @@ module Swift
 
       def inherited klass
         klass.store = store if store
-        klass.properties.push(*properties) if properties
+        klass.attributes.push(*attributes) if attributes
         Swift.resources.push(klass) if klass.name
       end
 
       def load tuple
-        im = [self, *tuple.values_at(*properties.keys)]
+        im = [self, *tuple.values_at(*attributes.keys)]
         unless resource = Swift.db.identity_map.get(im)
           resource = allocate
           resource.tuple.update(tuple)
@@ -45,8 +45,8 @@ module Swift
         Dsl.new(self, &definition).resource
       end
 
-      def properties
-        @properties ||= Properties.new
+      def attributes
+        @attributes ||= Attributes.new
       end
 
       def store
@@ -87,7 +87,7 @@ module Swift
       attr_reader :resource
 
       def self.const_missing klass
-        Property.const_get(klass)
+        Attribute.const_get(klass)
       end
 
       def initialize model, &definition
@@ -95,9 +95,9 @@ module Swift
         instance_eval(&definition)
       end
 
-      def property name, type, options = {}
-        @resource.properties.push(property = property_type(type).new(@resource, name, options))
-        (class << @resource; self end).send(:define_method, name, lambda{ property})
+      def attribute name, type, options = {}
+        @resource.attributes.push(attribute = attribute_type(type).new(@resource, name, options))
+        (class << @resource; self end).send(:define_method, name, lambda{ attribute})
      end
 
       def store name
@@ -109,8 +109,8 @@ module Swift
       end
 
       protected
-        def property_type klass
-          klass < Property ? klass : Property.const_get(:"#{klass}")
+        def attribute_type klass
+          klass < Attribute ? klass : Attribute.const_get(:"#{klass}")
         end
     end # Dsl
   end # Resource
