@@ -1,11 +1,12 @@
 # Extension.
 require_relative '../ext/swift/dbi'
 require_relative 'swift/adapter'
+require_relative 'swift/attribute'
+require_relative 'swift/attributes'
 require_relative 'swift/identity_map'
 require_relative 'swift/scheme'
-require_relative 'swift/attributes'
-require_relative 'swift/attribute'
 require_relative 'swift/statement'
+require_relative 'swift/type'
 
 module Swift
   class << self

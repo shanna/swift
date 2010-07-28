@@ -5,14 +5,14 @@ require_relative '../lib/swift'
 
 $driver = ARGV[0] || 'postgresql'
 
-Swift.setup :default, db: 'swift', user: Etc.getlogin, driver: $driver
+Swift.setup db: 'swift', user: Etc.getlogin, driver: $driver
 
 class User < Swift::Scheme
   store     :users
-  attribute :id,         Swift::Attribute::Integer, serial: true, key: true
-  attribute :name,       Swift::Attribute::String
-  attribute :email,      Swift::Attribute::String
-  attribute :updated_at, Swift::Attribute::Time
+  attribute :id,         Swift::Type::Integer, serial: true, key: true
+  attribute :name,       Swift::Type::String
+  attribute :email,      Swift::Type::String
+  attribute :updated_at, Swift::Type::Time
 end # User
 
 rows = (ARGV[1] || 500).to_i

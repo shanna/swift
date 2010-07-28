@@ -5,12 +5,12 @@ require 'pp'
 
 class User < Swift::Scheme
   store     :users
-  attribute :id,       Swift::Attribute::Integer, serial: true, key: true
-  attribute :name,     Swift::Attribute::String
-  attribute :email,    Swift::Attribute::String
-  attribute :active,   Swift::Attribute::Boolean
-  attribute :created,  Swift::Attribute::Time,   default: proc { Time.now }
-  attribute :optional, Swift::Attribute::String, default: 'woot'
+  attribute :id,       Swift::Type::Integer, serial: true, key: true
+  attribute :name,     Swift::Type::String
+  attribute :email,    Swift::Type::String
+  attribute :active,   Swift::Type::Boolean
+  attribute :created,  Swift::Type::Time,   default: proc { Time.now }
+  attribute :optional, Swift::Type::String, default: 'woot'
 end # User
 
 Swift.setup user: Etc.getlogin, db: 'swift', driver: ARGV[0] || 'postgresql'

@@ -1,14 +1,11 @@
 module Swift
   class Attribute
-    attr_accessor :name, :field, :key, :default, :serial
-    alias_method :key?, :key
-    alias_method :serial?, :serial
+    attr_reader :name, :field, :key, :serial
 
     def initialize scheme, name, options = {}
       @name      = name
       @default   = options.fetch(:default, nil)
       @field     = options.fetch(:field,   name)
-      @index     = options.fetch(:index,   nil)
       @key       = options.fetch(:key,     false)
       @serial    = options.fetch(:serial,  false)
       define_scheme_methods(scheme)
@@ -20,27 +17,9 @@ module Swift
 
     def define_scheme_methods scheme
       scheme.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-        def #{name}; tuple.fetch(:#{field}) end
+        def #{name};        tuple.fetch(:#{field})        end
         def #{name}= value; tuple.store(:#{field}, value) end
       RUBY
-    end
-
-    class String < Attribute
-    end
-
-    class Integer < Attribute
-    end
-
-    class Float < Attribute
-    end
-
-    class BigDecimal < Attribute
-    end
-
-    class Time < Attribute
-    end
-
-    class Boolean < Attribute
     end
   end # Attribute
 end # Swift

@@ -22,7 +22,7 @@ module Swift
       statement = prepare_create(scheme)
       relations.map do |relation|
         relation = scheme.new(relation) unless relation.kind_of?(scheme)
-        if statement.execute(*relation.tuple.values_at(*scheme.attributes.insertable)) && scheme.attributes.serial?
+        if statement.execute(*relation.tuple.values_at(*scheme.attributes.insertable)) && scheme.attributes.serial
           relation.tuple[scheme.attributes.serial] = statement.insert_id
         end
         relation
@@ -74,7 +74,7 @@ module Swift
       def prepare_create scheme
         prepare_cached(scheme, :create) do
           values    = (['?'] * scheme.attributes.insertable.size).join(', ')
-          returning = "returning #{scheme.attributes.serial}" if scheme.attributes.serial? and returning?
+          returning = "returning #{scheme.attributes.serial}" if scheme.attributes.serial and returning?
           "insert into #{scheme.store} (#{scheme.attributes.insertable.join(', ')}) values (#{values}) #{returning}"
         end
       end
@@ -89,12 +89,12 @@ module Swift
 
       def field_definition attribute
         "#{attribute.field} " + case attribute
-          when Attribute::String     then 'text'
-          when Attribute::Integer    then attribute.serial? ? 'serial' : 'integer'
-          when Attribute::Float      then 'float'
-          when Attribute::BigDecimal then 'numeric'
-          when Attribute::Time       then 'timestamp'
-          when Attribute::Boolean    then 'boolean'
+          when Type::String     then 'text'
+          when Type::Integer    then attribute.serial ? 'serial' : 'integer'
+          when Type::Float      then 'float'
+          when Type::BigDecimal then 'numeric'
+          when Type::Time       then 'timestamp'
+          when Type::Boolean    then 'boolean'
           else 'text'
         end
       end

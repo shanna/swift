@@ -29,16 +29,12 @@ module Swift
 
     def serial
       return @serial if defined? @serial
-      serial  = find(&:serial?)
+      serial  = find(&:serial)
       @serial = serial ? serial.field : nil
     end
 
-    def serial?
-      !!serial
-    end
-
     def keys
-      @keys ||= select(&:key?).map(&:field)
+      @keys ||= select(&:key).map(&:field)
     end
 
     def each &block
