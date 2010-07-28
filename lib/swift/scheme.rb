@@ -1,25 +1,25 @@
 module Swift
-  class Resource
+  class Scheme
     def initialize attributes = {}
       attributes.each{|k, v| send(:"#{k}=", v)}
     end
-    alias_method :model, :class
+    alias_method :scheme, :class
 
     def tuple
-      @tuple ||= model.attributes.new_tuple
+      @tuple ||= scheme.attributes.new_tuple
     end
 
     def update attributes = {}
       attributes.each{|k, v| send(:"#{k}=", v)}
-      Swift.db.update(model, self)
+      Swift.db.update(scheme, self)
     end
 
     #--
     # TODO: Adapter should be the only place with SQL. Add an Adapter#destory method.
     # This will pay off when we add mongo, sphinx etc.
     def destroy
-      where = model.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
-      Swift.db.execute("delete from #{model.store} where #{where}", *tuple.values_at(*model.attributes.keys))
+      where = scheme.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
+      Swift.db.execute("delete from #{scheme.store} where #{where}", *tuple.values_at(*scheme.attributes.keys))
     end
 
     class << self
@@ -28,21 +28,21 @@ module Swift
       def inherited klass
         klass.store = store if store
         klass.attributes.push(*attributes) if attributes
-        Swift.resources.push(klass) if klass.name
+        Swift.schema.push(klass) if klass.name
       end
 
       def load tuple
         im = [self, *tuple.values_at(*attributes.keys)]
-        unless resource = Swift.db.identity_map.get(im)
-          resource = allocate
-          resource.tuple.update(tuple)
-          Swift.db.identity_map.set(im, resource)
+        unless scheme = Swift.db.identity_map.get(im)
+          scheme = allocate
+          scheme.tuple.update(tuple)
+          Swift.db.identity_map.set(im, scheme)
         end
-        resource
+        scheme
       end
 
       def schema &definition
-        Dsl.new(self, &definition).resource
+        Dsl.new(self, &definition).scheme
       end
 
       def attributes
@@ -84,28 +84,28 @@ module Swift
     end
 
     class Dsl
-      attr_reader :resource
+      attr_reader :scheme
 
       def self.const_missing klass
         Attribute.const_get(klass)
       end
 
-      def initialize model, &definition
-        @resource = Class.new(model)
+      def initialize scheme, &definition
+        @scheme = Class.new(scheme)
         instance_eval(&definition)
       end
 
       def attribute name, type, options = {}
-        @resource.attributes.push(attribute = attribute_type(type).new(@resource, name, options))
-        (class << @resource; self end).send(:define_method, name, lambda{ attribute})
+        @scheme.attributes.push(attribute = attribute_type(type).new(@scheme, name, options))
+        (class << @scheme; self end).send(:define_method, name, lambda{ attribute})
      end
 
       def store name
-        @resource.store = name
+        @scheme.store = name
       end
 
       def migrate &migration
-        (class << @resource; self end).send(:define_method, :migrate!, lambda{ Swift.db.instance_eval(&migration)})
+        (class << @scheme; self end).send(:define_method, :migrate!, lambda{ Swift.db.instance_eval(&migration)})
       end
 
       protected
@@ -113,6 +113,6 @@ module Swift
           klass < Attribute ? klass : Attribute.const_get(:"#{klass}")
         end
     end # Dsl
-  end # Resource
+  end # Scheme
 end # Swift
 

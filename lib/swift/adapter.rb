@@ -8,32 +8,32 @@ module Swift
       @identity_map ||= IdentityMap.new
     end
 
-    def prepare model, query = nil
-      return super(model) unless model.kind_of?(Class) && model < Resource
-      Statement.new(self, model, query)
+    def prepare scheme, query = nil
+      return super(scheme) unless scheme.kind_of?(Class) && scheme < Scheme
+      Statement.new(self, scheme, query)
     end
 
-    def get model, keys
-      resource = model.new(keys)
-      prepare_get(model).execute(*resource.tuple.values_at(*model.attributes.keys)).first
+    def get scheme, keys
+      relation = scheme.new(keys)
+      prepare_get(scheme).execute(*relation.tuple.values_at(*scheme.attributes.keys)).first
     end
 
-    def create model, *resources
-      statement = prepare_create(model)
-      resources.map do |resource|
-        resource = model.new(resource) unless resource.kind_of?(model)
-        if statement.execute(*resource.tuple.values_at(*model.attributes.insertable)) && model.attributes.serial?
-          resource.tuple[model.attributes.serial] = statement.insert_id
+    def create scheme, *relations
+      statement = prepare_create(scheme)
+      relations.map do |relation|
+        relation = scheme.new(relation) unless relation.kind_of?(scheme)
+        if statement.execute(*relation.tuple.values_at(*scheme.attributes.insertable)) && scheme.attributes.serial?
+          relation.tuple[scheme.attributes.serial] = statement.insert_id
         end
-        resource
+        relation
       end
     end
 
-    def update model, *resources
-      statement = prepare_update(model)
-      resources.map do |resource|
-        resource = model.new(resource) unless resource.kind_of?(model)
-        statement.execute(*resource.tuple.values_at(*model.attributes.updatable, *model.attributes.keys))
+    def update scheme, *relations
+      statement = prepare_update(scheme)
+      relations.map do |relation|
+        relation = scheme.new(relation) unless relation.kind_of?(scheme)
+        statement.execute(*relation.tuple.values_at(*scheme.attributes.updatable, *scheme.attributes.keys))
       end
     end
 
@@ -45,13 +45,13 @@ module Swift
       @options[:driver]
     end
 
-    def migrate! model
-      keys   =  model.attributes.keys
-      fields =  model.attributes.map{|p| field_definition(p)}.join(', ')
+    def migrate! scheme
+      keys   =  scheme.attributes.keys
+      fields =  scheme.attributes.map{|p| field_definition(p)}.join(', ')
       fields += ", primary key (#{keys.join(', ')})" unless keys.empty?
 
-      execute("drop table if exists #{model.store}")
-      execute("create table #{model.store} (#{fields})")
+      execute("drop table if exists #{scheme.store}")
+      execute("create table #{scheme.store} (#{fields})")
     end
 
     protected
@@ -59,31 +59,31 @@ module Swift
         @returning ||= !!(driver == 'postgresql')
       end
 
-      def prepare_cached model, name, &block
+      def prepare_cached scheme, name, &block
         @prepared              ||= Hash.new{|h,k| h[k] = Hash.new} # Autovivification please Matz!
-        @prepared[model][name] ||= prepare(model, yield)
+        @prepared[scheme][name] ||= prepare(scheme, yield)
       end
 
-      def prepare_get model
-        prepare_cached(model, :get) do
-          where = model.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
-          "select * from #{model.store} where #{where} limit 1"
+      def prepare_get scheme
+        prepare_cached(scheme, :get) do
+          where = scheme.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
+          "select * from #{scheme.store} where #{where} limit 1"
         end
       end
 
-      def prepare_create model
-        prepare_cached(model, :create) do
-          values    = (['?'] * model.attributes.insertable.size).join(', ')
-          returning = "returning #{model.attributes.serial}" if model.attributes.serial? and returning?
-          "insert into #{model.store} (#{model.attributes.insertable.join(', ')}) values (#{values}) #{returning}"
+      def prepare_create scheme
+        prepare_cached(scheme, :create) do
+          values    = (['?'] * scheme.attributes.insertable.size).join(', ')
+          returning = "returning #{scheme.attributes.serial}" if scheme.attributes.serial? and returning?
+          "insert into #{scheme.store} (#{scheme.attributes.insertable.join(', ')}) values (#{values}) #{returning}"
         end
       end
 
-      def prepare_update model
-        prepare_cached(model, :update) do
-          set   = model.attributes.updatable.map{|field| "#{field} = ?"}.join(', ')
-          where = model.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
-          "update #{model.store} set #{set} where #{where}"
+      def prepare_update scheme
+        prepare_cached(scheme, :update) do
+          set   = scheme.attributes.updatable.map{|field| "#{field} = ?"}.join(', ')
+          where = scheme.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
+          "update #{scheme.store} set #{set} where #{where}"
         end
       end
 

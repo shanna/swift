@@ -2,7 +2,7 @@
 require_relative '../ext/swift/dbi'
 require_relative 'swift/adapter'
 require_relative 'swift/identity_map'
-require_relative 'swift/resource'
+require_relative 'swift/scheme'
 require_relative 'swift/attributes'
 require_relative 'swift/attribute'
 require_relative 'swift/statement'
@@ -10,7 +10,7 @@ require_relative 'swift/statement'
 module Swift
   class << self
     def resource &definition
-      Resource.schema(&definition)
+      Scheme.schema(&definition)
     end
 
     def setup name, adapter = {}
@@ -38,12 +38,12 @@ module Swift
       repository
     end
 
-    def resources
-      @resources ||= []
+    def schema
+      @schema ||= []
     end
 
     def migrate! name = nil
-      db(name){ resources.each(&:migrate!)}
+      db(name){ schema.each(&:migrate!)}
     end
 
     def trace flag
