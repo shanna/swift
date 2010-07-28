@@ -1,16 +1,17 @@
 module Swift
   class Scheme
-    def initialize attributes = {}
-      attributes.each{|k, v| send(:"#{k}=", v)}
-    end
     alias_method :scheme, :class
+
+    def initialize options = {}
+      options.each{|k, v| send(:"#{k}=", v)}
+    end
 
     def tuple
       @tuple ||= scheme.attributes.new_tuple
     end
 
-    def update attributes = {}
-      attributes.each{|k, v| send(:"#{k}=", v)}
+    def update options = {}
+      options.each{|k, v| send(:"#{k}=", v)}
       Swift.db.update(scheme, self)
     end
 
@@ -23,12 +24,10 @@ module Swift
     end
 
     class << self
-      attr_writer :store
-
       def inherited klass
-        klass.store = store if store
+        klass.store(store)                 if store
         klass.attributes.push(*attributes) if attributes
-        Swift.schema.push(klass) if klass.name
+        Swift.schema.push(klass)           if klass.name
       end
 
       def load tuple
@@ -41,24 +40,29 @@ module Swift
         scheme
       end
 
-      def schema &definition
-        Dsl.new(self, &definition).scheme
-      end
-
       def attributes
         @attributes ||= Attributes.new
       end
 
-      def store
-        @store ||= (name ? name.to_s.downcase.gsub(/[^:]+::/, '') : nil)
+      def attribute name, type, options = {}
+        attributes.push(attribute = type.new(self, name, options))
+        (class << self; self end).send(:define_method, name, lambda{ attribute })
+      end
+
+      def store name = nil
+        name ? @store = name : @store
+      end
+
+      def migration &migration
+        (class << self; self end).send(:define_method, :migrate!, lambda{ Swift.db.instance_eval(&migration) })
       end
 
       def migrate!
         Swift.db.migrate!(self)
       end
 
-      def create attributes = {}
-        Swift.db.create(self, attributes)
+      def create options = {}
+        Swift.db.create(self, options)
       end
 
       #--
@@ -82,37 +86,6 @@ module Swift
           sql.gsub(/:(\w+)/){ send($1.to_sym).field}
         end
     end
-
-    class Dsl
-      attr_reader :scheme
-
-      def self.const_missing klass
-        Attribute.const_get(klass)
-      end
-
-      def initialize scheme, &definition
-        @scheme = Class.new(scheme)
-        instance_eval(&definition)
-      end
-
-      def attribute name, type, options = {}
-        @scheme.attributes.push(attribute = attribute_type(type).new(@scheme, name, options))
-        (class << @scheme; self end).send(:define_method, name, lambda{ attribute})
-     end
-
-      def store name
-        @scheme.store = name
-      end
-
-      def migrate &migration
-        (class << @scheme; self end).send(:define_method, :migrate!, lambda{ Swift.db.instance_eval(&migration)})
-      end
-
-      protected
-        def attribute_type klass
-          klass < Attribute ? klass : Attribute.const_get(:"#{klass}")
-        end
-    end # Dsl
   end # Scheme
 end # Swift
 

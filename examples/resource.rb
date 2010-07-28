@@ -3,15 +3,14 @@ require_relative '../lib/swift'
 require 'etc'
 require 'pp'
 
-class User < Swift.resource do
-    store    :users
-    attribute :id,       Integer, serial: true, key: true
-    attribute :name,     String
-    attribute :email,    String
-    attribute :active,   Boolean
-    attribute :created,  Time,   default: proc { Time.now }
-    attribute :optional, String, default: 'woot'
-  end
+class User < Swift::Scheme
+  store     :users
+  attribute :id,       Swift::Attribute::Integer, serial: true, key: true
+  attribute :name,     Swift::Attribute::String
+  attribute :email,    Swift::Attribute::String
+  attribute :active,   Swift::Attribute::Boolean
+  attribute :created,  Swift::Attribute::Time,   default: proc { Time.now }
+  attribute :optional, Swift::Attribute::String, default: 'woot'
 end # User
 
 Swift.setup user: Etc.getlogin, db: 'swift', driver: ARGV[0] || 'postgresql'

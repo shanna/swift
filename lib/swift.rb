@@ -9,10 +9,6 @@ require_relative 'swift/statement'
 
 module Swift
   class << self
-    def resource &definition
-      Scheme.schema(&definition)
-    end
-
     def setup name, adapter = {}
       name, adapter = :default, name unless name.kind_of?(Symbol)
       (@repositories ||= {})[name] = adapter.kind_of?(Adapter) ? adapter : Adapter.new(adapter)

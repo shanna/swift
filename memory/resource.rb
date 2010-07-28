@@ -7,14 +7,13 @@ $driver = ARGV[0] || 'postgresql'
 
 Swift.setup :default, db: 'swift', user: Etc.getlogin, driver: $driver
 
-class SwiftUser < Swift.resource do
-    store    :users
-    attribute :id,         Integer, serial: true, key: true
-    attribute :name,       String
-    attribute :email,      String
-    attribute :updated_at, Time
-  end
-end # SwiftUser
+class User < Swift::Scheme
+  store     :users
+  attribute :id,         Swift::Attribute::Integer, serial: true, key: true
+  attribute :name,       Swift::Attribute::String
+  attribute :email,      Swift::Attribute::String
+  attribute :updated_at, Swift::Attribute::Time
+end # User
 
 rows = (ARGV[1] || 500).to_i
 iter = (ARGV[2] ||   5).to_i
@@ -26,12 +25,12 @@ iter = (ARGV[2] ||   5).to_i
 
   puts `top -n1 -bp #{$$} | grep #{Etc.getlogin}`
 
-  SwiftUser.migrate!
-  rows.times {|n| SwiftUser.create(name: "test #{n}", email: "test@example.com", updated_at: Time.now) }
-  iter.times {|n| SwiftUser.all.each{|m| [ m.id, m.name, m.email, m.updated_at ] } }
-  iter.times {|n| SwiftUser.all.each{|m| m.update(name: "foo", email: "foo@example.com", updated_at: Time.now) } }
+  User.migrate!
+  rows.times {|n| User.create(name: "test #{n}", email: "test@example.com", updated_at: Time.now) }
+  iter.times {|n| User.all.each{|m| [ m.id, m.name, m.email, m.updated_at ] } }
+  iter.times {|n| User.all.each{|m| m.update(name: "foo", email: "foo@example.com", updated_at: Time.now) } }
 
-  SwiftUser.migrate!
+  User.migrate!
   n = 0
   Swift.db.write("users", *%w{name email updated_at}) do
     data = n < rows ? "test #{n}\ttest@example.com\t#{Time.now}\n" : nil
