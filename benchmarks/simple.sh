@@ -3,7 +3,7 @@
 DIR=$(readlink -f $(dirname $0))
 
 usage() {
-echo <<-EOF
+cat <<-EOF
 
   $0 [options]
 
@@ -35,5 +35,7 @@ echo "-- driver: $DRIVER rows: $ROWS runs: $ITER --"
 echo ""
 
 $DIR/dm.rb    $DRIVER $ROWS $ITER
+sleep 2
 $DIR/ar.rb    $DRIVER $ROWS $ITER
+sleep 2
 $DIR/swift.rb $DRIVER $ROWS $ITER
