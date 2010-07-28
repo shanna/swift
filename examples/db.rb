@@ -31,5 +31,8 @@ Swift.db do
 
   puts '', '-- get --'
   pp get(User, id: 1)
+
+  puts '', '-- destroy --'
+  pp destroy(User, id: 1)
 end
 

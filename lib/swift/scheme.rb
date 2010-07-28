@@ -15,12 +15,8 @@ module Swift
       Swift.db.update(scheme, self)
     end
 
-    #--
-    # TODO: Adapter should be the only place with SQL. Add an Adapter#destory method.
-    # This will pay off when we add mongo, sphinx etc.
     def destroy
-      where = scheme.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
-      Swift.db.execute("delete from #{scheme.store} where #{where}", *tuple.values_at(*scheme.attributes.keys))
+      Swift.db.destroy(scheme, self)
     end
 
     class << self
@@ -66,13 +62,18 @@ module Swift
       end
 
       #--
-      # TODO: Adapter should be the only place with SQL. Add an Adapter#all method.
+      # TODO: Think long and hard about this.
+      # Adapter should be the only place with SQL. Add an Adapter#all method.
       # This will pay off when we add mongo, sphinx etc.
       def all where = '', *binds, &block
         where = "where #{exchange_names(where)}" unless where.empty?
         Swift.db.prepare(self, "select * from #{store} #{where}").execute(*binds, &block)
       end
 
+      #--
+      # TODO: Think long and hard about this.
+      # Adapter should be the only place with SQL. Add an Adapter#first method.
+      # This will pay off when we add mongo, sphinx etc.
       def first where = '', *binds, &block
         all(where, *binds, &block).first
       end

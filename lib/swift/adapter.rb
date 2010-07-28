@@ -37,6 +37,17 @@ module Swift
       end
     end
 
+    def destroy scheme, *relations
+      statement = prepare_destroy(scheme)
+      relations.map do |relation|
+        relation = scheme.new(relation) unless relation.kind_of?(scheme)
+        if result = statement.execute(*relation.tuple.values_at(*scheme.attributes.keys))
+          relation.freeze
+        end
+        result
+      end
+    end
+
     def transaction name = nil, &block
       super(name){ self.instance_eval(&block)}
     end
@@ -84,6 +95,13 @@ module Swift
           set   = scheme.attributes.updatable.map{|field| "#{field} = ?"}.join(', ')
           where = scheme.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
           "update #{scheme.store} set #{set} where #{where}"
+        end
+      end
+
+      def prepare_destroy scheme
+        prepare_cached(scheme, :destroy) do
+          where = scheme.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
+          "delete from #{scheme.store} where #{where}"
         end
       end
 
