@@ -63,7 +63,7 @@ http://github.com/shanna/swift/tree/master/benchmarks
     puts result.first
   end
 
-=== DB Resources
+=== DB Scheme Operations
 
 Rudimentary object mapping. Provides a definition to the db methods for prepared (and cached) statements plus native
 primitive Ruby type conversion.
@@ -75,19 +75,19 @@ primitive Ruby type conversion.
 
   Swift.setup user: Etc.getlogin, driver: 'postgresql', db: 'swift'
 
-  class User < Swift.resource do
-      store    :users
-      property :id,         Integer, serial: true, key: true
-      property :name,       String
-      property :email,      String
-      property :updated_at, Time
+  class User < Swift::Scheme
+      store     :users
+      attribute :id,         Swift::Type::Integer, serial: true, key: true
+      attribute :name,       Swift::Type::String
+      attribute :email,      Swift::Type::String
+      attribute :updated_at, Swift::Type::Time
     end
   end # User
 
   Swift.db do
     migrate! User
 
-    # Select Resource instead of Hash.
+    # Select Scheme instance (relation) instead of Hash.
     users = prepare(User, 'select * from users limit 1').execute
 
     # Make a change and update.
@@ -99,20 +99,20 @@ primitive Ruby type conversion.
     puts user.name, user.email
   end
 
-=== Resources CRUD
+=== Scheme CRUD
+
+Scheme/relation level helpers.
 
   require 'swift'
   require 'etc'
 
   Swift.setup user: Etc.getlogin, driver: 'postgresql', db: swift
 
-  # Resource
-  class User < Swift.resource do
-      store    :users
-      property :id,    Integer, serial: true, key: true
-      property :name,  String
-      property :email, String
-    end
+  class User < Swift::Scheme
+    store     :users
+    attribute :id,    Swift::Type::Integer, serial: true, key: true
+    attribute :name,  Swift::Type::String
+    attribute :email, Swift::Type::String
   end # User
 
   # Migrate it.
@@ -139,13 +139,12 @@ primitive Ruby type conversion.
 SQL is easy and most people know it so Swift ORM provides a simple symbol like syntax to convert resource
 names to field names.
 
-  class User < Swift.resource do
-      store    :users
-      property :id,    Integer, serial: true, key: true
-      property :age,   Integer, field: 'ega'
-      property :name,  String,  field: 'eman'
-      property :email, String,  field: 'liame'
-    end
+  class User < Swift::Scheme
+    store     :users
+    attribute :id,    Swift::Type::Integer, serial: true, key: true
+    attribute :age,   Swift::Type::Integer, field: 'ega'
+    attribute :name,  Swift::Type::String,  field: 'eman'
+    attribute :email, Swift::Type::String,  field: 'liame'
   end # User
 
   # Convert :name and :age to fields.
@@ -154,11 +153,7 @@ names to field names.
 
 == TODO
 
-* Explicitly register types (less magic if you wish to create your own types).
-* Adapter factory and explicit registration (same as types).
-* Actually hook up the IdentityMap.
 * Tests.
-* Naming. Is it a model, resource, tuple, records, row etc.
 * Tighter coupling of extension. Remove more wrapping, subclassing and re-opening.
 * Assertions for dumb stuff. model < Model for methods in Adapter.
 * Profile.
