@@ -4,7 +4,7 @@ module Swift
     alias_method :scheme, :class
 
     def initialize options = {}
-      @tuple = scheme.attributes.new_tuple
+      @tuple = scheme.header.new_tuple
       options.each{|k, v| send(:"#{k}=", v)}
     end
 
@@ -18,16 +18,16 @@ module Swift
     end
 
     class << self
-      attr_accessor :attributes
+      attr_accessor :header
 
       def inherited klass
-        klass.attributes = Attributes.new
-        klass.attributes.push(*attributes) if attributes
-        Swift.schema.push(klass)           if klass.name
+        klass.header = Header.new
+        klass.header.push(*header) if header
+        Swift.schema.push(klass)   if klass.name
       end
 
       def load tuple
-        im = [self, *tuple.values_at(*attributes.keys)]
+        im = [self, *tuple.values_at(*header.keys)]
         unless scheme = Swift.db.identity_map.get(im)
           scheme       = allocate
           scheme.tuple = tuple
@@ -37,7 +37,7 @@ module Swift
       end
 
       def attribute name, type, options = {}
-        attributes.push(attribute = type.new(self, name, options))
+        header.push(attribute = type.new(self, name, options))
         (class << self; self end).send(:define_method, name, lambda{ attribute })
       end
 

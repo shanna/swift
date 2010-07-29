@@ -1,10 +1,10 @@
 module Swift
-  class Attributes
+  class Header
     include Enumerable
 
     def initialize *attributes
       @attributes = {}
-      push *attributes
+      push *attributes unless attributes.empty?
     end
 
     def new_tuple
@@ -40,6 +40,6 @@ module Swift
     def each &block
       @attributes.values.each{|v| yield v}
     end
-  end # Attributes
+  end # Header
 end # Swift
 

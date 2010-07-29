@@ -8,15 +8,15 @@ module Swift
 
     def get scheme, keys
       relation = scheme.new(keys)
-      prepare_get(scheme).execute(*relation.tuple.values_at(*scheme.attributes.keys)).first
+      prepare_get(scheme).execute(*relation.tuple.values_at(*scheme.header.keys)).first
     end
 
     def create scheme, *relations
       statement = prepare_create(scheme)
       relations.map do |relation|
         relation = scheme.new(relation) unless relation.kind_of?(scheme)
-        if statement.execute(*relation.tuple.values_at(*scheme.attributes.insertable)) && scheme.attributes.serial
-          relation.tuple[scheme.attributes.serial] = statement.insert_id
+        if statement.execute(*relation.tuple.values_at(*scheme.header.insertable)) && scheme.header.serial
+          relation.tuple[scheme.header.serial] = statement.insert_id
         end
         relation
       end
@@ -26,7 +26,7 @@ module Swift
       statement = prepare_update(scheme)
       relations.map do |relation|
         relation = scheme.new(relation) unless relation.kind_of?(scheme)
-        statement.execute(*relation.tuple.values_at(*scheme.attributes.updatable, *scheme.attributes.keys))
+        statement.execute(*relation.tuple.values_at(*scheme.header.updatable, *scheme.header.keys))
       end
     end
 
@@ -34,7 +34,7 @@ module Swift
       statement = prepare_destroy(scheme)
       relations.map do |relation|
         relation = scheme.new(relation) unless relation.kind_of?(scheme)
-        if result = statement.execute(*relation.tuple.values_at(*scheme.attributes.keys))
+        if result = statement.execute(*relation.tuple.values_at(*scheme.header.keys))
           relation.freeze
         end
         result
@@ -42,8 +42,8 @@ module Swift
     end
 
     def migrate! scheme
-      keys   =  scheme.attributes.keys
-      fields =  scheme.attributes.map{|p| field_definition(p)}.join(', ')
+      keys   =  scheme.header.keys
+      fields =  scheme.header.map{|p| field_definition(p)}.join(', ')
       fields += ", primary key (#{keys.join(', ')})" unless keys.empty?
 
       execute("drop table if exists #{scheme.store}")
@@ -62,30 +62,30 @@ module Swift
 
       def prepare_get scheme
         prepare_cached(scheme, :get) do
-          where = scheme.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
+          where = scheme.header.keys.map{|key| "#{key} = ?"}.join(' and ')
           "select * from #{scheme.store} where #{where} limit 1"
         end
       end
 
       def prepare_create scheme
         prepare_cached(scheme, :create) do
-          values    = (['?'] * scheme.attributes.insertable.size).join(', ')
-          returning = "returning #{scheme.attributes.serial}" if scheme.attributes.serial and returning?
-          "insert into #{scheme.store} (#{scheme.attributes.insertable.join(', ')}) values (#{values}) #{returning}"
+          values    = (['?'] * scheme.header.insertable.size).join(', ')
+          returning = "returning #{scheme.header.serial}" if scheme.header.serial and returning?
+          "insert into #{scheme.store} (#{scheme.header.insertable.join(', ')}) values (#{values}) #{returning}"
         end
       end
 
       def prepare_update scheme
         prepare_cached(scheme, :update) do
-          set   = scheme.attributes.updatable.map{|field| "#{field} = ?"}.join(', ')
-          where = scheme.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
+          set   = scheme.header.updatable.map{|field| "#{field} = ?"}.join(', ')
+          where = scheme.header.keys.map{|key| "#{key} = ?"}.join(' and ')
           "update #{scheme.store} set #{set} where #{where}"
         end
       end
 
       def prepare_destroy scheme
         prepare_cached(scheme, :destroy) do
-          where = scheme.attributes.keys.map{|key| "#{key} = ?"}.join(' and ')
+          where = scheme.header.keys.map{|key| "#{key} = ?"}.join(' and ')
           "delete from #{scheme.store} where #{where}"
         end
       end
