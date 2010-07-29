@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{swift}
-  s.version = "0.2.0"
+  s.version = "0.3.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
@@ -33,9 +33,6 @@ Gem::Specification.new do |s|
      "lib/swift/pool.rb",
      "lib/swift/scheme.rb",
      "lib/swift/type.rb",
-     "memory/adapter.rb",
-     "memory/driver.cc",
-     "memory/scheme.rb",
      "swift.gemspec",
      "test/helper.rb",
      "test/test_resource.rb"
