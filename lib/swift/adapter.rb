@@ -1,16 +1,11 @@
 module Swift
   #--
   # TODO: Driver specific subclasses and factory.
-  class Adapter < DBI::Handle
+  class Adapter
     attr_reader :options
 
     def identity_map
       @identity_map ||= IdentityMap.new
-    end
-
-    def prepare scheme, query = nil
-      return super(scheme) unless scheme.kind_of?(Class) && scheme < Scheme
-      Statement.new(self, scheme, query)
     end
 
     def get scheme, keys
@@ -46,10 +41,6 @@ module Swift
         end
         result
       end
-    end
-
-    def transaction name = nil, &block
-      super(name){ self.instance_eval(&block)}
     end
 
     def driver

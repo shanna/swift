@@ -37,4 +37,4 @@ exit 1 unless library_installed? 'uuid',    apt_install_hint('uuid-dev')
 exit 1 unless library_installed? 'dbic++',  apt_install_hint('dbic++-dev')
 exit 1 unless library_installed? 'pthread', apt_install_hint('libc6-dev')
 
-create_makefile 'swift/dbi'
+create_makefile 'swift'

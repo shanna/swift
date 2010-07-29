@@ -1,11 +1,10 @@
 # Extension.
-require_relative '../ext/swift/dbi'
+require_relative '../ext/swift'
 require_relative 'swift/adapter'
 require_relative 'swift/attribute'
 require_relative 'swift/attributes'
 require_relative 'swift/identity_map'
 require_relative 'swift/scheme'
-require_relative 'swift/statement'
 require_relative 'swift/type'
 
 module Swift
@@ -41,14 +40,6 @@ module Swift
 
     def migrate! name = nil
       db(name){ schema.each(&:migrate!)}
-    end
-
-    def trace flag
-      Swift::DBI.trace flag
-    end
-
-    def init path
-      Swift::DBI.init path
     end
   end
 end # Swift

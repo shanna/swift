@@ -9,7 +9,7 @@ begin
     gem.email       = %w{shane.hanna@gmail.com deepfryed@gmail.com}
     gem.homepage    = 'http://github.com/shanna/swift'
     gem.authors     = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-    gem.extensions = FileList['ext/**/extconf.rb']
+    gem.extensions = FileList['ext/extconf.rb']
     gem.files.reject!{|f| f =~ %r{\.gitignore|examples|benchmarks/.*}}
   end
   Jeweler::GemcutterTasks.new
