@@ -38,8 +38,7 @@ http://github.com/shanna/swift/tree/master/benchmarks
   require 'etc'
 
   Swift.trace true # Debugging.
-
-  Swift.setup user: Etc.getlogin, driver: 'postgresql', db: 'swift'
+  Swift.setup :default, Swift::DB::Postgres, user: Etc.getlogin, db: 'swift'
 
   # Block form db context.
   Swift.db do
@@ -72,8 +71,7 @@ primitive Ruby type conversion.
   require 'etc'
 
   Swift.trace true # Debugging.
-
-  Swift.setup user: Etc.getlogin, driver: 'postgresql', db: 'swift'
+  Swift.setup :default, Swift::DB::Postgres, user: Etc.getlogin, db: 'swift'
 
   class User < Swift::Scheme
       store     :users
@@ -106,7 +104,8 @@ Scheme/relation level helpers.
   require 'swift'
   require 'etc'
 
-  Swift.setup user: Etc.getlogin, driver: 'postgresql', db: swift
+  Swift.trace true # Debugging.
+  Swift.setup :default, Swift::DB::Postgres, user: Etc.getlogin, db: 'swift'
 
   class User < Swift::Scheme
     store     :users

@@ -5,9 +5,8 @@ require 'stringio'
 require 'benchmark'
 require_relative '../lib/swift'
 
-$driver = ARGV[0] || 'postgresql'
-
-Swift.setup :default, db: 'swift', user: Etc.getlogin, driver: $driver
+adapter = ARGV.first =~ /mysql/i ? Swift::DB::Mysql : Swift::DB::Postgres
+Swift.setup :default, adapter, user: Etc.getlogin, db: 'swift'
 
 class User < Swift::Scheme
   store     :users
