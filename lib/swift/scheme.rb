@@ -1,13 +1,11 @@
 module Swift
   class Scheme
+    attr_accessor :tuple
     alias_method :scheme, :class
 
     def initialize options = {}
+      @tuple = scheme.attributes.new_tuple
       options.each{|k, v| send(:"#{k}=", v)}
-    end
-
-    def tuple
-      @tuple ||= scheme.attributes.new_tuple
     end
 
     def update options = {}
@@ -20,8 +18,10 @@ module Swift
     end
 
     class << self
+      attr_accessor :attributes
+
       def inherited klass
-        klass.store(store)                 if store
+        klass.attributes = Attributes.new
         klass.attributes.push(*attributes) if attributes
         Swift.schema.push(klass)           if klass.name
       end
@@ -29,15 +29,11 @@ module Swift
       def load tuple
         im = [self, *tuple.values_at(*attributes.keys)]
         unless scheme = Swift.db.identity_map.get(im)
-          scheme = allocate
-          scheme.tuple.update(tuple)
+          scheme       = allocate
+          scheme.tuple = tuple
           Swift.db.identity_map.set(im, scheme)
         end
         scheme
-      end
-
-      def attributes
-        @attributes ||= Attributes.new
       end
 
       def attribute name, type, options = {}
