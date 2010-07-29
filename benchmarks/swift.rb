@@ -20,8 +20,8 @@ end # User
 rows = (ARGV[1] || 500).to_i
 iter = (ARGV[2] ||   5).to_i
 
-User.migrate!
 Benchmark.bm(16) do |bm|
+  User.migrate!
   bm.report("swift #create") do
     rows.times {|n| User.create(name: "test #{n}", email: "test@example.com", updated_at: Time.now) }
   end
@@ -31,10 +31,7 @@ Benchmark.bm(16) do |bm|
   bm.report("swift #update") do
     iter.times {|n| User.all.each{|m| m.update(name: "foo", email: "foo@example.com", updated_at: Time.now) } }
   end
-end
-
-User.migrate!
-Benchmark.bm(16) do |bm|
+  User.migrate!
   bm.report("swift #write") do
     n = 0
     Swift.db.write("users", *%w{name email updated_at}) do
