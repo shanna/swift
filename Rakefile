@@ -10,7 +10,7 @@ begin
     gem.homepage    = 'http://github.com/shanna/swift'
     gem.authors     = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
     gem.extensions = FileList['ext/extconf.rb']
-    gem.files.reject!{|f| f =~ %r{\.gitignore|examples|benchmarks/.*}}
+    gem.files.reject!{|f| f =~ %r{\.gitignore|examples|benchmarks|memory/.*}}
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
