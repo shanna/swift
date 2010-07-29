@@ -1,11 +1,10 @@
 #!/usr/bin/ruby
 
 require 'etc'
-require_relative '../ext/swift/dbi'
+require_relative '../lib/swift'
 
-$driver = ARGV[0] || 'postgresql'
-
-h = Swift::DBI::Handle.new db: 'swift', user: Etc.getlogin, driver: $driver
+adapter = ARGV.first =~ /mysql/i ? Swift::DB::Mysql : Swift::DB::Postgres
+h = Swift.setup :default, adapter, user: Etc.getlogin, db: 'swift'
 
 rows = (ARGV[1] || 500).to_i
 iter = (ARGV[2] ||   5).to_i

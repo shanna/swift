@@ -13,7 +13,10 @@ class User < Swift::Scheme
   attribute :optional, Swift::Type::String, default: 'woot'
 end # User
 
-Swift.setup user: Etc.getlogin, db: 'swift', driver: ARGV[0] || 'postgresql'
+adapter = ARGV.first =~ /mysql/i ? Swift::DB::Mysql : Swift::DB::Postgres
+puts "Using DB: #{adapter}"
+
+Swift.setup :default, adapter, user: Etc.getlogin, db: 'swift'
 Swift.trace true
 
 Swift.db do

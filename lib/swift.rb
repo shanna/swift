@@ -3,6 +3,7 @@ require_relative '../ext/swift/dbi'
 require_relative 'swift/adapter'
 require_relative 'swift/attribute'
 require_relative 'swift/attributes'
+require_relative 'swift/db'
 require_relative 'swift/identity_map'
 require_relative 'swift/scheme'
 require_relative 'swift/statement'
@@ -10,9 +11,11 @@ require_relative 'swift/type'
 
 module Swift
   class << self
-    def setup name, adapter = {}
-      name, adapter = :default, name unless name.kind_of?(Symbol)
-      (@repositories ||= {})[name] = adapter.kind_of?(Adapter) ? adapter : Adapter.new(adapter)
+    def setup name, type, options = {}
+      unless type.kind_of?(Class) && type < Swift::Adapter
+        raise TypeError, "Expected +type+ Swift::Adapter subclass but got #{type.inspect}"
+      end
+      (@repositories ||= {})[name] = type.new(options)
     end
 
     def db name = nil, &block

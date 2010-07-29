@@ -4,7 +4,10 @@ require 'etc'
 require_relative '../lib/swift'
 require_relative '../lib/swift/pool'
 
-Swift.setup db: 'swift', user: Etc.getlogin, driver: 'postgresql'
+adapter = ARGV.first =~ /mysql/i ? Swift::DB::Mysql : Swift::DB::Postgres
+puts "Using DB: #{adapter}"
+
+Swift.setup :default, adapter, user: Etc.getlogin, db: 'swift'
 Swift.trace true
 
 # create test table

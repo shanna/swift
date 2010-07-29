@@ -1,6 +1,4 @@
 module Swift
-  #--
-  # TODO: Driver specific subclasses and factory.
   class Adapter < DBI::Handle
     attr_reader :options
 
@@ -52,10 +50,6 @@ module Swift
       super(name){ self.instance_eval(&block)}
     end
 
-    def driver
-      @options[:driver]
-    end
-
     def migrate! scheme
       keys   =  scheme.attributes.keys
       fields =  scheme.attributes.map{|p| field_definition(p)}.join(', ')
@@ -67,7 +61,7 @@ module Swift
 
     protected
       def returning?
-        @returning ||= !!(driver == 'postgresql')
+        raise NotImplementedError
       end
 
       def prepare_cached scheme, name, &block
