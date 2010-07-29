@@ -5,14 +5,14 @@
 
 Gem::Specification.new do |s|
   s.name = %q{swift}
-  s.version = "0.1.0"
+  s.version = "0.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-  s.date = %q{2010-07-23}
+  s.date = %q{2010-07-29}
   s.description = %q{A rational rudimentary database abstraction.}
   s.email = ["shane.hanna@gmail.com", "deepfryed@gmail.com"]
-  s.extensions = ["ext/swift/extconf.rb"]
+  s.extensions = ["ext/extconf.rb"]
   s.extra_rdoc_files = [
     "LICENSE",
      "README.rdoc"
@@ -22,16 +22,20 @@ Gem::Specification.new do |s|
      "README.rdoc",
      "Rakefile",
      "VERSION",
-     "ext/swift/dbi.cc",
-     "ext/swift/extconf.rb",
+     "ext/extconf.rb",
+     "ext/swift.cc",
      "lib/swift.rb",
      "lib/swift/adapter.rb",
+     "lib/swift/attribute.rb",
+     "lib/swift/attributes.rb",
+     "lib/swift/db.rb",
      "lib/swift/identity_map.rb",
      "lib/swift/pool.rb",
-     "lib/swift/properties.rb",
-     "lib/swift/property.rb",
-     "lib/swift/resource.rb",
-     "lib/swift/statement.rb",
+     "lib/swift/scheme.rb",
+     "lib/swift/type.rb",
+     "memory/adapter.rb",
+     "memory/driver.cc",
+     "memory/scheme.rb",
      "swift.gemspec",
      "test/helper.rb",
      "test/test_resource.rb"
@@ -44,9 +48,9 @@ Gem::Specification.new do |s|
   s.test_files = [
     "test/helper.rb",
      "test/test_resource.rb",
-     "examples/dbi.rb",
+     "examples/scheme.rb",
      "examples/async.rb",
-     "examples/resource.rb",
+     "examples/adapter.rb",
      "examples/db.rb"
   ]
 
