@@ -56,7 +56,7 @@ module Swift
       end
 
       def prepare_cached scheme, name, &block
-        @prepared              ||= Hash.new{|h,k| h[k] = Hash.new} # Autovivification please Matz!
+        @prepared               ||= Hash.new{|h,k| h[k] = Hash.new} # Autovivification please Matz!
         @prepared[scheme][name] ||= prepare(scheme, yield)
       end
 

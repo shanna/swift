@@ -58,6 +58,18 @@ class IOStream : public dbi::IOStream {
         }
     }
 
+    // never return more data in the callback than a packet size which is ~16m for mysql by default.
+    uint read(char *buffer, uint len) {
+        VALUE stream = rb_proc_call(callback, rb_ary_new());
+        if (stream == Qnil)
+            return 0;
+        else {
+            len = len < RSTRING_LEN(stream) ? len : RSTRING_LEN(stream);
+            memcpy(buffer, RSTRING_PTR(stream), len);
+            return len;
+        }
+    }
+
     void write(const char *str) {
         rb_proc_call(callback, rb_ary_new3(1, rb_str_new2(str)));
     }
@@ -264,6 +276,9 @@ VALUE rb_adapter_write(int argc, VALUE *argv, VALUE self) {
             VALUE f = rb_ary_entry(fields, n);
             rfields << std::string(RSTRING_PTR(f), RSTRING_LEN(f));
         }
+        // This is just for the friggin mysql support - mysql does not like a statement close
+        // command being send on a handle when the writing has started.
+        rb_gc();
         rows = h->copyIn(RSTRING_PTR(table), rfields, &io);
     } catch EXCEPTION("Adapter#write");
 
