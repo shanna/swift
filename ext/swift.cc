@@ -60,7 +60,7 @@ class IOStream : public dbi::IOStream {
         }
     }
 
-    // never return more data in the callback than a packet size which is ~16m for mysql by default.
+    // never return more data in the callback than a packet size which is 8k for mysql client by default.
     uint read(char *buffer, uint len) {
         VALUE stream = rb_proc_call(callback, rb_ary_new());
         if (stream == Qnil)

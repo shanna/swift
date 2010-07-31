@@ -18,6 +18,7 @@ EOF
 DRIVER='postgresql'
 ITER=5
 ROWS=500
+export TZ='AEST-10:00'
 
 while getopts "d:n:r:h" OPTION
 do

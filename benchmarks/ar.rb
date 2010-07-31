@@ -21,6 +21,8 @@ end # ARUser
 rows = (ARGV[1] || 500).to_i
 iter = (ARGV[2] ||   5).to_i
 
+ARUser.connection.execute 'truncate users'
+
 Benchmark.bm(16) do |bm|
   bm.report("ar #create") do
     rows.times {|n| ARUser.create(name: "test #{n}", email: "test@example.com", updated_at: Time.now) }
@@ -36,3 +38,5 @@ Benchmark.bm(16) do |bm|
     end
   end
 end
+
+puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)

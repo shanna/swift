@@ -22,7 +22,7 @@ iter = (ARGV[2] ||   5).to_i
   puts "-- run #{r} --"
   puts ""
 
-  puts `top -n1 -bp #{$$} | grep #{Etc.getlogin}`
+  puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)
 
   User.migrate!
   rows.times {|n| User.create(name: "test #{n}", email: "test@example.com", updated_at: Time.now) }
@@ -37,9 +37,9 @@ iter = (ARGV[2] ||   5).to_i
     data
   end
 
-  puts `top -n1 -bp #{$$} | grep #{Etc.getlogin}`
+  puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)
 
   GC.start
 
-  puts `top -n1 -bp #{$$} | grep #{Etc.getlogin}`
+  puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)
 end

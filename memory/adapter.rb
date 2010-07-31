@@ -14,7 +14,7 @@ iter = (ARGV[2] ||   5).to_i
   puts "-- run #{r} --"
   puts ""
 
-  puts `top -n1 -bp #{$$} | grep #{Etc.getlogin}`
+  puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)
 
   h.execute 'drop table if exists users'
   h.execute 'create table users(id serial, name text, email text, updated_at timestamp)'
@@ -29,7 +29,7 @@ iter = (ARGV[2] ||   5).to_i
   upd = h.prepare 'update users set name = ?, email = ?, updated_at = ? where id = ?'
   iter.times {|n| sel.execute {|m| upd.execute("foo", "foo@example.com", Time.now, m[:id]) } }
 
-  puts `top -n1 -bp #{$$} | grep #{Etc.getlogin}`
+  puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)
 
   ins.finish
   sel.finish
@@ -37,5 +37,5 @@ iter = (ARGV[2] ||   5).to_i
 
   GC.start
 
-  puts `top -n1 -bp #{$$} | grep #{Etc.getlogin}`
+  puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)
 end

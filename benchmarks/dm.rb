@@ -36,4 +36,5 @@ Benchmark.bm(16) do |bm|
     iter.times { DMUser.all.each {|m| m.update(name: "foo", email: "foo@example.com", updated_at: Time.now) } }
   end
 end
-DMUser.auto_migrate!
+
+puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)
