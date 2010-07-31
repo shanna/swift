@@ -5,7 +5,7 @@
 
    To compile:
 
-   g++ -Iinc -Llibs -rdynamic -o example example.cc -ldbic++ -ldl -lpcrecpp -levent -lpthread
+   g++ -Iinc -Llibs -rdynamic -o driver driver.cc -ldbic++ -ldl -lpcrecpp -levent -lpthread -luuid
 
 ----------------------------------------------------------------------------------*/
 
