@@ -1,12 +1,8 @@
-#!/usr/bin/ruby
-
 require 'etc'
-require 'stringio'
 require 'benchmark'
 require_relative '../lib/swift'
 
-adapter = ARGV.shift =~ /mysql/i ? Swift::DB::Mysql : Swift::DB::Postgres
-Swift.setup :default, adapter, user: Etc.getlogin, db: 'swift'
+ENV['TZ']='AEST-10:00'
 
 class User < Swift::Scheme
   store     :users
@@ -16,27 +12,46 @@ class User < Swift::Scheme
   attribute :updated_at, Swift::Type::Time
 end # User
 
-rows = (ARGV.shift || 500).to_i
-iter = (ARGV.shift ||   5).to_i
-ENV['TZ']='AEST-10:00'
+class Runner
+  attr_reader :tests, :driver, :runs, :rows, :results
+  def initialize opts={}
+    @results = []
+    @driver  = opts[:driver] =~ /postgresql/ ? Swift::DB::Postgres : Swift::DB::Mysql
+    %w(tests runs rows).each do |name|
+      instance_variable_set("@#{name}", opts[name.to_sym])
+    end
+    Swift.setup :default, @driver, user: Etc.getlogin, db: 'swift'
+  end
 
-GC.disable
-Benchmark.bm(16) do |bm|
-  Swift.db do
-    User.migrate!
-    bm.report("swift #create") do
+  def run
+    GC.disable
+    User.migrate! if tests.include?(:create) or tests.include?(:update)
+    run_creates if tests.include?(:create)
+    run_selects if tests.include?(:select)
+    run_updates if tests.include?(:update)
+    results
+  end
+
+  def run_creates
+    results << Benchmark.run("swift #create") do
       rows.times {|n| User.create(name: "test #{n}", email: "test@example.com", updated_at: Time.now) }
     end
-    bm.report("swift #select") do
-      iter.times {|n| User.all.each{|m| [ m.id, m.name, m.email, m.updated_at ] } }
+  end
+
+  def run_selects
+    results << Benchmark.run("swift #select") do
+      runs.times {|n| User.all.each{|m| [ m.id, m.name, m.email, m.updated_at ] } }
     end
-    bm.report("swift #update") do
-      iter.times {|n| User.all.each{|m| m.update(name: "foo", email: "foo@example.com", updated_at: Time.now) } }
+  end
+
+  def run_updates
+    results << Benchmark.run("swift #update") do
+      runs.times {|n| User.all.each{|m| m.update(name: "foo", email: "foo@example.com", updated_at: Time.now) } }
     end
-    execute('truncate users')
-    bm.report("swift #write") do
+    Swift.db.execute('truncate users')
+    results << Benchmark.run("swift #write") do
       n = 0
-      write("users", *%w{name email updated_at}) do
+      Swift.db.write("users", *%w{name email updated_at}) do
         data = n < rows ? "test #{n}\ttest@example.com\t#{Time.now}\n" : nil
         n += 1
         data
@@ -44,5 +59,3 @@ Benchmark.bm(16) do |bm|
     end
   end
 end
-
-puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)
