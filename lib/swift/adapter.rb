@@ -1,4 +1,6 @@
 module Swift
+  #--
+  # TODO: Still not convinced all and first are necessary.
   class Adapter
     attr_reader :options
 
@@ -9,6 +11,15 @@ module Swift
     def get scheme, keys
       relation = scheme.new(keys)
       prepare_get(scheme).execute(*relation.tuple.values_at(*scheme.header.keys)).first
+    end
+
+    def all scheme, conditions = '', *binds, &block
+      where = "where #{exchange_names(scheme, conditions)}" unless conditions.empty?
+      prepare(scheme, "select * from #{scheme.store} #{where}").execute(*binds, &block)
+    end
+
+    def first scheme, conditions = '', *binds, &block
+      all(scheme, "#{conditions} limit 1", *binds, &block).first
     end
 
     def create scheme, *relations
@@ -51,6 +62,10 @@ module Swift
     end
 
     protected
+      def exchange_names scheme, query
+        query.gsub(/:(\w+)/){ scheme.send($1.to_sym).field }
+      end
+
       def returning?
         raise NotImplementedError
       end

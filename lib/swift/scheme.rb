@@ -57,31 +57,17 @@ module Swift
         Swift.db.create(self, options)
       end
 
-      #--
-      # TODO: Think long and hard about this.
-      # Adapter should be the only place with SQL. Add an Adapter#all method.
-      # This will pay off when we add mongo, sphinx etc.
-      def all where = '', *binds, &block
-        where = "where #{exchange_names(where)}" unless where.empty?
-        Swift.db.prepare(self, "select * from #{store} #{where}").execute(*binds, &block)
-      end
-
-      #--
-      # TODO: Think long and hard about this.
-      # Adapter should be the only place with SQL. Add an Adapter#first method.
-      # This will pay off when we add mongo, sphinx etc.
-      def first where = '', *binds, &block
-        all(where, *binds, &block).first
-      end
-
       def get keys
         Swift.db.get(self, keys)
       end
 
-      protected
-        def exchange_names sql
-          sql.gsub(/:(\w+)/){ send($1.to_sym).field}
-        end
+      def all conditions = '', *binds, &block
+        Swift.db.all(self, conditions, *binds, &block)
+      end
+
+      def first conditions = '', *binds, &block
+        Swift.db.first(self, conditions, *binds, &block)
+      end
     end
   end # Scheme
 end # Swift
