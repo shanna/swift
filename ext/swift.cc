@@ -17,6 +17,8 @@ static VALUE eRuntimeError;
 static VALUE eArgumentError;
 static VALUE eStandardError;
 static VALUE eConnectionError;
+
+static VALUE fLoad;
 static VALUE fStringify;
 static VALUE fNew;
 
@@ -405,10 +407,9 @@ static VALUE rb_statement_each(VALUE self) {
     VALUE scheme = rb_iv_get(self, "@scheme");
 
     try {
-        VALUE row = rb_hash_new();
         VALUE attrs = rb_ary_new();
         std::vector<string> fields = st->fields();
-        std::vector<int> types = st->types();
+        std::vector<int> types     = st->types();
         for (c = 0; c < fields.size(); c++) {
             rb_ary_push(attrs, ID2SYM(rb_intern(fields[c].c_str())));
         }
@@ -418,6 +419,7 @@ static VALUE rb_statement_each(VALUE self) {
         //      Maybe an inline method will help ?
         if (NIL_P(scheme) || scheme == Qnil) {
             for (r = 0; r < st->rows(); r++) {
+                VALUE row = rb_hash_new();
                 for (c = 0; c < st->columns(); c++) {
                     data = (const char*)st->fetchValue(r,c, &len);
                     if (data)
@@ -429,8 +431,8 @@ static VALUE rb_statement_each(VALUE self) {
             }
         }
         else {
-            VALUE load = rb_intern("load");
             for (r = 0; r < st->rows(); r++) {
+                VALUE row = rb_hash_new();
                 for (c = 0; c < st->columns(); c++) {
                     data = (const char*)st->fetchValue(r,c, &len);
                     if (data)
@@ -438,7 +440,7 @@ static VALUE rb_statement_each(VALUE self) {
                     else
                         rb_hash_aset(row, rb_ary_entry(attrs, c), Qnil);
                 }
-                rb_yield(rb_funcall(scheme, load, 1, row));
+                rb_yield(rb_funcall(scheme, fLoad, 1, row));
             }
         }
     } catch EXCEPTION("Statment#each");
@@ -605,6 +607,8 @@ extern "C" {
 
         fNew             = rb_intern("new");
         fStringify       = rb_intern("to_s");
+        fLoad            = rb_intern("load");
+
         eRuntimeError    = CONST_GET(rb_mKernel, "RuntimeError");
         eArgumentError   = CONST_GET(rb_mKernel, "ArgumentError");
         eStandardError   = CONST_GET(rb_mKernel, "StandardError");
