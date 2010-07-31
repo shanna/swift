@@ -18,6 +18,7 @@ end # User
 
 rows = (ARGV.shift || 500).to_i
 iter = (ARGV.shift ||   5).to_i
+ENV['TZ']='AEST-10:00'
 
 GC.disable
 Benchmark.bm(16) do |bm|

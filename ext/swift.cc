@@ -417,6 +417,7 @@ static VALUE rb_statement_each(VALUE self) {
         // TODO Code duplication
         //      Avoiding a rb_yield(NIL_P(scheme) ? row : rb_funcall(scheme, load, row))
         //      Maybe an inline method will help ?
+        st->seek(0);
         if (NIL_P(scheme) || scheme == Qnil) {
             for (r = 0; r < st->rows(); r++) {
                 VALUE row = rb_hash_new();
