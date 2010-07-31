@@ -19,6 +19,7 @@ end # User
 rows = (ARGV.shift || 500).to_i
 iter = (ARGV.shift ||   5).to_i
 
+GC.disable
 Benchmark.bm(16) do |bm|
   Swift.db do
     User.migrate!

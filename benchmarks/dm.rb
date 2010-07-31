@@ -24,6 +24,7 @@ end # DMUser
 rows = (ARGV[1] || 500).to_i
 iter = (ARGV[2] ||   5).to_i
 
+GC.disable
 DMUser.auto_migrate!
 Benchmark.bm(16) do |bm|
   bm.report("dm #create") do
