@@ -5,9 +5,9 @@ require 'benchmark'
 
 module Benchmark
   class Tms
-    attr_accessor :label, :rss, :stime, :utime
+    attr_accessor :label, :rss, :stime, :utime, :real
     def output
-      "%-16s\t%8.6f\t%8.6f\t%8.6f\t%.2fm" % [ label, stime, utime, stime+utime, rss/1024.0 ]
+      "%-16s\t%8.6f\t%8.6f\t%8.6f\t%8.6f\t%.2fm" % [ label, stime, utime, stime+utime, real, rss/1024.0 ]
     end
   end
   def self.run label, &block
@@ -46,12 +46,13 @@ end.parse!
 args[:script].uniq!
 args[:script] = %w(dm ar swift) if args[:script].empty?
 args[:tests]  = %w(create select update).map(&:to_sym) if args[:tests].empty?
+args[:rows]   = '*' if args[:tests] == [ :select ]
 
 if args[:verbose]
   puts ''
-  puts '-- driver: %s rows: %d runs: %d --' % args.values_at(:driver, :rows, :runs)
+  puts '-- driver: %s rows: %s runs: %d --' % args.values_at(:driver, :rows, :runs)
   puts ''
-  puts "%-16s\t%-8s\t%-8s\t%-8s\trss" % %w(benchmark sys user total)
+  puts "%-16s\t%-8s\t%-8s\t%-8s\t%-8s\trss" % %w(benchmark sys user total real)
 end
 
 require_relative args[:script].shift
