@@ -47,8 +47,14 @@ args[:script].uniq!
 args[:script] = %w(dm ar swift) if args[:script].empty?
 args[:tests]  = %w(create select update).map(&:to_sym) if args[:tests].empty?
 
+if args[:label]
+  puts ''
+  puts '-- driver: %s rows: %d runs: %d --' % args.values_at(:driver, :rows, :runs)
+  puts ''
+  puts '%-16s %-8s %-8s %-8s rss' % %w(benchmark sys user total)
+end
+
 require_relative args[:script].shift
-puts '%-16s %-8s %-8s %-8s rss' % %w(benchmark sys user total) if args[:label]
 Runner.new(args).run.each do |result|
   puts result.output
 end
