@@ -172,7 +172,7 @@ is usually very fast (~5-10x faster) than regular prepared insert statements for
 sets of data.
 
 MySQL adapter - Overrides the MySQL C API and implements its own _infile_ handlers. This
-means currently you cannot execute the following SQL using Swift,
+means currently you *cannot* execute the following SQL using Swift
 
   LOAD DATA LOCAL INFILE '/tmp/users.tab' INTO TABLE users;
 
@@ -191,8 +191,8 @@ But you can do it almost as fast in ruby,
     end
   end
   
-and you are just limited to files, you can stream data from anywhere into MySQL directly
-without creating temporary files pretty fast. 
+You are not just limited to files - you can stream data from anywhere into MySQL and
+PostgreSQL directly without creating temporary files.
   
 
 == Benchmarks
