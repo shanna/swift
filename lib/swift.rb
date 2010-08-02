@@ -4,7 +4,6 @@ require_relative 'swift/adapter'
 require_relative 'swift/attribute'
 require_relative 'swift/db'
 require_relative 'swift/header'
-require_relative 'swift/identity_map'
 require_relative 'swift/scheme'
 require_relative 'swift/type'
 

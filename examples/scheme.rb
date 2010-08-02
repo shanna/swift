@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 require_relative '../lib/swift'
-require 'etc'
 require 'pp'
 
 class User < Swift::Scheme
@@ -16,7 +15,7 @@ end # User
 adapter = ARGV.first =~ /mysql/i ? Swift::DB::Mysql : Swift::DB::Postgres
 puts "Using DB: #{adapter}"
 
-Swift.setup :default, adapter, user: Etc.getlogin, db: 'swift'
+Swift.setup :default, adapter, db: 'swift'
 Swift.trace true
 
 Swift.db do
@@ -43,4 +42,7 @@ Swift.db do
 
   puts '', '-- destroy --'
   user.destroy
+
+  puts '', '-- all --'
+  pp User.all.to_a
 end

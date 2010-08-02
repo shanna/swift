@@ -2,6 +2,7 @@
 #include <ruby/ruby.h>
 #include <ruby/io.h>
 #include <time.h>
+#include <unistd.h>
 
 #define CONST_GET(scope, constant) rb_const_get(scope, rb_intern(constant))
 
@@ -147,11 +148,11 @@ VALUE rb_adapter_init(VALUE self, VALUE opts) {
     VALUE password = rb_hash_aref(opts, ID2SYM(rb_intern("password")));
 
     if (NIL_P(db)) rb_raise(eArgumentError, "Adapter#new called without :db");
-    if (NIL_P(user)) rb_raise(eArgumentError, "Adapter#new called without :user");
     if (NIL_P(driver)) rb_raise(eArgumentError, "Adapter#new called without :driver");
 
     host     = NIL_P(host)     ? rb_str_new2("") : host;
     port     = NIL_P(port)     ? rb_str_new2("") : port;
+    user     = NIL_P(user)     ? rb_str_new2(getlogin()) : user;
     password = NIL_P(password) ? rb_str_new2("") : password;
 
     try {
@@ -371,8 +372,15 @@ VALUE rb_field_typecast(int type, const char *data, unsigned long len) {
         case DBI_TYPE_TEXT:
             return rb_str_new(data, len);
         case DBI_TYPE_TIME:
-            sscanf(data, "%s %d:%d:%d%lf%c%02d%02d",
-                datetime, &hour, &min, &sec, &usec, &tzsign, &tzhour, &tzmin);
+            // if timestamp field has usec resolution, parse it.
+            if (strlen(data) > 19 && data[19] == '.') {
+                sscanf(data, "%s %d:%d:%d%lf%c%02d%02d",
+                    datetime, &hour, &min, &sec, &usec, &tzsign, &tzhour, &tzmin);
+            }
+            else {
+                sscanf(data, "%s %d:%d:%d%c%02d%02d",
+                    datetime, &hour, &min, &sec, &tzsign, &tzhour, &tzmin);
+            }
             sprintf(datetime, "%s %02d:%02d:%02d", datetime, hour, min, sec);
             memset(&tm, 0, sizeof(struct tm));
             if (strptime(datetime, "%F %T", &tm)) {
@@ -528,11 +536,11 @@ VALUE rb_cpool_init(VALUE self, VALUE n, VALUE opts) {
     VALUE password = rb_hash_aref(opts, ID2SYM(rb_intern("password")));
 
     if (NIL_P(db)) rb_raise(eArgumentError, "ConnectionPool#new called without :db");
-    if (NIL_P(user)) rb_raise(eArgumentError, "ConnectionPool#new called without :user");
     if (NIL_P(driver)) rb_raise(eArgumentError, "ConnectionPool#new called without :driver");
 
     host     = NIL_P(host)     ? rb_str_new2("") : host;
     port     = NIL_P(port)     ? rb_str_new2("") : port;
+    user     = NIL_P(user)     ? rb_str_new2(getlogin()) : user;
     password = NIL_P(password) ? rb_str_new2("") : password;
 
     if (NUM2INT(n) < 1) rb_raise(eArgumentError, "ConnectionPool#new called with invalid pool size.");
@@ -602,8 +610,6 @@ VALUE rb_request_process(VALUE self) {
 
 extern "C" {
     void Init_swift(void) {
-        struct tm tm;
-
         rb_require("bigdecimal");
 
         fNew             = rb_intern("new");
@@ -668,8 +674,15 @@ extern "C" {
 
         rb_define_method(cResultSet, "execute", RUBY_METHOD_FUNC(Qnil), 0);
 
-        memset(&tm, 0, sizeof(struct tm));
-        strptime("1970-01-01 00:00:00", "%F %T", &tm);
-        tzoffset = mktime(&tm) * -1;
+        tzset();
+        tzoffset = -1 * timezone;
+        // avoids all those stat("/etc/localtime") calls.
+        if (!getenv("TZ")) {
+            char buffer[128];
+            int hour = timezone/3600;
+            int min  = abs(timezone) - 3600*abs(hour);
+            snprintf(buffer, 127, "%s%+02d:%02d", tzname[0], hour, min);
+            setenv("TZ", buffer, 0);
+        }
     }
 }

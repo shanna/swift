@@ -35,10 +35,9 @@ http://github.com/shanna/swift/tree/master/benchmarks
 === DB
 
   require 'swift'
-  require 'etc'
 
   Swift.trace true # Debugging.
-  Swift.setup :default, Swift::DB::Postgres, user: Etc.getlogin, db: 'swift'
+  Swift.setup :default, Swift::DB::Postgres, db: 'swift'
 
   # Block form db context.
   Swift.db do
@@ -68,18 +67,16 @@ Rudimentary object mapping. Provides a definition to the db methods for prepared
 primitive Ruby type conversion.
 
   require 'swift'
-  require 'etc'
 
   Swift.trace true # Debugging.
-  Swift.setup :default, Swift::DB::Postgres, user: Etc.getlogin, db: 'swift'
+  Swift.setup :default, Swift::DB::Postgres, db: 'swift'
 
   class User < Swift::Scheme
-      store     :users
-      attribute :id,         Swift::Type::Integer, serial: true, key: true
-      attribute :name,       Swift::Type::String
-      attribute :email,      Swift::Type::String
-      attribute :updated_at, Swift::Type::Time
-    end
+    store     :users
+    attribute :id,         Swift::Type::Integer, serial: true, key: true
+    attribute :name,       Swift::Type::String
+    attribute :email,      Swift::Type::String
+    attribute :updated_at, Swift::Type::Time
   end # User
 
   Swift.db do
@@ -102,10 +99,9 @@ primitive Ruby type conversion.
 Scheme/relation level helpers.
 
   require 'swift'
-  require 'etc'
 
   Swift.trace true # Debugging.
-  Swift.setup :default, Swift::DB::Postgres, user: Etc.getlogin, db: 'swift'
+  Swift.setup :default, Swift::DB::Postgres, db: 'swift'
 
   class User < Swift::Scheme
     store     :users
@@ -149,6 +145,24 @@ names to field names.
   # Convert :name and :age to fields.
   # select * from users where eman like '%Arthurton' and ega > 20
   users = User.all(':name like ? and :age > ?', '%Arthurton', 20)
+
+=== Identity Map
+
+Swift comes with a simple identity map. Just require it after you load swift.
+
+  require 'swift'
+  require 'swift/identity_map'
+
+  class User < Swift::Scheme
+    store     :users
+    attribute :id,    Swift::Type::Integer, serial: true, key: true
+    attribute :age,   Swift::Type::Integer, field: 'ega'
+    attribute :name,  Swift::Type::String,  field: 'eman'
+    attribute :email, Swift::Type::String,  field: 'liame'
+  end # User
+
+  User.first(':name = ?', 'James Arthurton')
+  User.first(':name = ?', 'James Arthurton') # Gets same object reference
 
 == TODO
 
