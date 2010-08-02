@@ -184,7 +184,7 @@ But you can do it almost as fast in ruby,
 
   # MySQL packet size is the usual limit, 8k is the packet size by default.
   Swift.db do
-    File.open do |file|
+    File.open('/tmp/users.tab') do |file|
       count = write('users', *%w(name email balance)) do
         file.read(8192)
       end
