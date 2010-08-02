@@ -35,10 +35,9 @@ http://github.com/shanna/swift/tree/master/benchmarks
 === DB
 
   require 'swift'
-  require 'etc'
 
   Swift.trace true # Debugging.
-  Swift.setup :default, Swift::DB::Postgres, user: Etc.getlogin, db: 'swift'
+  Swift.setup :default, Swift::DB::Postgres, db: 'swift'
 
   # Block form db context.
   Swift.db do
@@ -68,18 +67,16 @@ Rudimentary object mapping. Provides a definition to the db methods for prepared
 primitive Ruby type conversion.
 
   require 'swift'
-  require 'etc'
 
   Swift.trace true # Debugging.
-  Swift.setup :default, Swift::DB::Postgres, user: Etc.getlogin, db: 'swift'
+  Swift.setup :default, Swift::DB::Postgres, db: 'swift'
 
   class User < Swift::Scheme
-      store     :users
-      attribute :id,         Swift::Type::Integer, serial: true, key: true
-      attribute :name,       Swift::Type::String
-      attribute :email,      Swift::Type::String
-      attribute :updated_at, Swift::Type::Time
-    end
+    store     :users
+    attribute :id,         Swift::Type::Integer, serial: true, key: true
+    attribute :name,       Swift::Type::String
+    attribute :email,      Swift::Type::String
+    attribute :updated_at, Swift::Type::Time
   end # User
 
   Swift.db do
@@ -102,10 +99,9 @@ primitive Ruby type conversion.
 Scheme/relation level helpers.
 
   require 'swift'
-  require 'etc'
 
   Swift.trace true # Debugging.
-  Swift.setup :default, Swift::DB::Postgres, user: Etc.getlogin, db: 'swift'
+  Swift.setup :default, Swift::DB::Postgres, db: 'swift'
 
   class User < Swift::Scheme
     store     :users
@@ -149,6 +145,85 @@ names to field names.
   # Convert :name and :age to fields.
   # select * from users where eman like '%Arthurton' and ega > 20
   users = User.all(':name like ? and :age > ?', '%Arthurton', 20)
+
+=== Identity Map
+
+Swift comes with a simple identity map. Just require it after you load swift.
+
+  require 'swift'
+  require 'swift/identity_map'
+
+  class User < Swift::Scheme
+    store     :users
+    attribute :id,    Swift::Type::Integer, serial: true, key: true
+    attribute :age,   Swift::Type::Integer, field: 'ega'
+    attribute :name,  Swift::Type::String,  field: 'eman'
+    attribute :email, Swift::Type::String,  field: 'liame'
+  end # User
+
+  User.first(':name = ?', 'James Arthurton')
+  User.first(':name = ?', 'James Arthurton') # Gets same object reference
+
+
+=== Bulk inserts
+
+Swift comes with adapter level support for bulk inserts for MySQL and PostgreSQL. This
+is usually very fast (~5-10x faster) than regular prepared insert statements for larger
+sets of data.
+
+MySQL adapter - Overrides the MySQL C API and implements its own _infile_ handlers. This
+means currently you *cannot* execute the following SQL using Swift
+
+  LOAD DATA LOCAL INFILE '/tmp/users.tab' INTO TABLE users;
+
+But you can do it almost as fast in ruby,
+
+  require 'swift'
+
+  Swift.setup :default, Swift::DB::Mysql, db: 'swift'
+
+  # MySQL packet size is the usual limit, 8k is the packet size by default.
+  Swift.db do
+    File.open('/tmp/users.tab') do |file|
+      count = write('users', *%w(name email balance)) do
+        file.read(8192)
+      end
+    end
+  end
+  
+You are not just limited to files - you can stream data from anywhere into MySQL and
+PostgreSQL directly without creating temporary files.
+  
+
+== Benchmarks
+
+The following bechmarks were run on a machine with 4G ram, 5200rpm sata drive,
+Intel Core2Duo P8700 2.53GHz and stock PostgreSQL 8.4.1.
+
+* 10,000 rows are created once.
+* All the rows are selected once.
+* All the rows are selected once and updated once.
+* Memory footprint(rss) shows how much memory the benchmark used with GC disabled.
+  This gives an idea of total memory use and indirectly an idea of the number of
+  objects allocated and the pressure on Ruby GC if it were running. When GC is enabled,
+  the actual memory consumption might be much lower than the numbers below.
+
+    ./benchmarks/simple.rb -r 10000 -n 1
+
+    benchmark       sys         user        total       real        rss
+    dm #create      0.390000    3.950000    4.340000    5.771812    244.32m
+    dm #select      0.150000    1.760000    1.910000    2.035583    128.97m
+    dm #update      0.690000    7.880000    8.570000    11.295239   603.30m
+
+    ar #create      0.930000    6.620000    7.550000    10.002911   367.82m
+    ar #select      0.050000    0.310000    0.360000    0.417127     38.82m
+    ar #update      0.770000    6.180000    6.950000    9.711788    361.93m
+
+    swift #create   0.180000    0.820000    1.000000    1.968757     27.35m
+    swift #select   0.010000    0.070000    0.080000    0.130234      9.85m
+    swift #update   0.250000    0.610000    0.860000    1.996165     29.35m
+    swift #write    0.000000    0.100000    0.100000    0.167199      6.23m
+
 
 == TODO
 

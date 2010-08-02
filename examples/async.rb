@@ -1,13 +1,12 @@
 #!/usr/bin/ruby
 
-require 'etc'
 require_relative '../lib/swift'
 require_relative '../lib/swift/pool'
 
 adapter = ARGV.first =~ /mysql/i ? Swift::DB::Mysql : Swift::DB::Postgres
 puts "Using DB: #{adapter}"
 
-Swift.setup :default, adapter, user: Etc.getlogin, db: 'swift'
+Swift.setup :default, adapter, db: 'swift'
 Swift.trace true
 
 # create test table

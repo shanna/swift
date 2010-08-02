@@ -27,12 +27,8 @@ module Swift
       end
 
       def load tuple
-        im = [self, *tuple.values_at(*header.keys)]
-        unless scheme = Swift.db.identity_map.get(im)
-          scheme       = allocate
-          scheme.tuple = tuple
-          Swift.db.identity_map.set(im, scheme)
-        end
+        scheme       = allocate
+        scheme.tuple = tuple
         scheme
       end
 

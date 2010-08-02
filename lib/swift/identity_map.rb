@@ -26,4 +26,16 @@ module Swift
         @cache.delete @reverse_cache.delete value_id
       end
   end # IdentityMap
+
+  class Scheme
+    def self.load tuple
+      im = [self, *tuple.values_at(*header.keys)]
+      unless scheme = Swift.db.identity_map.get(im)
+        scheme       = allocate
+        scheme.tuple = tuple
+        Swift.db.identity_map.set(im, scheme)
+      end
+      scheme
+    end
+  end # Scheme
 end # Swift

@@ -49,16 +49,12 @@ args[:tests]  = %w(create select update).map(&:to_sym) if args[:tests].empty?
 args[:rows]   = '*' if args[:tests] == [ :select ]
 
 if args[:verbose]
-  puts ''
-  puts '-- driver: %s rows: %s runs: %d --' % args.values_at(:driver, :rows, :runs)
-  puts ''
-  puts "%-16s\t%-8s\t%-8s\t%-8s\t%-8s\trss" % %w(benchmark sys user total real)
+  puts '', '-- driver: %s rows: %s runs: %d --' % args.values_at(:driver, :rows, :runs)
+  puts '', "%-16s\t%-8s\t%-8s\t%-8s\t%-8s\trss" % %w(benchmark sys user total real)
 end
 
 require_relative args[:script].shift
-Runner.new(args).run.each do |result|
-  puts result.output
-end
+Runner.new(args).run {|result| puts result.output }
 
 if !args[:script].empty?
   Kernel.exec(
