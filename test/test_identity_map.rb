@@ -6,7 +6,7 @@ describe 'IdentityMap' do
     @im = Swift::IdentityMap.new
   end
 
-  it "must return nil on GC'd object" do
+  it %q{returns nil on GC'd object} do
     2.times do
       @im.set('foo', 'foo')
       assert_equal 'foo', @im.get('foo')
