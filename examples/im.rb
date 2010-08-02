@@ -1,10 +1,7 @@
 #!/usr/bin/env ruby
 require_relative '../lib/swift'
-require 'etc'
+require_relative '../lib/swift/identity_map'
 require 'pp'
-
-adapter = ARGV.first =~ /mysql/i ? Swift::DB::Mysql : Swift::DB::Postgres
-puts "Using DB: #{adapter}"
 
 im = Swift::IdentityMap.new
 10.times do |t|
