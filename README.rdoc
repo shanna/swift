@@ -203,22 +203,26 @@ Intel Core2Duo P8700 2.53GHz and stock PostgreSQL 8.4.1.
 * 10,000 rows are created once.
 * All the rows are selected once.
 * All the rows are selected once and updated once.
+* Memory footprint(rss) shows how much memory the benchmark used with GC disabled.
+  This gives an idea of total memory use and indirectly an idea of the number of
+  objects allocated and the pressure on Ruby GC if it were running. When GC is enabled,
+  the actual memory consumption might be much lower than the numbers below.
 
-  ./benchmarks/simple.rb -r 10000 -n 1
+    ./benchmarks/simple.rb -r 10000 -n 1
 
-  benchmark       sys         user        total       real        rss
-  dm #create      0.390000    3.950000    4.340000    5.771812    244.32m
-  dm #select      0.150000    1.760000    1.910000    2.035583    128.97m
-  dm #update      0.690000    7.880000    8.570000    11.295239   603.30m
+    benchmark       sys         user        total       real        rss
+    dm #create      0.390000    3.950000    4.340000    5.771812    244.32m
+    dm #select      0.150000    1.760000    1.910000    2.035583    128.97m
+    dm #update      0.690000    7.880000    8.570000    11.295239   603.30m
 
-  ar #create      0.930000    6.620000    7.550000    10.002911   367.82m
-  ar #select      0.050000    0.310000    0.360000    0.417127     38.82m
-  ar #update      0.770000    6.180000    6.950000    9.711788    361.93m
+    ar #create      0.930000    6.620000    7.550000    10.002911   367.82m
+    ar #select      0.050000    0.310000    0.360000    0.417127     38.82m
+    ar #update      0.770000    6.180000    6.950000    9.711788    361.93m
 
-  swift #create   0.180000    0.820000    1.000000    1.968757     27.35m
-  swift #select   0.010000    0.070000    0.080000    0.130234      9.85m
-  swift #update   0.250000    0.610000    0.860000    1.996165     29.35m
-  swift #write    0.000000    0.100000    0.100000    0.167199      6.23m
+    swift #create   0.180000    0.820000    1.000000    1.968757     27.35m
+    swift #select   0.010000    0.070000    0.080000    0.130234      9.85m
+    swift #update   0.250000    0.610000    0.860000    1.996165     29.35m
+    swift #write    0.000000    0.100000    0.100000    0.167199      6.23m
 
 
 == TODO
