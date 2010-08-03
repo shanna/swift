@@ -76,7 +76,7 @@ class IOStream : public dbi::IOStream {
     void write(const char *str) {
         rb_proc_call(callback, rb_ary_new3(1, rb_str_new2(str)));
     }
-    void write(const char *str, unsigned long l) {
+    void write(const char *str, ulong l) {
         rb_proc_call(callback, rb_ary_new3(1, rb_str_new(str, l)));
     }
     void truncate() {
@@ -203,7 +203,7 @@ static VALUE rb_adapter_prepare(int argc, VALUE *argv, VALUE self) {
 VALUE rb_statement_execute(int argc, VALUE *argv, VALUE self);
 
 VALUE rb_adapter_execute(int argc, VALUE *argv, VALUE self) {
-    unsigned int rows = 0;
+    uint rows = 0;
     dbi::Handle *h = DBI_HANDLE(self);
     if (argc == 0 || NIL_P(argv[0]))
         rb_raise(eArgumentError, "Adapter#execute called without a SQL command");
@@ -274,7 +274,7 @@ VALUE rb_adapter_transaction(int argc, VALUE *argv, VALUE self) {
 
 VALUE rb_adapter_write(int argc, VALUE *argv, VALUE self) {
     VALUE callback, table, fields;
-    unsigned long rows = 0;
+    ulong rows = 0;
     rb_scan_args(argc, argv, "1*&", &table, &fields, &callback);
     if (NIL_P(callback))
         rb_raise(eArgumentError, "Adapter#write called without a block");
@@ -348,7 +348,7 @@ VALUE rb_statement_finish(VALUE self) {
 }
 
 VALUE rb_statement_rows(VALUE self) {
-    unsigned int rows;
+    uint rows;
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
     try { rows = st->rows(); } catch EXCEPTION("Statement#rows");
     return INT2NUM(rows);
@@ -364,7 +364,7 @@ VALUE rb_statement_insert_id(VALUE self) {
   return insert_id;
 }
 
-VALUE rb_field_typecast(int type, const char *data, unsigned long len) {
+VALUE rb_field_typecast(int type, const char *data, ulong len) {
     time_t epoch, offset;
     struct tm tm;
 
@@ -415,8 +415,8 @@ VALUE rb_field_typecast(int type, const char *data, unsigned long len) {
 }
 
 static VALUE rb_statement_each(VALUE self) {
-    unsigned int r, c;
-    unsigned long len;
+    uint r, c;
+    ulong len;
     const char *data;
 
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
@@ -466,8 +466,8 @@ static VALUE rb_statement_each(VALUE self) {
 
 VALUE rb_statement_fetchrow(VALUE self) {
     const char *data;
-    unsigned int r, c;
-    unsigned long len;
+    uint r, c;
+    ulong len;
     VALUE row = Qnil;
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
     try {
