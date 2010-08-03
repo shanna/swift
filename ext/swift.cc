@@ -360,7 +360,7 @@ VALUE rb_field_typecast(int type, const char *data, unsigned long len) {
     time_t epoch, offset;
     struct tm tm;
 
-    char datetime[512], tzsign = '+';
+    char datetime[512], tzsign = ' ';
     int hour = 0, min = 0, sec = 0, tzhour = 0, tzmin = 0;
     double usec = 0;
 
@@ -374,11 +374,11 @@ VALUE rb_field_typecast(int type, const char *data, unsigned long len) {
         case DBI_TYPE_TIME:
             // if timestamp field has usec resolution, parse it.
             if (strlen(data) > 19 && data[19] == '.') {
-                sscanf(data, "%s %d:%d:%d%lf%c%02d%02d",
+                sscanf(data, "%s %d:%d:%d%lf%c%02d:%02d",
                     datetime, &hour, &min, &sec, &usec, &tzsign, &tzhour, &tzmin);
             }
             else {
-                sscanf(data, "%s %d:%d:%d%c%02d%02d",
+                sscanf(data, "%s %d:%d:%d%c%02d:%02d",
                     datetime, &hour, &min, &sec, &tzsign, &tzhour, &tzmin);
             }
             sprintf(datetime, "%s %02d:%02d:%02d", datetime, hour, min, sec);
@@ -386,7 +386,7 @@ VALUE rb_field_typecast(int type, const char *data, unsigned long len) {
             if (strptime(datetime, "%F %T", &tm)) {
                 offset = 0;
                 epoch  = mktime(&tm);
-                if (tzhour > 0 || tzmin > 0) {
+                if (tzsign == '+' || tzsign == '-') {
                     offset = tzsign == '+' ?
                           (time_t)tzhour * -3600 + (time_t)tzmin * -60
                         : (time_t)tzhour *  3600 + (time_t)tzmin *  60;

@@ -12,7 +12,12 @@ class MiniTest::Spec
 
   # supported_by :Postgres, :Mysql
   def self.supported_by *drivers, &block
+
+    describe = Kernel.method(:describe)
     drivers.each do |driver|
+      Kernel.send(:define_method, :describe) do |desc, &block|
+        describe.call "#{driver} #{desc}", &block
+      end
       begin
         adapter = ::Swift::DB.const_get(driver)
         Swift.setup :default, adapter, db: 'swift_test'
@@ -22,6 +27,8 @@ class MiniTest::Spec
       end
       block.call(adapter)
     end
+    ensure
+      Kernel.send(:define_method, :describe, &describe)
   end
 end
 
