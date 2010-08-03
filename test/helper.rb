@@ -28,7 +28,7 @@ class MiniTest::Spec
       block.call(adapter)
     end
     ensure
-      Kernel.send(:define_method, :describe, &describe)
+      Kernel.send(:define_method, :describe) {|name, &block| describe.call(name, &block) }
   end
 end
 
