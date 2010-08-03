@@ -1,7 +1,7 @@
 require_relative 'helper'
 
 describe 'Adapter' do
-  supported_by :Postgres, :Mysql do
+  supported_by Swift::DB::Postgres, Swift::DB::Mysql do
     describe 'execute' do
       it 'executes without bind values' do
         assert Swift.db.execute %q{drop table if exists users}

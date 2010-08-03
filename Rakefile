@@ -11,6 +11,8 @@ begin
     gem.authors     = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
     gem.extensions = FileList['ext/extconf.rb']
     gem.files.reject!{|f| f =~ %r{\.gitignore|examples|benchmarks|memory/.*}}
+
+    gem.add_development_dependency 'minitest', '>= 1.7.0'
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
