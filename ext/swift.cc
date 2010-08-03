@@ -200,15 +200,23 @@ static VALUE rb_adapter_prepare(int argc, VALUE *argv, VALUE self) {
     return prepared;
 }
 
+VALUE rb_statement_execute(int argc, VALUE *argv, VALUE self);
+
 VALUE rb_adapter_execute(int argc, VALUE *argv, VALUE self) {
     unsigned int rows = 0;
     dbi::Handle *h = DBI_HANDLE(self);
     if (argc == 0 || NIL_P(argv[0]))
         rb_raise(eArgumentError, "Adapter#execute called without a SQL command");
     try {
-        if (argc == 1) {
-            rows = h->execute(CSTRING(argv[0]));
+        // shortcut: a block form execute will prepare, execute and yield, saving you some
+        // keystrokes. now prepares do allocate some resources on server side, maybe dbic++ needs
+        // to start supporting return simple result sets without prepared statements ?
+        if (rb_block_given_p()) {
+            VALUE st = rb_adapter_prepare(1, argv, self);
+            return rb_statement_execute(argc-1, argv+1, st);
         }
+        else if (argc == 1)
+            rows = h->execute(CSTRING(argv[0]));
         else {
             dbi::ResultRow bind;
             rb_extract_bind_params(argc-1, argv+1, bind);
