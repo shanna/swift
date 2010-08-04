@@ -17,7 +17,7 @@ class Runner
     %w(tests runs rows).each do |name|
       instance_variable_set("@#{name}", opts[name.to_sym])
     end
-    User.establish_connection adapter: @driver, host: '127.0.0.1', user: Etc.getlogin, database: 'swift'
+    User.establish_connection adapter: @driver, host: '127.0.0.1', username: Etc.getlogin, database: 'swift'
   end
 
   def run

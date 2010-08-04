@@ -20,7 +20,7 @@ class Runner
     %w(tests runs rows).each do |name|
       instance_variable_set("@#{name}", opts[name.to_sym])
     end
-    DataMapper.setup :default, "#{@driver}://127.0.0.1/swift"
+    DataMapper.setup :default, {adapter: @driver, database: 'swift', username: Etc.getlogin}
   end
 
   def run
