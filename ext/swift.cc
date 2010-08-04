@@ -703,6 +703,7 @@ extern "C" {
 
         tzset();
         tzoffset = -1 * timezone;
+        // TODO Figure out a way to handle DST transitions.
         // avoids all those stat("/etc/localtime") calls.
         if (!getenv("TZ")) {
             char buffer[128];
