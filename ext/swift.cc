@@ -22,6 +22,8 @@ static VALUE eConnectionError;
 static VALUE fLoad;
 static VALUE fStringify;
 static VALUE fNew;
+static VALUE fRead;
+static VALUE fWrite;
 
 char errstr[8192];
 static time_t tzoffset;
@@ -41,43 +43,41 @@ catch (dbi::Error &e) {\
 
 class IOStream : public dbi::IOStream {
     private:
-    string empty;
-    string data;
-    VALUE callback;
+    string empty, data;
+    VALUE stream;
     public:
-    IOStream(VALUE cb) {
-        callback = cb;
+    IOStream(VALUE s) {
+        stream = s;
     }
     string& read() {
-        VALUE stream = rb_proc_call(callback, rb_ary_new());
-        if (stream == Qnil)
+        VALUE response = rb_funcall(stream, fRead, 0);
+        if (response == Qnil)
             return empty;
         else {
-            if (TYPE(stream) != T_STRING)
+            if (TYPE(response) != T_STRING)
                 rb_raise(eArgumentError,
                     "Adapter#write can only process string data. You need to stringify values returned in the callback.");
-            data = string(RSTRING_PTR(stream), RSTRING_LEN(stream));
+            data = string(RSTRING_PTR(response), RSTRING_LEN(response));
             return data;
         }
     }
 
-    // never return more data in the callback than a packet size which is 8k for mysql client by default.
     uint read(char *buffer, uint len) {
-        VALUE stream = rb_proc_call(callback, rb_ary_new());
-        if (stream == Qnil)
+        VALUE response = rb_funcall(stream, fRead, 1, INT2NUM(len));
+        if (response == Qnil)
             return 0;
         else {
-            len = len < RSTRING_LEN(stream) ? len : RSTRING_LEN(stream);
-            memcpy(buffer, RSTRING_PTR(stream), len);
+            len = len < RSTRING_LEN(response) ? len : RSTRING_LEN(response);
+            memcpy(buffer, RSTRING_PTR(response), len);
             return len;
         }
     }
 
     void write(const char *str) {
-        rb_proc_call(callback, rb_ary_new3(1, rb_str_new2(str)));
+        rb_funcall(stream, fWrite, 1, rb_str_new2(str));
     }
     void write(const char *str, ulong l) {
-        rb_proc_call(callback, rb_ary_new3(1, rb_str_new(str, l)));
+        rb_funcall(stream, fWrite, 1, rb_str_new(str, l));
     }
     void truncate() {
         data = "";
@@ -281,14 +281,16 @@ VALUE rb_adapter_transaction(int argc, VALUE *argv, VALUE self) {
 }
 
 VALUE rb_adapter_write(int argc, VALUE *argv, VALUE self) {
-    VALUE callback, table, fields;
     ulong rows = 0;
-    rb_scan_args(argc, argv, "1*&", &table, &fields, &callback);
-    if (NIL_P(callback))
-        rb_raise(eArgumentError, "Adapter#write called without a block");
+    VALUE stream, table, fields;
+
+    rb_scan_args(argc, argv, "30", &table, &fields, &stream);
+    if (TYPE(stream) != T_STRING && !rb_respond_to(stream, fRead))
+        rb_raise(eArgumentError, "Adapter#write: stream should be a string or kind_of?(IO)");
+    if (TYPE(fields) != T_ARRAY)
+        rb_raise(eArgumentError, "Adapter#write: fields should be an array of string values");
 
     dbi::Handle *h = DBI_HANDLE(self);
-    IOStream io(callback);
     try {
         dbi::ResultRow rfields;
         for (int n = 0; n < RARRAY_LEN(fields); n++) {
@@ -298,7 +300,14 @@ VALUE rb_adapter_write(int argc, VALUE *argv, VALUE self) {
         // This is just for the friggin mysql support - mysql does not like a statement close
         // command being send on a handle when the writing has started.
         rb_gc();
-        rows = h->copyIn(RSTRING_PTR(table), rfields, &io);
+        if (TYPE(stream) == T_STRING) {
+            dbi::IOStream io(RSTRING_PTR(stream), RSTRING_LEN(stream));
+            rows = h->copyIn(RSTRING_PTR(table), rfields, &io);
+        }
+        else {
+            IOStream io(stream);
+            rows = h->copyIn(RSTRING_PTR(table), rfields, &io);
+        }
     } catch EXCEPTION("Adapter#write");
 
     return ULONG2NUM(rows);
@@ -630,6 +639,8 @@ extern "C" {
         fNew             = rb_intern("new");
         fStringify       = rb_intern("to_s");
         fLoad            = rb_intern("load");
+        fRead            = rb_intern("read");
+        fWrite           = rb_intern("write");
 
         eRuntimeError    = CONST_GET(rb_mKernel, "RuntimeError");
         eArgumentError   = CONST_GET(rb_mKernel, "ArgumentError");

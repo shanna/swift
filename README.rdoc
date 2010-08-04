@@ -40,24 +40,24 @@ http://github.com/shanna/swift/tree/master/benchmarks
   Swift.setup :default, Swift::DB::Postgres, db: 'swift'
 
   # Block form db context.
-  Swift.db do
-    execute('drop table if exists users')
-    execute('create table users(id serial, name text, email text)')
+  Swift.db do |db|
+    db.execute('drop table if exists users')
+    db.execute('create table users(id serial, name text, email text)')
 
     # Save points are supported.
-    transaction :named_save_point do
-      st = prepare('insert into users (name, email) values (?, ?)')
+    db.transaction :named_save_point do
+      st = db.prepare('insert into users (name, email) values (?, ?)')
       puts st.execute('Apple Arthurton', 'apple@arthurton.local').insert_id
       puts st.execute('Benny Arthurton', 'benny@arthurton.local').insert_id
     end
 
     # Block result iteration.
-    prepare('select * from users').execute do |row|
+    db.prepare('select * from users').execute do |row|
       puts row.inspect
     end
 
     # Enumerable.
-    result = prepare('select * from users where name like ?').execute('Benny%')
+    result = db.prepare('select * from users where name like ?').execute('Benny%')
     puts result.first
   end
 
@@ -79,18 +79,18 @@ primitive Ruby type conversion.
     attribute :updated_at, Swift::Type::Time
   end # User
 
-  Swift.db do
-    migrate! User
+  Swift.db do |db|
+    db.migrate! User
 
     # Select Scheme instance (relation) instead of Hash.
-    users = prepare(User, 'select * from users limit 1').execute
+    users = db.prepare(User, 'select * from users limit 1').execute
 
     # Make a change and update.
     users.each{|user| user.updated_at = Time.now}
-    update(User, *users)
+    db.update(User, *users)
 
     # Get a specific user by id.
-    user = get(User, id: 1)
+    user = db.get(User, id: 1)
     puts user.name, user.email
   end
 
@@ -183,11 +183,9 @@ But you can do it almost as fast in ruby,
   Swift.setup :default, Swift::DB::Mysql, db: 'swift'
 
   # MySQL packet size is the usual limit, 8k is the packet size by default.
-  Swift.db do
+  Swift.db do |db|
     File.open('/tmp/users.tab') do |file|
-      count = write('users', *%w(name email balance)) do
-        file.read(8192)
-      end
+      count = db.write('users', %w{name email balance}, file)
     end
   end
   

@@ -113,9 +113,14 @@ describe 'Adapter' do
         end
       end
 
-      it 'writes' do
+      it 'writes from an IO object' do
         data = StringIO.new "Sally Arthurton\tsally@local\nJonas Arthurton\tjonas@local\n"
-        assert_equal 2, Swift.db.write('users', 'name', 'email'){ data.read }
+        assert_equal 2, Swift.db.write('users', %w{name email}, data)
+      end
+
+      it 'writes from a string' do
+        data = "Sally Arthurton\tsally@local\nJonas Arthurton\tjonas@local\n"
+        assert_equal 2, Swift.db.write('users', %w{name email}, data)
       end
     end
   end
