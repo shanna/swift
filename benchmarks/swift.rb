@@ -1,7 +1,6 @@
 require 'benchmark'
+require 'stringio'
 require_relative '../lib/swift'
-
-ENV['TZ']='AEST-10:00'
 
 class User < Swift::Scheme
   store     :users
@@ -51,12 +50,8 @@ class Runner
   def run_writes
     Swift.db.execute('truncate users')
     Benchmark.run("swift #write") do
-      n = 0
-      Swift.db.write("users", *%w{name email updated_at}) do
-        data = n < rows ? "test #{n}\ttest@example.com\t#{Time.now}\n" : nil
-        n += 1
-        data
-      end
+      stream = StringIO.new rows.times.map {|n| "test #{n}\ttest@example.com\t#{Time.now}\n" }.join('')
+      Swift.db.write("users", %w{name email updated_at}, stream)
     end
   end
 end
