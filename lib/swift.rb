@@ -28,7 +28,7 @@ module Swift
       if block_given?
         begin
           scopes.push(repository)
-          repository.instance_eval(&block)
+          block.call(repository)
         ensure
           scopes.pop
         end

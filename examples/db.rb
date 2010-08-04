@@ -15,26 +15,26 @@ puts "Using DB: #{adapter}"
 Swift.setup :default, adapter, db: 'swift'
 Swift.trace true
 
-Swift.db do
-  migrate! User
+Swift.db do |db|
+  db.migrate! User
 
   puts '-- create --'
-  create(User,
+  db.create(User,
     {name: 'Apple Arthurton', email: 'apple@arthurton.local'},
     {name: 'Benny Arthurton', email: 'benny@arthurton.local'}
   )
 
   puts '', '-- select --'
-  pp users = prepare(User, 'select * from users').execute.to_a
+  pp users = db.prepare(User, 'select * from users').execute.to_a
 
   puts '', '-- update --'
-  update(User, *users.map!{|user| user.name = 'Fred Nurk'; user})
-  pp prepare(User, 'select * from users').execute.to_a
+  db.update(User, *users.map!{|user| user.name = 'Fred Nurk'; user})
+  pp db.prepare(User, 'select * from users').execute.to_a
 
   puts '', '-- get --'
-  pp get(User, id: 1)
+  pp db.get(User, id: 1)
 
   puts '', '-- destroy --'
-  pp destroy(User, id: 1)
+  pp db.destroy(User, id: 1)
 end
 

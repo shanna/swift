@@ -10,25 +10,25 @@ Swift.setup :default, adapter, db: 'swift'
 Swift.trace true
 
 # create test table
-Swift.db do
+Swift.db do |db|
   puts '-- create --'
-  execute('DROP TABLE IF EXISTS users')
-  execute('CREATE TABLE users(id serial, name text, email text)')
+  db.execute('DROP TABLE IF EXISTS users')
+  db.execute('CREATE TABLE users(id serial, name text, email text)')
 
   sample = DATA.read.split(/\n/).map {|v| v.split(/\t+/) }
 
   puts '-- insert --'
-  ins = prepare('insert into users(name, email) values(?, ?)')
+  ins = db.prepare('insert into users(name, email) values(?, ?)')
   10.times {|n| ins.execute(*sample[n%3]) }
 end
 
 puts '-- select 9 times with a pool of size 5 --'
 Swift.trace false
-Swift.pool(5) do
+Swift.pool(5) do |db|
   (1..9).each do |n|
     pause = '%0.3f' % ((20-n)/20.0)
     pause = "case length(pg_sleep(#{pause})::text) when 0 then '#{pause}' else '' end as sleep"
-    execute("select #{pause}, * from users where id = ?", n) {|r| p r.first }
+    db.execute("select #{pause}, * from users where id = ?", n) {|r| p r.first }
   end
 end
 Swift.trace true

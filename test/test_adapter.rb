@@ -1,7 +1,16 @@
 require_relative 'helper'
+require 'stringio'
 
 describe 'Adapter' do
   supported_by Swift::DB::Postgres, Swift::DB::Mysql do
+    describe 'db' do
+      it 'yields db to block' do
+        Swift.db do |db|
+          assert_kind_of Swift::Adapter, db
+        end
+      end
+    end
+
     describe 'execute' do
       it 'executes without bind values' do
         assert Swift.db.execute %q{drop table if exists users}
@@ -16,9 +25,9 @@ describe 'Adapter' do
 
     describe 'prepared statements' do
       before do
-        @db = Swift.db do
-          execute %q{drop table if exists users}
-          execute %q{create table users(id serial, name text, created_at timestamp)}
+        @db = Swift.db do |db|
+          db.execute %q{drop table if exists users}
+          db.execute %q{create table users(id serial, name text, created_at timestamp)}
         end
       end
 
@@ -39,10 +48,10 @@ describe 'Adapter' do
 
     describe 'executed prepared statements' do
       before do
-        @db = Swift.db do
-          execute %q{drop table if exists users}
-          execute %q{create table users(id serial, name text, created_at timestamp)}
-          sth = prepare(%q{insert into users (name, created_at) values (?, now())})
+        @db = Swift.db do |db|
+          db.execute %q{drop table if exists users}
+          db.execute %q{create table users(id serial, name text, created_at timestamp)}
+          sth = db.prepare(%q{insert into users (name, created_at) values (?, now())})
           sth.execute('Apple Arthurton')
           sth.execute('Benny Arthurton')
         end
@@ -81,11 +90,33 @@ describe 'Adapter' do
       end
     end
 
+    describe 'transactions' do
+      it 'yields db to block' do
+        Swift.db.transaction do |db|
+          assert_kind_of Swift::Adapter, db
+        end
+
+        Swift.db.transaction :sweet do |db|
+          assert_kind_of Swift::Adapter, db
+        end
+      end
+    end
+
     #--
-    # TODO:
-    # describe 'transactions'
-    #   it 'has vanilla transactions'
-    #   it 'has named save points'
-    # describe 'write'
+    # TODO: Not sure how I feel about the block in write; feels like it's just there to get around the fields in the
+    # argument list. How about write('users', %w{name, email, balance}, data)?
+    describe 'bulk writes!' do
+      before do
+        @db = Swift.db do |db|
+          db.execute %q{drop table if exists users}
+          db.execute %q{create table users(id serial, name text, email text)}
+        end
+      end
+
+      it 'writes' do
+        data = StringIO.new "Sally Arthurton\tsally@local\nJonas Arthurton\tjonas@local\n"
+        assert_equal 2, Swift.db.write('users', 'name', 'email'){ data.read }
+      end
+    end
   end
 end

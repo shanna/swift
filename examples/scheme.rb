@@ -18,31 +18,29 @@ puts "Using DB: #{adapter}"
 Swift.setup :default, adapter, db: 'swift'
 Swift.trace true
 
-Swift.db do
-  puts '-- migrate! --'
-  User.migrate!
+puts '-- migrate! --'
+User.migrate!
 
-  puts '', '-- create --'
-  User.create name: 'Apple Arthurton', email: 'apple@arthurton.local'
-  User.create name: 'Benny Arthurton', email: 'benny@arthurton.local'
+puts '', '-- create --'
+User.create name: 'Apple Arthurton', email: 'apple@arthurton.local'
+User.create name: 'Benny Arthurton', email: 'benny@arthurton.local'
 
-  puts '', '-- all --'
-  pp User.all.to_a
-  # pp User.all(':name like ?', '%Arthurton').to_a
+puts '', '-- all --'
+pp User.all.to_a
+# pp User.all(':name like ?', '%Arthurton').to_a
 
-  puts '', '-- first --'
-  pp User.first(':name like ?', '%Arthurton')
+puts '', '-- first --'
+pp User.first(':name like ?', '%Arthurton')
 
-  puts '', '-- get --'
-  pp user = User.get(id: 2)
-  pp user = User.get(id: 2)
+puts '', '-- get --'
+pp user = User.get(id: 2)
+pp user = User.get(id: 2)
 
-  puts '', '-- update --'
-  user.update(name: 'Jimmy Arthurton')
+puts '', '-- update --'
+user.update(name: 'Jimmy Arthurton')
 
-  puts '', '-- destroy --'
-  user.destroy
+puts '', '-- destroy --'
+user.destroy
 
-  puts '', '-- all --'
-  pp User.all.to_a
-end
+puts '', '-- all --'
+pp User.all.to_a

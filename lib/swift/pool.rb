@@ -62,7 +62,7 @@ module Swift
     end
 
     def run &block
-      EM.run{ instance_eval(&block)}
+      EM.run{ yield self }
     end
   end # Pool
 
