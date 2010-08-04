@@ -70,6 +70,15 @@ describe 'Adapter' do
       it 'returns array rows for fetchrow' do
         assert_kind_of Array, @sth.fetchrow
       end
+
+      it 'returns a result set on Adapter#execute{}' do
+        @db.execute('select * from users') {|r| assert_kind_of Hash, r }
+      end
+
+      it 'returns a result set on Adapter#results' do
+        @db.execute('select * from users')
+        assert_kind_of Swift::ResultSet, @db.results
+      end
     end
 
     #--

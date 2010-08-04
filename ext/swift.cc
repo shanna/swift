@@ -136,7 +136,7 @@ static void free_connection(dbi::Handle *self) {
 
 VALUE rb_adapter_alloc(VALUE klass) {
     dbi::Handle *h = 0;
-    return Data_Wrap_Struct(klass, NULL, free_connection, h);
+    return Data_Wrap_Struct(klass, 0, free_connection, h);
 }
 
 VALUE rb_adapter_init(VALUE self, VALUE opts) {
@@ -193,41 +193,49 @@ static VALUE rb_adapter_prepare(int argc, VALUE *argv, VALUE self) {
 
     try {
         dbi::AbstractStatement *st = h->conn()->prepare(CSTRING(sql));
-        prepared = Data_Wrap_Struct(cStatement, NULL, free_statement, st);
+        prepared = Data_Wrap_Struct(cStatement, 0, free_statement, st);
         rb_iv_set(prepared, "@scheme", scheme);
     } catch EXCEPTION("Adapter#prepare");
 
     return prepared;
 }
 
+static VALUE rb_statement_each(VALUE self);
 VALUE rb_statement_execute(int argc, VALUE *argv, VALUE self);
 
 VALUE rb_adapter_execute(int argc, VALUE *argv, VALUE self) {
     uint rows = 0;
+    VALUE result = 0;
     dbi::Handle *h = DBI_HANDLE(self);
     if (argc == 0 || NIL_P(argv[0]))
         rb_raise(eArgumentError, "Adapter#execute called without a SQL command");
     try {
-        // shortcut: a block form execute will prepare, execute and yield, saving you some
-        // keystrokes. now prepares do allocate some resources on server side, maybe dbic++ needs
-        // to start supporting return simple result sets without prepared statements ?
-        if (rb_block_given_p()) {
-            VALUE st = rb_adapter_prepare(1, argv, self);
-            return rb_statement_execute(argc-1, argv+1, st);
-        }
-        else if (argc == 1)
+        if (argc == 1)
             rows = h->execute(CSTRING(argv[0]));
         else {
             dbi::ResultRow bind;
             rb_extract_bind_params(argc-1, argv+1, bind);
-            dbi::AbstractStatement *st = h->conn()->prepare(CSTRING(argv[0]));
             if (dbi::_trace)
                 dbi::logMessage(dbi::_trace_fd, dbi::formatParams(CSTRING(argv[0]), bind));
-            rows = st->execute(bind);
-            delete st;
+            rows = h->conn()->execute(CSTRING(argv[0]), bind);
+        }
+        if (rb_block_given_p()) {
+            dbi::AbstractResultSet *rs = h->results();
+            result = Data_Wrap_Struct(cResultSet, 0, free_statement, rs);
         }
     } catch EXCEPTION("Adapter#execute");
-    return INT2NUM(rows);
+
+    return result ? rb_statement_each(result) : INT2NUM(rows);
+}
+
+VALUE rb_adapter_results(VALUE self) {
+    VALUE result = Qnil;
+    dbi::Handle *h = DBI_HANDLE(self);
+    try {
+        dbi::AbstractResultSet *rs = h->results();
+        result = Data_Wrap_Struct(cResultSet, 0, free_statement, rs);
+    } catch EXCEPTION("Adapter#results");
+    return result;
 }
 
 VALUE rb_adapter_begin(int argc, VALUE *argv, VALUE self) {
@@ -298,7 +306,7 @@ VALUE rb_adapter_write(int argc, VALUE *argv, VALUE self) {
 
 VALUE rb_statement_alloc(VALUE klass) {
     dbi::AbstractStatement *st = 0;
-    return Data_Wrap_Struct(klass, NULL, free_statement, st);
+    return Data_Wrap_Struct(klass, 0, free_statement, st);
 }
 
 VALUE rb_statement_init(VALUE self, VALUE hl, VALUE sql) {
@@ -315,8 +323,6 @@ VALUE rb_statement_init(VALUE self, VALUE hl, VALUE sql) {
 
     return Qnil;
 }
-
-static VALUE rb_statement_each(VALUE self);
 
 VALUE rb_statement_execute(int argc, VALUE *argv, VALUE self) {
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
@@ -523,7 +529,7 @@ static void free_request(dbi::Request *self) {
 
 VALUE rb_request_alloc(VALUE klass) {
     dbi::Request *r = 0;
-    return Data_Wrap_Struct(klass, NULL, free_request, r);
+    return Data_Wrap_Struct(klass, 0, free_request, r);
 }
 
 static void free_cpool(dbi::ConnectionPool *self) {
@@ -532,7 +538,7 @@ static void free_cpool(dbi::ConnectionPool *self) {
 
 VALUE rb_cpool_alloc(VALUE klass) {
     dbi::ConnectionPool *c = 0;
-    return Data_Wrap_Struct(klass, NULL, free_cpool, c);
+    return Data_Wrap_Struct(klass, 0, free_cpool, c);
 }
 
 VALUE rb_cpool_init(VALUE self, VALUE n, VALUE opts) {
@@ -564,6 +570,7 @@ VALUE rb_cpool_init(VALUE self, VALUE n, VALUE opts) {
 
 void rb_cpool_callback(dbi::AbstractResultSet *rs) {
     VALUE callback = (VALUE)rs->context;
+    // NOTE: ResultSet will be free'd by the underlying connection pool dispatcher.
     if (!NIL_P(callback))
         rb_proc_call(callback, rb_ary_new3(1, Data_Wrap_Struct(cResultSet, 0, 0, rs)));
 }
@@ -653,6 +660,7 @@ extern "C" {
         rb_define_method(cAdapter, "dup",         RUBY_METHOD_FUNC(rb_adapter_dup), 0);
         rb_define_method(cAdapter, "clone",       RUBY_METHOD_FUNC(rb_adapter_dup), 0);
         rb_define_method(cAdapter, "write",       RUBY_METHOD_FUNC(rb_adapter_write), -1);
+        rb_define_method(cAdapter, "results",     RUBY_METHOD_FUNC(rb_adapter_results), 0);
 
         rb_define_alloc_func(cStatement, rb_statement_alloc);
 

@@ -66,7 +66,7 @@ Swift.db do
 
   puts ''
   puts '-- select and print results one by one -- '
-  st.execute(0) {|r| p r }
+  execute("select * from users") {|r| p r }
 end
 
 __END__
