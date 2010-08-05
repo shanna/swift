@@ -27,8 +27,8 @@ static VALUE fWrite;
 
 char errstr[8192];
 
-#define CSTRING(v) RSTRING_PTR(TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
-#define TO_STRING(v) (TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
+#define CSTRING(v)    RSTRING_PTR(TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
+#define OBJ2STRING(v) (TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
 
 #define EXCEPTION(type) (dbi::ConnectionError &e) { \
     snprintf(errstr, 4096, "%s", e.what()); \
@@ -118,7 +118,9 @@ void static inline rb_extract_bind_params(int argc, VALUE* argv, std::vector<dbi
         if (arg == Qnil)
             bind.push_back(dbi::PARAM(dbi::null()));
         else {
-            arg = TO_STRING(arg);
+            arg = OBJ2STRING(arg);
+            if (strcmp(rb_enc_get(arg)->name, "UTF-8") != 0)
+                arg = rb_str_encode(arg, rb_str_new2("UTF-8"), 0, Qnil);
             bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(arg), RSTRING_LEN(arg)));
         }
     }
@@ -418,8 +420,12 @@ VALUE rb_field_typecast(int type, const char *data, ulong len) {
             return strcmp(data, "t") == 0 || strcmp(data, "1") == 0 ? Qtrue : Qfalse;
         case DBI_TYPE_INT:
             return rb_cstr2inum(data, 10);
-        case DBI_TYPE_TEXT:
+        case DBI_TYPE_BLOB:
             return rb_str_new(data, len);
+        // forcing UTF8 convention here - do we really care about people using non utf8
+        // client encodings and databases ?
+        case DBI_TYPE_TEXT:
+            return rb_enc_str_new(data, len, rb_utf8_encoding());
         case DBI_TYPE_TIME:
             // if timestamp field has usec resolution, parse it.
             if (strlen(data) > 19 && data[19] == '.') {
@@ -626,7 +632,9 @@ VALUE rb_cpool_execute(int argc, VALUE *argv, VALUE self) {
             if (arg == Qnil)
                 bind.push_back(dbi::PARAM(dbi::null()));
             else {
-                arg = TO_STRING(arg);
+                arg = OBJ2STRING(arg);
+                if (strcmp(rb_enc_get(arg)->name, "UTF-8") != 0)
+                    arg = rb_str_encode(arg, rb_str_new2("UTF-8"), 0, Qnil);
                 bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(arg), RSTRING_LEN(arg)));
             }
         }
