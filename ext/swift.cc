@@ -26,7 +26,6 @@ static VALUE fRead;
 static VALUE fWrite;
 
 char errstr[8192];
-static time_t tzoffset;
 
 #define CSTRING(v) RSTRING_PTR(TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
 #define TO_STRING(v) (TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
@@ -132,6 +131,14 @@ VALUE rb_swift_init(VALUE self, VALUE path) {
 
 static void free_connection(dbi::Handle *self) {
     if (self) delete self;
+}
+
+int compute_tzoffset() {
+    struct tm tm;
+    memset(&tm, 0, sizeof(struct tm));
+    tm.tm_year = 70;
+    tm.tm_mday = 1;
+    return -1 * mktime(&tm);
 }
 
 VALUE rb_adapter_alloc(VALUE klass) {
@@ -313,6 +320,25 @@ VALUE rb_adapter_write(int argc, VALUE *argv, VALUE self) {
     return ULONG2NUM(rows);
 }
 
+VALUE rb_adapter_timezone(int argc, VALUE *argv, VALUE self) {
+    VALUE name, tzhour, tzmin;
+    if (argc == 1)
+        rb_scan_args(argc, argv, "10", &name);
+    else {
+        rb_scan_args(argc, argv, "20", &tzhour, &tzmin);
+        if (TYPE(tzhour) != T_FIXNUM && TYPE(tzmin) != T_FIXNUM)
+            rb_raise(eArgumentError, "Adapter#timezone: tzhour and tzmin must be Fixnum");
+    }
+    dbi::Handle *h = DBI_HANDLE(self);
+    try {
+        if (argc == 1)
+            h->setTimeZone(CSTRING(name));
+        else
+            h->setTimeZoneOffset(NUM2INT(tzhour), NUM2INT(tzmin));
+    } catch EXCEPTION("Adapter#timezone");
+    return Qtrue;
+}
+
 VALUE rb_statement_alloc(VALUE klass) {
     dbi::AbstractStatement *st = 0;
     return Data_Wrap_Struct(klass, 0, free_statement, st);
@@ -413,7 +439,7 @@ VALUE rb_field_typecast(int type, const char *data, ulong len) {
                     offset = tzsign == '+' ?
                           (time_t)tzhour * -3600 + (time_t)tzmin * -60
                         : (time_t)tzhour *  3600 + (time_t)tzmin *  60;
-                    offset += tzoffset;
+                    offset += compute_tzoffset();
                 }
                 return rb_time_new(epoch + offset, usec*1000000);
             }
@@ -672,6 +698,7 @@ extern "C" {
         rb_define_method(cAdapter, "clone",       RUBY_METHOD_FUNC(rb_adapter_dup), 0);
         rb_define_method(cAdapter, "write",       RUBY_METHOD_FUNC(rb_adapter_write), -1);
         rb_define_method(cAdapter, "results",     RUBY_METHOD_FUNC(rb_adapter_results), 0);
+        rb_define_method(cAdapter, "timezone",    RUBY_METHOD_FUNC(rb_adapter_timezone), -1);
 
         rb_define_alloc_func(cStatement, rb_statement_alloc);
 
@@ -700,17 +727,5 @@ extern "C" {
         rb_define_method(cRequest, "process",     RUBY_METHOD_FUNC(rb_request_process), 0);
 
         rb_define_method(cResultSet, "execute", RUBY_METHOD_FUNC(Qnil), 0);
-
-        tzset();
-        tzoffset = -1 * timezone;
-        // TODO Figure out a way to handle DST transitions.
-        // avoids all those stat("/etc/localtime") calls.
-        if (!getenv("TZ")) {
-            char buffer[128];
-            int hour = timezone/3600;
-            int min  = abs(timezone) - 3600*abs(hour);
-            snprintf(buffer, 127, "%s%+02d:%02d", tzname[0], hour, min);
-            setenv("TZ", buffer, 0);
-        }
     }
 }
