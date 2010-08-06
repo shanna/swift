@@ -3,6 +3,8 @@
 require 'optparse'
 require 'benchmark'
 
+ENV['TZ'] = ":Australia/Melbourne"
+
 module Benchmark
   class Tms
     attr_accessor :label, :rss, :stime, :utime, :real

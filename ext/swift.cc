@@ -25,6 +25,7 @@ static VALUE fNew;
 static VALUE fRead;
 static VALUE fWrite;
 
+size_t tzoffset;
 char errstr[8192];
 
 #define CSTRING(v)    RSTRING_PTR(TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
@@ -442,7 +443,7 @@ VALUE rb_field_typecast(VALUE adapter, int type, const char *data, ulong len) {
             sprintf(datetime, "%s %02d:%02d:%02d", datetime, hour, min, sec);
             memset(&tm, 0, sizeof(struct tm));
             if (strptime(datetime, "%F %T", &tm)) {
-                offset = compute_tzoffset();
+                offset = tzoffset;
                 epoch  = mktime(&tm);
                 if (tzsign == '+' || tzsign == '-') {
                     offset += tzsign == '+' ?
@@ -488,6 +489,7 @@ static VALUE rb_statement_each(VALUE self) {
         //      Avoiding a rb_yield(NIL_P(scheme) ? row : rb_funcall(scheme, load, row))
         //      Maybe an inline method will help ?
         st->seek(0);
+        tzoffset = compute_tzoffset();
         if (NIL_P(scheme) || scheme == Qnil) {
             for (r = 0; r < st->rows(); r++) {
                 VALUE row = rb_hash_new();
