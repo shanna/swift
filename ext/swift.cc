@@ -204,6 +204,7 @@ static VALUE rb_adapter_prepare(int argc, VALUE *argv, VALUE self) {
         dbi::AbstractStatement *st = h->conn()->prepare(CSTRING(sql));
         prepared = Data_Wrap_Struct(cStatement, 0, free_statement, st);
         rb_iv_set(prepared, "@scheme", scheme);
+        rb_iv_set(prepared, "@adapter", self);
     } catch EXCEPTION("Adapter#prepare");
 
     return prepared;
@@ -231,6 +232,7 @@ VALUE rb_adapter_execute(int argc, VALUE *argv, VALUE self) {
         if (rb_block_given_p()) {
             dbi::AbstractResultSet *rs = h->results();
             result = Data_Wrap_Struct(cResultSet, 0, free_statement, rs);
+            rb_iv_set(result, "@adapter", self);
         }
     } catch EXCEPTION("Adapter#execute");
 
@@ -243,6 +245,7 @@ VALUE rb_adapter_results(VALUE self) {
     try {
         dbi::AbstractResultSet *rs = h->results();
         result = Data_Wrap_Struct(cResultSet, 0, free_statement, rs);
+        rb_iv_set(result, "@adapter", self);
     } catch EXCEPTION("Adapter#results");
     return result;
 }
@@ -407,7 +410,7 @@ VALUE rb_statement_insert_id(VALUE self) {
   return insert_id;
 }
 
-VALUE rb_field_typecast(int type, const char *data, ulong len) {
+VALUE rb_field_typecast(VALUE adapter, int type, const char *data, ulong len) {
     time_t epoch, offset;
     struct tm tm;
 
@@ -439,13 +442,16 @@ VALUE rb_field_typecast(int type, const char *data, ulong len) {
             sprintf(datetime, "%s %02d:%02d:%02d", datetime, hour, min, sec);
             memset(&tm, 0, sizeof(struct tm));
             if (strptime(datetime, "%F %T", &tm)) {
-                offset = 0;
+                offset = compute_tzoffset();
                 epoch  = mktime(&tm);
                 if (tzsign == '+' || tzsign == '-') {
-                    offset = tzsign == '+' ?
+                    offset += tzsign == '+' ?
                           (time_t)tzhour * -3600 + (time_t)tzmin * -60
                         : (time_t)tzhour *  3600 + (time_t)tzmin *  60;
-                    offset += compute_tzoffset();
+                }
+                else {
+                    VALUE database_offset = rb_iv_get(adapter, "@tzoffset");
+                    offset -= NIL_P(database_offset) ? 0 : NUM2ULONG(database_offset);
                 }
                 return rb_time_new(epoch + offset, usec*1000000);
             }
@@ -467,7 +473,8 @@ static VALUE rb_statement_each(VALUE self) {
     const char *data;
 
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
-    VALUE scheme = rb_iv_get(self, "@scheme");
+    VALUE scheme  = rb_iv_get(self, "@scheme");
+    VALUE adapter = rb_iv_get(self, "@adapter");
 
     try {
         VALUE attrs = rb_ary_new();
@@ -487,7 +494,7 @@ static VALUE rb_statement_each(VALUE self) {
                 for (c = 0; c < st->columns(); c++) {
                     data = (const char*)st->fetchValue(r,c, &len);
                     if (data)
-                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(types[c], data, len));
+                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(adapter, types[c], data, len));
                     else
                         rb_hash_aset(row, rb_ary_entry(attrs, c), Qnil);
                 }
@@ -500,7 +507,7 @@ static VALUE rb_statement_each(VALUE self) {
                 for (c = 0; c < st->columns(); c++) {
                     data = (const char*)st->fetchValue(r,c, &len);
                     if (data)
-                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(types[c], data, len));
+                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(adapter, types[c], data, len));
                     else
                         rb_hash_aset(row, rb_ary_entry(attrs, c), Qnil);
                 }

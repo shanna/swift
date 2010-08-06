@@ -12,7 +12,6 @@ describe 'Adapter' do
       it 'should store and retrieve utf8 characters' do
         Swift.db do |db|
           name = "King of \u2665s"
-          db.execute('truncate users')
           db.prepare("insert into users (name) values(?)").execute(name)
           value = db.prepare("select * from users limit 1").execute.first[:name]
           assert_equal Encoding::UTF_8, value.encoding
@@ -23,7 +22,6 @@ describe 'Adapter' do
       it 'should store and retrieve non ascii' do
         Swift.db do |db|
           name = "\xA1\xB8".force_encoding("euc-jp")
-          db.execute('truncate users')
           db.prepare("insert into users (name) values(?)").execute(name)
           value = db.prepare("select * from users limit 1").execute.first[:name]
           assert_equal Encoding::UTF_8, value.encoding

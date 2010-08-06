@@ -123,20 +123,5 @@ describe 'Adapter' do
         assert_equal 2, Swift.db.write('users', %w{name email}, data)
       end
     end
-
-    describe 'time parsing and time zones' do
-      it 'should set timezone' do
-        assert Swift.db.timezone(8, 0) # +08:00
-      end
-
-      it 'should parse timestamps and do conversion accordingly' do
-        now = Time.now
-        assert Swift.db.timezone(8, 30) # +08:30
-        match = Regexp.new (now - now.utc_offset + 8*3600 + 1800).strftime("%Y-%m-%d %H:%M")
-        Swift.db.execute("select now() as now") do |r|
-          assert_match match, r[:now].to_s, "parses time and does zone conversion"
-        end
-      end
-    end
   end
 end
