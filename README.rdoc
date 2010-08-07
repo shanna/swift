@@ -188,10 +188,10 @@ But you can do it almost as fast in ruby,
       count = db.write('users', %w{name email balance}, file)
     end
   end
-  
+
 You are not just limited to files - you can stream data from anywhere into MySQL and
 PostgreSQL directly without creating temporary files.
-  
+
 
 == Benchmarks
 
@@ -226,7 +226,6 @@ Intel Core2Duo P8700 2.53GHz and stock PostgreSQL 8.4.1.
 == TODO
 
 * Tests.
-* Tighter coupling of extension. Remove more wrapping, subclassing and re-opening.
 * Assertions for dumb stuff. model < Model for methods in Adapter.
 * Profile.
 
