@@ -13,7 +13,6 @@ static VALUE cResultSet;
 static VALUE cPool;
 static VALUE cRequest;
 static VALUE cBigDecimal;
-static VALUE cBLOB;
 
 static VALUE eRuntimeError;
 static VALUE eArgumentError;
@@ -119,7 +118,8 @@ void static inline rb_extract_bind_params(int argc, VALUE* argv, std::vector<dbi
         VALUE arg = argv[i];
         if (arg == Qnil)
             bind.push_back(dbi::PARAM(dbi::null()));
-        else if (rb_obj_class(arg) ==  cBLOB) {
+        else if (rb_obj_is_kind_of(arg, rb_cIO) ==  Qtrue) {
+            arg = rb_funcall(arg, fRead, 0);
             bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(arg), RSTRING_LEN(arg)));
         }
         else {
@@ -644,7 +644,8 @@ VALUE rb_cpool_execute(int argc, VALUE *argv, VALUE self) {
             VALUE arg = rb_ary_entry(args, n);
             if (arg == Qnil)
                 bind.push_back(dbi::PARAM(dbi::null()));
-            else if (rb_obj_class(arg) ==  cBLOB) {
+            else if (rb_obj_is_kind_of(arg, rb_cIO) ==  Qtrue) {
+                arg = rb_funcall(arg, fRead, 0);
                 bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(arg), RSTRING_LEN(arg)));
             }
             else {
@@ -704,7 +705,6 @@ extern "C" {
         cResultSet       = rb_define_class_under(mSwift, "ResultSet", cStatement);
         cPool            = rb_define_class_under(mSwift, "ConnectionPool", rb_cObject);
         cRequest         = rb_define_class_under(mSwift, "Request", rb_cObject);
-        cBLOB            = rb_define_class_under(mSwift, "BLOB", rb_cString);
 
         rb_define_module_function(mSwift, "init",  RUBY_METHOD_FUNC(rb_swift_init), 1);
         rb_define_module_function(mSwift, "trace", RUBY_METHOD_FUNC(rb_swift_trace), -1);

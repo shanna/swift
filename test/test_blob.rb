@@ -12,11 +12,13 @@ describe 'Adapter' do
       end
       it 'should store and retrieve image' do
         Swift.db do |db|
-          data = Swift::BLOB.new(File.read(File.dirname(__FILE__) + '/house-explode.jpg'))
-          db.prepare("insert into users (name, image) values(?, ?)").execute('test', data)
+          io = File.open(File.dirname(__FILE__) + '/house-explode.jpg')
+          db.prepare("insert into users (name, image) values(?, ?)").execute('test', io)
           value = db.prepare("select image from users limit 1").execute.first[:image]
+
+          io.rewind
           assert_equal Encoding::ASCII_8BIT, value.encoding
-          assert_equal data.force_encoding("ASCII-8BIT"), value
+          assert_equal io.read.force_encoding("ASCII-8BIT"), value
         end
       end
     end
