@@ -23,13 +23,6 @@ dbic++ can be found here http://github.com/deepfryed/dbicpp
 * EventMachine asynchronous interface.
 * Migrations.
 
-== Performance
-
-Swift prefers performance when it doesn't compromise the Ruby-ish interface. It's unfair to compare Swift to DataMapper
-and ActiveRecord which suffer under the weight of support for many more databases and legacy/alternative Ruby
-implementations. That said obviously if Swift were slower it would be redundant so benchmark code does exist in
-http://github.com/shanna/swift/tree/master/benchmarks
-
 == Synopsis
 
 === DB
@@ -193,7 +186,14 @@ You are not just limited to files - you can stream data from anywhere into MySQL
 PostgreSQL directly without creating temporary files.
 
 
-== Benchmarks
+== Performance
+
+Swift prefers performance when it doesn't compromise the Ruby-ish interface. It's unfair to compare Swift to DataMapper
+and ActiveRecord which suffer under the weight of support for many more databases and legacy/alternative Ruby
+implementations. That said obviously if Swift were slower it would be redundant so benchmark code does exist in
+http://github.com/shanna/swift/tree/master/benchmarks
+
+=== Benchmarks
 
 The following bechmarks were run on a machine with 4G ram, 5200rpm sata drive,
 Intel Core2Duo P8700 2.53GHz and stock PostgreSQL 8.4.1.
