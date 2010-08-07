@@ -416,13 +416,13 @@ VALUE rb_statement_insert_id(VALUE self) {
   return insert_id;
 }
 
-VALUE rb_field_typecast(VALUE adapter, int type, const char *data, ulong len) {
+VALUE rb_field_typecast(int type, const char *data, ulong len, ulong dbtzoffset) {
     time_t epoch, offset;
     struct tm tm;
 
-    char tzsign = ' ';
-    int tzhour = 0, tzmin = 0;
     double usec = 0;
+    char tzsign = 0;
+    int tzhour  = 0, tzmin = 0;
 
     switch(type) {
         case DBI_TYPE_BOOLEAN:
@@ -462,10 +462,7 @@ VALUE rb_field_typecast(VALUE adapter, int type, const char *data, ulong len) {
                           (time_t)tzhour * -3600 + (time_t)tzmin * -60
                         : (time_t)tzhour *  3600 + (time_t)tzmin *  60;
                 }
-                else {
-                    VALUE database_offset = rb_iv_get(adapter, "@tzoffset");
-                    offset -= NIL_P(database_offset) ? 0 : NUM2ULONG(database_offset);
-                }
+                else offset -= dbtzoffset;
                 return rb_time_new(epoch + offset, usec*1000000);
             }
             else {
@@ -482,12 +479,15 @@ VALUE rb_field_typecast(VALUE adapter, int type, const char *data, ulong len) {
 
 static VALUE rb_statement_each(VALUE self) {
     uint r, c;
-    ulong len;
+    ulong len, dbtzoffset;
     const char *data;
 
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
-    VALUE scheme  = rb_iv_get(self, "@scheme");
-    VALUE adapter = rb_iv_get(self, "@adapter");
+    VALUE scheme     = rb_iv_get(self, "@scheme");
+    VALUE adapter    = rb_iv_get(self, "@adapter");
+    VALUE tzoffsecs  = rb_iv_get(adapter, "@tzoffset");
+
+    dbtzoffset = NIL_P(tzoffsecs) ? 0 : NUM2ULONG(tzoffsecs);
 
     try {
         VALUE attrs = rb_ary_new();
@@ -498,17 +498,16 @@ static VALUE rb_statement_each(VALUE self) {
         }
 
         // TODO Code duplication
-        //      Avoiding a rb_yield(NIL_P(scheme) ? row : rb_funcall(scheme, load, row))
-        //      Maybe an inline method will help ?
+        //      Avoiding a rb_yield(NIL_P(scheme) ? row : rb_funcall(scheme, fLoad, 1, row))
         st->seek(0);
         tzoffset = compute_tzoffset();
-        if (NIL_P(scheme) || scheme == Qnil) {
+        if (NIL_P(scheme)) {
             for (r = 0; r < st->rows(); r++) {
                 VALUE row = rb_hash_new();
                 for (c = 0; c < st->columns(); c++) {
                     data = (const char*)st->fetchValue(r,c, &len);
                     if (data)
-                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(adapter, types[c], data, len));
+                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(types[c], data, len, dbtzoffset));
                     else
                         rb_hash_aset(row, rb_ary_entry(attrs, c), Qnil);
                 }
@@ -521,7 +520,7 @@ static VALUE rb_statement_each(VALUE self) {
                 for (c = 0; c < st->columns(); c++) {
                     data = (const char*)st->fetchValue(r,c, &len);
                     if (data)
-                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(adapter, types[c], data, len));
+                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(types[c], data, len, dbtzoffset));
                     else
                         rb_hash_aset(row, rb_ary_entry(attrs, c), Qnil);
                 }
