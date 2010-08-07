@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{swift}
-  s.version = "0.4.0"
+  s.version = "0.4.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-  s.date = %q{2010-07-29}
+  s.date = %q{2010-08-07}
   s.description = %q{A rational rudimentary database abstraction.}
   s.email = ["shane.hanna@gmail.com", "deepfryed@gmail.com"]
   s.extensions = ["ext/extconf.rb"]
@@ -35,7 +35,12 @@ Gem::Specification.new do |s|
      "lib/swift/type.rb",
      "swift.gemspec",
      "test/helper.rb",
-     "test/test_resource.rb"
+     "test/house-explode.jpg",
+     "test/test_adapter.rb",
+     "test/test_encoding.rb",
+     "test/test_identity_map.rb",
+     "test/test_io.rb",
+     "test/test_timestamps.rb"
   ]
   s.homepage = %q{http://github.com/shanna/swift}
   s.rdoc_options = ["--charset=UTF-8"]
@@ -43,11 +48,14 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.6}
   s.summary = %q{A rational rudimentary database abstraction.}
   s.test_files = [
-    "test/helper.rb",
-     "test/test_resource.rb",
-     "examples/scheme.rb",
+    "test/test_adapter.rb",
+     "test/test_io.rb",
+     "test/test_encoding.rb",
+     "test/test_timestamps.rb",
+     "test/helper.rb",
+     "test/test_identity_map.rb",
      "examples/async.rb",
-     "examples/adapter.rb",
+     "examples/scheme.rb",
      "examples/db.rb"
   ]
 
@@ -56,9 +64,12 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
+      s.add_development_dependency(%q<minitest>, [">= 1.7.0"])
     else
+      s.add_dependency(%q<minitest>, [">= 1.7.0"])
     end
   else
+    s.add_dependency(%q<minitest>, [">= 1.7.0"])
   end
 end
 
