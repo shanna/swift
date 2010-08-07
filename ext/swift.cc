@@ -13,6 +13,7 @@ static VALUE cResultSet;
 static VALUE cPool;
 static VALUE cRequest;
 static VALUE cBigDecimal;
+static VALUE cBLOB;
 
 static VALUE eRuntimeError;
 static VALUE eArgumentError;
@@ -118,11 +119,14 @@ void static inline rb_extract_bind_params(int argc, VALUE* argv, std::vector<dbi
         VALUE arg = argv[i];
         if (arg == Qnil)
             bind.push_back(dbi::PARAM(dbi::null()));
+        else if (rb_obj_class(arg) ==  cBLOB) {
+            bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(arg), RSTRING_LEN(arg)));
+        }
         else {
             arg = OBJ2STRING(arg);
             if (strcmp(rb_enc_get(arg)->name, "UTF-8") != 0)
                 arg = rb_str_encode(arg, rb_str_new2("UTF-8"), 0, Qnil);
-            bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(arg), RSTRING_LEN(arg)));
+            bind.push_back(dbi::PARAM((unsigned char*)RSTRING_PTR(arg), RSTRING_LEN(arg)));
         }
     }
 }
@@ -640,11 +644,14 @@ VALUE rb_cpool_execute(int argc, VALUE *argv, VALUE self) {
             VALUE arg = rb_ary_entry(args, n);
             if (arg == Qnil)
                 bind.push_back(dbi::PARAM(dbi::null()));
+            else if (rb_obj_class(arg) ==  cBLOB) {
+                bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(arg), RSTRING_LEN(arg)));
+            }
             else {
                 arg = OBJ2STRING(arg);
                 if (strcmp(rb_enc_get(arg)->name, "UTF-8") != 0)
                     arg = rb_str_encode(arg, rb_str_new2("UTF-8"), 0, Qnil);
-                bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(arg), RSTRING_LEN(arg)));
+                bind.push_back(dbi::PARAM((unsigned char*)RSTRING_PTR(arg), RSTRING_LEN(arg)));
             }
         }
         // TODO GC mark callback.
@@ -697,6 +704,7 @@ extern "C" {
         cResultSet       = rb_define_class_under(mSwift, "ResultSet", cStatement);
         cPool            = rb_define_class_under(mSwift, "ConnectionPool", rb_cObject);
         cRequest         = rb_define_class_under(mSwift, "Request", rb_cObject);
+        cBLOB            = rb_define_class_under(mSwift, "BLOB", rb_cString);
 
         rb_define_module_function(mSwift, "init",  RUBY_METHOD_FUNC(rb_swift_init), 1);
         rb_define_module_function(mSwift, "trace", RUBY_METHOD_FUNC(rb_swift_trace), -1);
