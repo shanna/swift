@@ -27,7 +27,7 @@ static VALUE fRead;
 static VALUE fWrite;
 
 size_t tzoffset;
-char errstr[8192];
+char   errstr[8192];
 
 #define CSTRING(v)    RSTRING_PTR(TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
 #define OBJ2STRING(v) (TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
@@ -420,8 +420,8 @@ VALUE rb_field_typecast(VALUE adapter, int type, const char *data, ulong len) {
     time_t epoch, offset;
     struct tm tm;
 
-    char datetime[512], tzsign = ' ';
-    int hour = 0, min = 0, sec = 0, tzhour = 0, tzmin = 0;
+    char tzsign = ' ';
+    int tzhour = 0, tzmin = 0;
     double usec = 0;
 
     switch(type) {
@@ -436,18 +436,25 @@ VALUE rb_field_typecast(VALUE adapter, int type, const char *data, ulong len) {
         case DBI_TYPE_TEXT:
             return rb_enc_str_new(data, len, rb_utf8_encoding());
         case DBI_TYPE_TIME:
-            // if timestamp field has usec resolution, parse it.
-            if (strlen(data) > 19 && data[19] == '.') {
-                sscanf(data, "%s %d:%d:%d%lf%c%02d:%02d",
-                    datetime, &hour, &min, &sec, &usec, &tzsign, &tzhour, &tzmin);
+            /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+               NOTE Flexibility sacrificed for performance.
+                    Timestamp parser is very unforgiving and only parses
+                    YYYY-MM-DD HH:MM:SS.ms[+-]HH:MM
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+            memset(&tm, 0, sizeof(struct tm));
+            if (strchr(data, '.')) {
+                sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%lf%c%02d:%02d",
+                    &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec,
+                    &usec, &tzsign, &tzhour, &tzmin);
             }
             else {
-                sscanf(data, "%s %d:%d:%d%c%02d:%02d",
-                    datetime, &hour, &min, &sec, &tzsign, &tzhour, &tzmin);
+                sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%c%02d:%02d",
+                    &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec,
+                    &tzsign, &tzhour, &tzmin);
             }
-            sprintf(datetime, "%s %02d:%02d:%02d", datetime, hour, min, sec);
-            memset(&tm, 0, sizeof(struct tm));
-            if (strptime(datetime, "%F %T", &tm)) {
+            tm.tm_year -= 1900;
+            tm.tm_mon  -= 1;
+            if (tm.tm_mday > 0) {
                 offset = tzoffset;
                 epoch  = mktime(&tm);
                 if (tzsign == '+' || tzsign == '-') {
