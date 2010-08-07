@@ -13,6 +13,7 @@ static VALUE cResultSet;
 static VALUE cPool;
 static VALUE cRequest;
 static VALUE cBigDecimal;
+static VALUE cStringIO;
 
 static VALUE eRuntimeError;
 static VALUE eArgumentError;
@@ -118,7 +119,7 @@ void static inline rb_extract_bind_params(int argc, VALUE* argv, std::vector<dbi
         VALUE arg = argv[i];
         if (arg == Qnil)
             bind.push_back(dbi::PARAM(dbi::null()));
-        else if (rb_obj_is_kind_of(arg, rb_cIO) ==  Qtrue) {
+        else if (rb_obj_is_kind_of(arg, rb_cIO) ==  Qtrue || rb_obj_is_kind_of(arg, cStringIO) ==  Qtrue) {
             arg = rb_funcall(arg, fRead, 0);
             bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(arg), RSTRING_LEN(arg)));
         }
@@ -429,7 +430,7 @@ VALUE rb_field_typecast(VALUE adapter, int type, const char *data, ulong len) {
         case DBI_TYPE_INT:
             return rb_cstr2inum(data, 10);
         case DBI_TYPE_BLOB:
-            return rb_str_new(data, len);
+            return rb_funcall(cStringIO, fNew, 1, rb_str_new(data, len));
         // forcing UTF8 convention here - do we really care about people using non utf8
         // client encodings and databases ?
         case DBI_TYPE_TEXT:
@@ -644,7 +645,7 @@ VALUE rb_cpool_execute(int argc, VALUE *argv, VALUE self) {
             VALUE arg = rb_ary_entry(args, n);
             if (arg == Qnil)
                 bind.push_back(dbi::PARAM(dbi::null()));
-            else if (rb_obj_is_kind_of(arg, rb_cIO) ==  Qtrue) {
+            else if (rb_obj_is_kind_of(arg, rb_cIO) ==  Qtrue || rb_obj_is_kind_of(arg, cStringIO) ==  Qtrue) {
                 arg = rb_funcall(arg, fRead, 0);
                 bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(arg), RSTRING_LEN(arg)));
             }
@@ -686,6 +687,7 @@ VALUE rb_request_process(VALUE self) {
 extern "C" {
     void Init_swift(void) {
         rb_require("bigdecimal");
+        rb_require("stringio");
 
         fNew             = rb_intern("new");
         fStringify       = rb_intern("to_s");
@@ -697,6 +699,7 @@ extern "C" {
         eArgumentError   = CONST_GET(rb_mKernel, "ArgumentError");
         eStandardError   = CONST_GET(rb_mKernel, "StandardError");
         cBigDecimal      = CONST_GET(rb_mKernel, "BigDecimal");
+        cStringIO        = CONST_GET(rb_mKernel, "StringIO");
         eConnectionError = rb_define_class("ConnectionError", eRuntimeError);
 
         mSwift           = rb_define_module("Swift");
