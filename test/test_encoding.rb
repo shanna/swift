@@ -9,6 +9,7 @@ describe 'Adapter' do
           db.execute %q{create table users(id serial, name text, primary key(id))}
         end
       end
+
       it 'should store and retrieve utf8 characters' do
         Swift.db do |db|
           name = "King of \u2665s"

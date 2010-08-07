@@ -1,7 +1,7 @@
 require_relative 'helper'
 
 describe 'Adapter' do
-   supported_by Swift::DB::Postgres, Swift::DB::Mysql do
+  supported_by Swift::DB::Postgres, Swift::DB::Mysql do
     describe 'Storing binary objects' do
       before do
         Swift.db do |db|
@@ -10,7 +10,8 @@ describe 'Adapter' do
           db.execute %Q{create table users(id serial, name text, image #{type}, primary key(id))}
         end
       end
-      it 'should store and retrieve image' do
+
+      it 'stores and retrieves an image' do
         Swift.db do |db|
           io = File.open(File.dirname(__FILE__) + '/house-explode.jpg')
           db.prepare("insert into users (name, image) values(?, ?)").execute('test', io)
@@ -22,5 +23,5 @@ describe 'Adapter' do
         end
       end
     end
-   end
+  end
 end
