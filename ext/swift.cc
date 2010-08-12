@@ -350,6 +350,18 @@ VALUE rb_adapter_timezone(int argc, VALUE *argv, VALUE self) {
     return Qtrue;
 }
 
+VALUE rb_adapter_escape(VALUE self, VALUE val) {
+    VALUE escaped = Qnil;
+    if (TYPE(val) != T_STRING) rb_raise(eArgumentError, "Adapter#escape: Cannot escape non-string value");
+
+    dbi::Handle *h = DBI_HANDLE(self);
+    try {
+        std::string safe = h->escape(std::string(RSTRING_PTR(val), RSTRING_LEN(val)));
+        escaped = rb_str_new(safe.data(), safe.length());
+    } catch EXCEPTION("Adapter#escape");
+    return escaped;
+}
+
 VALUE rb_statement_alloc(VALUE klass) {
     dbi::AbstractStatement *st = 0;
     return Data_Wrap_Struct(klass, 0, free_statement, st);
@@ -733,6 +745,7 @@ extern "C" {
         rb_define_method(cAdapter, "write",       RUBY_METHOD_FUNC(rb_adapter_write), -1);
         rb_define_method(cAdapter, "results",     RUBY_METHOD_FUNC(rb_adapter_results), 0);
         rb_define_method(cAdapter, "timezone",    RUBY_METHOD_FUNC(rb_adapter_timezone), -1);
+        rb_define_method(cAdapter, "escape",      RUBY_METHOD_FUNC(rb_adapter_escape), 1);
 
         rb_define_alloc_func(cStatement, rb_statement_alloc);
 
