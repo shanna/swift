@@ -350,6 +350,18 @@ VALUE rb_adapter_timezone(int argc, VALUE *argv, VALUE self) {
     return Qtrue;
 }
 
+VALUE rb_adapter_escape(VALUE self, VALUE val) {
+    VALUE escaped = Qnil;
+    if (TYPE(val) != T_STRING) rb_raise(eArgumentError, "Adapter#escape: Cannot escape non-string value");
+
+    dbi::Handle *h = DBI_HANDLE(self);
+    try {
+        std::string safe = h->escape(std::string(RSTRING_PTR(val), RSTRING_LEN(val)));
+        escaped = rb_str_new(safe.data(), safe.length());
+    } catch EXCEPTION("Adapter#escape");
+    return escaped;
+}
+
 VALUE rb_statement_alloc(VALUE klass) {
     dbi::AbstractStatement *st = 0;
     return Data_Wrap_Struct(klass, 0, free_statement, st);
@@ -416,13 +428,13 @@ VALUE rb_statement_insert_id(VALUE self) {
   return insert_id;
 }
 
-VALUE rb_field_typecast(VALUE adapter, int type, const char *data, ulong len) {
+VALUE rb_field_typecast(int type, const char *data, ulong len, ulong dbtzoffset) {
     time_t epoch, offset;
     struct tm tm;
 
-    char tzsign = ' ';
-    int tzhour = 0, tzmin = 0;
     double usec = 0;
+    char tzsign = 0;
+    int tzhour  = 0, tzmin = 0;
 
     switch(type) {
         case DBI_TYPE_BOOLEAN:
@@ -462,10 +474,7 @@ VALUE rb_field_typecast(VALUE adapter, int type, const char *data, ulong len) {
                           (time_t)tzhour * -3600 + (time_t)tzmin * -60
                         : (time_t)tzhour *  3600 + (time_t)tzmin *  60;
                 }
-                else {
-                    VALUE database_offset = rb_iv_get(adapter, "@tzoffset");
-                    offset -= NIL_P(database_offset) ? 0 : NUM2ULONG(database_offset);
-                }
+                else offset -= dbtzoffset;
                 return rb_time_new(epoch + offset, usec*1000000);
             }
             else {
@@ -482,12 +491,15 @@ VALUE rb_field_typecast(VALUE adapter, int type, const char *data, ulong len) {
 
 static VALUE rb_statement_each(VALUE self) {
     uint r, c;
-    ulong len;
+    ulong len, dbtzoffset;
     const char *data;
 
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
-    VALUE scheme  = rb_iv_get(self, "@scheme");
-    VALUE adapter = rb_iv_get(self, "@adapter");
+    VALUE scheme     = rb_iv_get(self, "@scheme");
+    VALUE adapter    = rb_iv_get(self, "@adapter");
+    VALUE tzoffsecs  = rb_iv_get(adapter, "@tzoffset");
+
+    dbtzoffset = NIL_P(tzoffsecs) ? 0 : NUM2ULONG(tzoffsecs);
 
     try {
         VALUE attrs = rb_ary_new();
@@ -498,17 +510,16 @@ static VALUE rb_statement_each(VALUE self) {
         }
 
         // TODO Code duplication
-        //      Avoiding a rb_yield(NIL_P(scheme) ? row : rb_funcall(scheme, load, row))
-        //      Maybe an inline method will help ?
+        //      Avoiding a rb_yield(NIL_P(scheme) ? row : rb_funcall(scheme, fLoad, 1, row))
         st->seek(0);
         tzoffset = compute_tzoffset();
-        if (NIL_P(scheme) || scheme == Qnil) {
+        if (NIL_P(scheme)) {
             for (r = 0; r < st->rows(); r++) {
                 VALUE row = rb_hash_new();
                 for (c = 0; c < st->columns(); c++) {
                     data = (const char*)st->fetchValue(r,c, &len);
                     if (data)
-                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(adapter, types[c], data, len));
+                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(types[c], data, len, dbtzoffset));
                     else
                         rb_hash_aset(row, rb_ary_entry(attrs, c), Qnil);
                 }
@@ -521,7 +532,7 @@ static VALUE rb_statement_each(VALUE self) {
                 for (c = 0; c < st->columns(); c++) {
                     data = (const char*)st->fetchValue(r,c, &len);
                     if (data)
-                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(adapter, types[c], data, len));
+                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(types[c], data, len, dbtzoffset));
                     else
                         rb_hash_aset(row, rb_ary_entry(attrs, c), Qnil);
                 }
@@ -734,6 +745,7 @@ extern "C" {
         rb_define_method(cAdapter, "write",       RUBY_METHOD_FUNC(rb_adapter_write), -1);
         rb_define_method(cAdapter, "results",     RUBY_METHOD_FUNC(rb_adapter_results), 0);
         rb_define_method(cAdapter, "timezone",    RUBY_METHOD_FUNC(rb_adapter_timezone), -1);
+        rb_define_method(cAdapter, "escape",      RUBY_METHOD_FUNC(rb_adapter_escape), 1);
 
         rb_define_alloc_func(cStatement, rb_statement_alloc);
 
