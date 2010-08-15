@@ -27,7 +27,15 @@ module Swift
       end
   end # IdentityMap
 
+  class Adapter
+    def identity_map
+      @identity_map ||= IdentityMap.new
+    end
+  end
+
   class Scheme
+    #--
+    # TODO: Redefined method :(
     def self.load tuple
       im = [self, *tuple.values_at(*header.keys)]
       unless scheme = Swift.db.identity_map.get(im)

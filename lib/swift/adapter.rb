@@ -1,12 +1,6 @@
 module Swift
-  #--
-  # TODO: Still not convinced all and first are necessary.
   class Adapter
     attr_reader :options
-
-    def identity_map
-      @identity_map ||= IdentityMap.new
-    end
 
     def get scheme, keys
       relation = scheme.new(keys)
