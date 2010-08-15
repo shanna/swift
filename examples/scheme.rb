@@ -5,6 +5,7 @@ $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'pp'
 require 'swift'
 require 'swift/migrations'
+require 'swift/validations'
 
 class User < Swift::Scheme
   store     :users
@@ -14,6 +15,10 @@ class User < Swift::Scheme
   attribute :active,   Swift::Type::Boolean
   attribute :created,  Swift::Type::Time,   default: proc { Time.now }
   attribute :optional, Swift::Type::String, default: 'woot'
+
+  validations do |errors|
+    errors << [:name, 'is blank'] if name.to_s.empty?
+  end
 end # User
 
 adapter = ARGV.first =~ /mysql/i ? Swift::DB::Mysql : Swift::DB::Postgres
