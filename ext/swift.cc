@@ -41,6 +41,15 @@ catch (dbi::Error &e) {\
     rb_raise(eRuntimeError, "%s : %s", type, errstr); \
 }
 
+#define THREAD_BLOCKING_FUNCTION(f) ((VALUE (*)(void*)) f)
+
+struct BlockingQuery {
+    char *sql;
+    dbi::Handle *handle;
+    dbi::AbstractStatement *stmt;
+    dbi::ResultRow bind;
+};
+
 
 class IOStream : public dbi::IOStream {
     private:
@@ -219,21 +228,33 @@ static VALUE rb_adapter_prepare(int argc, VALUE *argv, VALUE self) {
 static VALUE rb_statement_each(VALUE self);
 VALUE rb_statement_execute(int argc, VALUE *argv, VALUE self);
 
+VALUE handle_execute(BlockingQuery *q) {
+    return UINT2NUM(q->handle->conn()->execute(q->sql));
+}
+
+VALUE handle_execute_bind(BlockingQuery *q) {
+    return UINT2NUM(q->handle->conn()->execute(q->sql, q->bind));
+}
+
 VALUE rb_adapter_execute(int argc, VALUE *argv, VALUE self) {
-    uint rows = 0;
+    VALUE rows;
     VALUE result = 0;
     dbi::Handle *h = DBI_HANDLE(self);
+
     if (argc == 0 || NIL_P(argv[0]))
         rb_raise(eArgumentError, "Adapter#execute called without a SQL command");
+
     try {
+        BlockingQuery query;
+        query.sql    = CSTRING(argv[0]);
+        query.handle = h;
         if (argc == 1)
-            rows = h->execute(CSTRING(argv[0]));
+            rows = rb_thread_blocking_region(THREAD_BLOCKING_FUNCTION(handle_execute), &query, 0, 0);
         else {
-            dbi::ResultRow bind;
-            rb_extract_bind_params(argc-1, argv+1, bind);
+            rb_extract_bind_params(argc-1, argv+1, query.bind);
             if (dbi::_trace)
-                dbi::logMessage(dbi::_trace_fd, dbi::formatParams(CSTRING(argv[0]), bind));
-            rows = h->conn()->execute(CSTRING(argv[0]), bind);
+                dbi::logMessage(dbi::_trace_fd, dbi::formatParams(query.sql, query.bind));
+            rows = rb_thread_blocking_region(THREAD_BLOCKING_FUNCTION(handle_execute_bind), &query, 0, 0);
         }
         if (rb_block_given_p()) {
             dbi::AbstractResultSet *rs = h->results();
@@ -242,7 +263,7 @@ VALUE rb_adapter_execute(int argc, VALUE *argv, VALUE self) {
         }
     } catch EXCEPTION("Adapter#execute");
 
-    return result ? rb_statement_each(result) : INT2NUM(rows);
+    return result ? rb_statement_each(result) : rows;
 }
 
 VALUE rb_adapter_results(VALUE self) {
@@ -382,21 +403,32 @@ VALUE rb_statement_init(VALUE self, VALUE hl, VALUE sql) {
     return Qnil;
 }
 
+VALUE statement_execute(BlockingQuery *q) {
+    q->stmt->execute();
+    return Qnil;
+}
+
+VALUE statement_execute_bind(BlockingQuery *q) {
+    q->stmt->execute(q->bind);
+    return Qnil;
+}
+
 VALUE rb_statement_execute(int argc, VALUE *argv, VALUE self) {
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
     try {
+        BlockingQuery query;
+        query.stmt = st;
         if (argc == 0) {
             dbi::ResultRow params;
             if (dbi::_trace)
                 dbi::logMessage(dbi::_trace_fd, dbi::formatParams(st->command(), params));
-            st->execute();
+            rb_thread_blocking_region(THREAD_BLOCKING_FUNCTION(statement_execute), &query, 0, 0);
         }
         else {
-            dbi::ResultRow bind;
-            rb_extract_bind_params(argc, argv, bind);
+            rb_extract_bind_params(argc, argv, query.bind);
             if (dbi::_trace)
-                dbi::logMessage(dbi::_trace_fd, dbi::formatParams(st->command(), bind));
-            st->execute(bind);
+                dbi::logMessage(dbi::_trace_fd, dbi::formatParams(st->command(), query.bind));
+            rb_thread_blocking_region(THREAD_BLOCKING_FUNCTION(statement_execute_bind), &query, 0, 0);
         }
     } catch EXCEPTION("Statement#execute");
 
