@@ -21,6 +21,7 @@ dbic++ can be found here http://github.com/deepfryed/dbicpp
 * Bind values.
 * Transactions and named save points.
 * EventMachine asynchronous interface.
+* IdentityMap.
 * Migrations.
 
 == Synopsis
@@ -60,6 +61,7 @@ Rudimentary object mapping. Provides a definition to the db methods for prepared
 primitive Ruby type conversion.
 
   require 'swift'
+  require 'swift/migrations'
 
   Swift.trace true # Debugging.
   Swift.setup :default, Swift::DB::Postgres, db: 'swift'
@@ -92,6 +94,7 @@ primitive Ruby type conversion.
 Scheme/relation level helpers.
 
   require 'swift'
+  require 'swift/migrations'
 
   Swift.trace true # Debugging.
   Swift.setup :default, Swift::DB::Postgres, db: 'swift'
@@ -145,6 +148,7 @@ Swift comes with a simple identity map. Just require it after you load swift.
 
   require 'swift'
   require 'swift/identity_map'
+  require 'swift/migrations'
 
   class User < Swift::Scheme
     store     :users
@@ -154,9 +158,14 @@ Swift comes with a simple identity map. Just require it after you load swift.
     attribute :email, Swift::Type::String,  field: 'liame'
   end # User
 
+  # Migrate it.
+  User.migrate!
+
+  # Create
+  User.create name: 'James Arthurton', email: 'james@arthurton.local' # => User
+
   User.first(':name = ?', 'James Arthurton')
   User.first(':name = ?', 'James Arthurton') # Gets same object reference
-
 
 === Bulk inserts
 
@@ -184,7 +193,6 @@ But you can do it almost as fast in ruby,
 
 You are not just limited to files - you can stream data from anywhere into MySQL and
 PostgreSQL directly without creating temporary files.
-
 
 == Performance
 
@@ -221,7 +229,6 @@ Intel Core2Duo P8700 2.53GHz and stock PostgreSQL 8.4.1.
     swift #select   0.010000    0.070000    0.080000    0.130234      9.85m
     swift #update   0.250000    0.610000    0.860000    1.996165     29.35m
     swift #write    0.000000    0.100000    0.100000    0.167199      6.23m
-
 
 == TODO
 
