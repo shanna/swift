@@ -41,14 +41,6 @@ module Swift
         name ? @store = name : @store
       end
 
-      def migration &migration
-        (class << self; self end).send(:define_method, :migrate!, lambda{ Swift.db.instance_eval(&migration) })
-      end
-
-      def migrate!
-        Swift.db.migrate!(self)
-      end
-
       def create options = {}
         Swift.db.create(self, options)
       end

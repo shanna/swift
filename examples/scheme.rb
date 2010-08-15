@@ -1,6 +1,10 @@
 #!/usr/bin/env ruby
-require_relative '../lib/swift'
+
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+
 require 'pp'
+require 'swift'
+require 'swift/migrations'
 
 class User < Swift::Scheme
   store     :users
@@ -27,7 +31,6 @@ User.create name: 'Benny Arthurton', email: 'benny@arthurton.local'
 
 puts '', '-- all --'
 pp User.all.to_a
-# pp User.all(':name like ?', '%Arthurton').to_a
 
 puts '', '-- first --'
 pp User.first(':name like ?', '%Arthurton')

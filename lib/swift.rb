@@ -39,10 +39,5 @@ module Swift
     def schema
       @schema ||= []
     end
-
-    def migrate! name = nil
-      db(name){ schema.each(&:migrate!)}
-    end
   end
 end # Swift
-

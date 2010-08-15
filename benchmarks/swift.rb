@@ -1,6 +1,10 @@
+#!/usr/bin/env ruby
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+
 require 'benchmark'
 require 'stringio'
-require_relative '../lib/swift'
+require 'swift'
+require 'swift/migrations'
 
 class User < Swift::Scheme
   store     :users

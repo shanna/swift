@@ -1,4 +1,5 @@
 require_relative 'helper'
+require 'swift/pool'
 
 describe 'Adapter' do
   supported_by Swift::DB::Postgres, Swift::DB::Mysql do

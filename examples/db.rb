@@ -1,6 +1,10 @@
 #!/usr/bin/env ruby
-require_relative '../lib/swift'
+
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+
 require 'pp'
+require 'swift'
+require 'swift/migrations'
 
 class User < Swift::Scheme
   store     :users
