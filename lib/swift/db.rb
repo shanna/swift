@@ -38,6 +38,13 @@ module Swift
         true
       end
 
+      def field_definition attribute
+        case attribute
+          when Type::IO then '%s bytea' % attribute.field
+          else super
+        end
+      end
+
       private
       def sync_timezone
         sql = "select extract(epoch from now())::bigint - extract(epoch from now() at time zone 'UTC')::bigint"

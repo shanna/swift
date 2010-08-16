@@ -107,6 +107,7 @@ module Swift
           when Type::BigDecimal then 'numeric'
           when Type::Time       then 'timestamp'
           when Type::Boolean    then 'boolean'
+          when Type::IO         then 'blob'
           else 'text'
         end
       end

@@ -4,11 +4,13 @@ describe 'Adapter' do
   supported_by Swift::DB::Postgres, Swift::DB::Mysql do
     describe 'Storing binary objects' do
       before do
-        Swift.db do |db|
-          type = db.is_a?(Swift::DB::Postgres) ? 'bytea' : 'blob'
-          db.execute %q{drop table if exists users}
-          db.execute %Q{create table users(id serial, name text, image #{type}, primary key(id))}
+        user = Class.new(Swift::Scheme) do
+          store :users
+          attribute :id,    Swift::Type::Integer, serial: true, key: true
+          attribute :name,  Swift::Type::String
+          attribute :image, Swift::Type::IO
         end
+        Swift.db.migrate! user
       end
 
       it 'stores and retrieves an image' do
