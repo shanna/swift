@@ -3,36 +3,45 @@ module Swift
     class Mysql < Adapter
       def initialize options = {}
         super options.update(driver: 'mysql')
-        execute('select unix_timestamp() - unix_timestamp(utc_timestamp()) as offset') {|r| @tzoffset = r[:offset] }
+        sync_timezone
       end
 
       def timezone *args
         super(*args)
-        execute('select unix_timestamp() - unix_timestamp(utc_timestamp()) as offset') {|r| @tzoffset = r[:offset] }
+        sync_timezone
         @tzoffset
       end
 
       def returning?
         false
       end
+
+      private
+      def sync_timezone
+        execute('select unix_timestamp() - unix_timestamp(utc_timestamp()) as offset') {|r| @tzoffset = r[:offset] }
+      end
     end # Mysql
 
     class Postgres < Adapter
       def initialize options = {}
         super options.update(driver: 'postgresql')
-        sql = "select extract(epoch from now())::bigint - extract(epoch from now() at time zone 'UTC')::bigint"
-        execute('%s as offset' % sql) {|r| @tzoffset = r[:offset] }
+        sync_timezone
       end
 
       def timezone *args
         super(*args)
-        sql = "select extract(epoch from now())::bigint - extract(epoch from now() at time zone 'UTC')::bigint"
-        execute('%s as offset' % sql) {|r| @tzoffset = r[:offset] }
+        sync_timezone
         @tzoffset
       end
 
       def returning?
         true
+      end
+
+      private
+      def sync_timezone
+        sql = "select extract(epoch from now())::bigint - extract(epoch from now() at time zone 'UTC')::bigint"
+        execute('%s as offset' % sql) {|r| @tzoffset = r[:offset] }
       end
     end # Postgres
   end # DB
