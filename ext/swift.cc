@@ -170,6 +170,7 @@ VALUE rb_adapter_init(VALUE self, VALUE opts) {
     VALUE user     = rb_hash_aref(opts, ID2SYM(rb_intern("user")));
     VALUE driver   = rb_hash_aref(opts, ID2SYM(rb_intern("driver")));
     VALUE password = rb_hash_aref(opts, ID2SYM(rb_intern("password")));
+    VALUE zone     = rb_hash_aref(opts, ID2SYM(rb_intern("zone")));
 
     if (NIL_P(db)) rb_raise(eArgumentError, "Adapter#new called without :db");
     if (NIL_P(driver)) rb_raise(eArgumentError, "Adapter#new called without :driver");
@@ -186,7 +187,9 @@ VALUE rb_adapter_init(VALUE self, VALUE opts) {
         );
     } catch EXCEPTION("Adapter#new");
 
+    // TODO figure out if we still need to store opts.
     rb_iv_set(self, "@options", opts);
+    rb_iv_set(self, "@zone", zone);
     return Qnil;
 }
 
@@ -352,23 +355,35 @@ VALUE rb_adapter_write(int argc, VALUE *argv, VALUE self) {
     return ULONG2NUM(rows);
 }
 
-VALUE rb_adapter_timezone(int argc, VALUE *argv, VALUE self) {
-    VALUE name, tzhour, tzmin;
-    if (argc == 1)
-        rb_scan_args(argc, argv, "10", &name);
-    else {
-        rb_scan_args(argc, argv, "20", &tzhour, &tzmin);
-        if (TYPE(tzhour) != T_FIXNUM && TYPE(tzmin) != T_FIXNUM)
-            rb_raise(eArgumentError, "Adapter#timezone: tzhour and tzmin must be Fixnum");
-    }
-    dbi::Handle *h = DBI_HANDLE(self);
-    try {
-        if (argc == 1)
-            h->setTimeZone(CSTRING(name));
-        else
-            h->setTimeZoneOffset(NUM2INT(tzhour), NUM2INT(tzmin));
-    } catch EXCEPTION("Adapter#timezone");
-    return Qtrue;
+VALUE rb_adapter_timezone(VALUE self, VALUE zone) {
+    rb_iv_set(self, "@zone", zone);
+    return zone;
+}
+
+
+ulong rb_adapter_tzoffset(VALUE self) {
+    ulong offset;
+    char buffer[512];
+    char *old, saved[512];
+
+    VALUE zone = rb_iv_get(self, "@zone");
+    if NIL_P(zone) return 0;
+
+    // save current zone setting.
+    if ((old = getenv("TZ"))) strcpy(saved, old);
+
+    snprintf(buffer, 512, ":%s", CSTRING(zone));
+    setenv("TZ", buffer, 1);
+    tzset();
+    offset = timezone;
+
+    // reset it back.
+    if (old)
+        setenv("TZ", saved, 1);
+    else
+        unsetenv("TZ");
+
+    return -1 * offset;
 }
 
 VALUE rb_adapter_escape(VALUE self, VALUE val) {
@@ -460,7 +475,7 @@ VALUE rb_statement_insert_id(VALUE self) {
   return insert_id;
 }
 
-VALUE rb_field_typecast(int type, const char *data, ulong len, ulong dbtzoffset) {
+VALUE rb_field_typecast(int type, const char *data, ulong len, ulong adapter_tzoffset) {
     time_t epoch, offset;
     struct tm tm;
 
@@ -506,7 +521,7 @@ VALUE rb_field_typecast(int type, const char *data, ulong len, ulong dbtzoffset)
                           (time_t)tzhour * -3600 + (time_t)tzmin * -60
                         : (time_t)tzhour *  3600 + (time_t)tzmin *  60;
                 }
-                else offset -= dbtzoffset;
+                else offset -= adapter_tzoffset;
                 return rb_time_new(epoch + offset, usec*1000000);
             }
             else {
@@ -523,15 +538,13 @@ VALUE rb_field_typecast(int type, const char *data, ulong len, ulong dbtzoffset)
 
 static VALUE rb_statement_each(VALUE self) {
     uint r, c;
-    ulong len, dbtzoffset;
+    ulong len, adapter_tzoffset;
     const char *data;
 
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
     VALUE scheme     = rb_iv_get(self, "@scheme");
     VALUE adapter    = rb_iv_get(self, "@adapter");
-    VALUE tzoffsecs  = rb_iv_get(adapter, "@tzoffset");
-
-    dbtzoffset = NIL_P(tzoffsecs) ? 0 : NUM2ULONG(tzoffsecs);
+    adapter_tzoffset = rb_adapter_tzoffset(adapter);
 
     try {
         VALUE attrs = rb_ary_new();
@@ -551,7 +564,8 @@ static VALUE rb_statement_each(VALUE self) {
                 for (c = 0; c < st->columns(); c++) {
                     data = (const char*)st->fetchValue(r,c, &len);
                     if (data)
-                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(types[c], data, len, dbtzoffset));
+                        rb_hash_aset(row, rb_ary_entry(attrs, c),
+                            rb_field_typecast(types[c], data, len, adapter_tzoffset));
                     else
                         rb_hash_aset(row, rb_ary_entry(attrs, c), Qnil);
                 }
@@ -564,7 +578,8 @@ static VALUE rb_statement_each(VALUE self) {
                 for (c = 0; c < st->columns(); c++) {
                     data = (const char*)st->fetchValue(r,c, &len);
                     if (data)
-                        rb_hash_aset(row, rb_ary_entry(attrs, c), rb_field_typecast(types[c], data, len, dbtzoffset));
+                        rb_hash_aset(row, rb_ary_entry(attrs, c),
+                            rb_field_typecast(types[c], data, len, adapter_tzoffset));
                     else
                         rb_hash_aset(row, rb_ary_entry(attrs, c), Qnil);
                 }
@@ -776,7 +791,7 @@ extern "C" {
         rb_define_method(cAdapter, "clone",       RUBY_METHOD_FUNC(rb_adapter_dup), 0);
         rb_define_method(cAdapter, "write",       RUBY_METHOD_FUNC(rb_adapter_write), -1);
         rb_define_method(cAdapter, "results",     RUBY_METHOD_FUNC(rb_adapter_results), 0);
-        rb_define_method(cAdapter, "timezone",    RUBY_METHOD_FUNC(rb_adapter_timezone), -1);
+        rb_define_method(cAdapter, "timezone",    RUBY_METHOD_FUNC(rb_adapter_timezone), 1);
         rb_define_method(cAdapter, "escape",      RUBY_METHOD_FUNC(rb_adapter_escape), 1);
 
         rb_define_alloc_func(cStatement, rb_statement_alloc);
