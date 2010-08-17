@@ -32,6 +32,7 @@ module Swift
       relations.map do |relation|
         relation = scheme.new(relation) unless relation.kind_of?(scheme)
         statement.execute(*relation.tuple.values_at(*scheme.header.updatable, *scheme.header.keys))
+        relation
       end
     end
 
