@@ -356,12 +356,6 @@ VALUE rb_adapter_write(int argc, VALUE *argv, VALUE self) {
     return ULONG2NUM(rows);
 }
 
-VALUE rb_adapter_timezone(VALUE self, VALUE zone) {
-    rb_iv_set(self, "@timezone", zone);
-    return zone;
-}
-
-
 ulong rb_zone_to_offset(VALUE zone) {
     ulong offset;
     char buffer[512];
@@ -377,7 +371,7 @@ ulong rb_zone_to_offset(VALUE zone) {
     tzset();
     offset = timezone;
 
-    // reset it back.
+    // reset it back, no need to use rb_ensure coz we can't get any VM errors here.
     if (old)
         setenv("TZ", saved, 1);
     else
@@ -803,7 +797,6 @@ extern "C" {
         rb_define_method(cAdapter, "clone",       RUBY_METHOD_FUNC(rb_adapter_dup), 0);
         rb_define_method(cAdapter, "write",       RUBY_METHOD_FUNC(rb_adapter_write), -1);
         rb_define_method(cAdapter, "results",     RUBY_METHOD_FUNC(rb_adapter_results), 0);
-        rb_define_method(cAdapter, "timezone",    RUBY_METHOD_FUNC(rb_adapter_timezone), 1);
         rb_define_method(cAdapter, "escape",      RUBY_METHOD_FUNC(rb_adapter_escape), 1);
 
         rb_define_alloc_func(cStatement, rb_statement_alloc);
