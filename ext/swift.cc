@@ -170,7 +170,7 @@ VALUE rb_adapter_init(VALUE self, VALUE opts) {
     VALUE user     = rb_hash_aref(opts, ID2SYM(rb_intern("user")));
     VALUE driver   = rb_hash_aref(opts, ID2SYM(rb_intern("driver")));
     VALUE password = rb_hash_aref(opts, ID2SYM(rb_intern("password")));
-    VALUE zone     = rb_hash_aref(opts, ID2SYM(rb_intern("zone")));
+    VALUE zone     = rb_hash_aref(opts, ID2SYM(rb_intern("timezone")));
 
     if (NIL_P(db)) rb_raise(eArgumentError, "Adapter#new called without :db");
     if (NIL_P(driver)) rb_raise(eArgumentError, "Adapter#new called without :driver");
@@ -187,9 +187,10 @@ VALUE rb_adapter_init(VALUE self, VALUE opts) {
         );
     } catch EXCEPTION("Adapter#new");
 
-    // TODO figure out if we still need to store opts.
+    // NOTE: We need the options ivar - Swift#pool uses it to setup pools based on
+    //       names used in Swift#setup.
     rb_iv_set(self, "@options", opts);
-    rb_iv_set(self, "@zone", zone);
+    rb_iv_set(self, "@timezone", zone);
     return Qnil;
 }
 
@@ -221,8 +222,8 @@ static VALUE rb_adapter_prepare(int argc, VALUE *argv, VALUE self) {
     try {
         dbi::AbstractStatement *st = h->conn()->prepare(CSTRING(sql));
         prepared = Data_Wrap_Struct(cStatement, 0, free_statement, st);
-        rb_iv_set(prepared, "@scheme", scheme);
-        rb_iv_set(prepared, "@adapter", self);
+        rb_iv_set(prepared, "@scheme",   scheme);
+        rb_iv_set(prepared, "@timezone", rb_iv_get(self, "@timezone"));
     } catch EXCEPTION("Adapter#prepare");
 
     return prepared;
@@ -262,7 +263,7 @@ VALUE rb_adapter_execute(int argc, VALUE *argv, VALUE self) {
         if (rb_block_given_p()) {
             dbi::AbstractResultSet *rs = h->results();
             result = Data_Wrap_Struct(cResultSet, 0, free_statement, rs);
-            rb_iv_set(result, "@adapter", self);
+            rb_iv_set(result, "@timezone", rb_iv_get(self, "@timezone"));
         }
     } catch EXCEPTION("Adapter#execute");
 
@@ -275,7 +276,7 @@ VALUE rb_adapter_results(VALUE self) {
     try {
         dbi::AbstractResultSet *rs = h->results();
         result = Data_Wrap_Struct(cResultSet, 0, free_statement, rs);
-        rb_iv_set(result, "@adapter", self);
+        rb_iv_set(result, "@timezone", rb_iv_get(self, "@timezone"));
     } catch EXCEPTION("Adapter#results");
     return result;
 }
@@ -356,17 +357,16 @@ VALUE rb_adapter_write(int argc, VALUE *argv, VALUE self) {
 }
 
 VALUE rb_adapter_timezone(VALUE self, VALUE zone) {
-    rb_iv_set(self, "@zone", zone);
+    rb_iv_set(self, "@timezone", zone);
     return zone;
 }
 
 
-ulong rb_adapter_tzoffset(VALUE self) {
+ulong rb_zone_to_offset(VALUE zone) {
     ulong offset;
     char buffer[512];
     char *old, saved[512];
 
-    VALUE zone = rb_iv_get(self, "@zone");
     if NIL_P(zone) return 0;
 
     // save current zone setting.
@@ -543,8 +543,8 @@ static VALUE rb_statement_each(VALUE self) {
 
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
     VALUE scheme     = rb_iv_get(self, "@scheme");
-    VALUE adapter    = rb_iv_get(self, "@adapter");
-    adapter_tzoffset = rb_adapter_tzoffset(adapter);
+    VALUE zone       = rb_iv_get(self, "@timezone");
+    adapter_tzoffset = rb_zone_to_offset(zone);
 
     try {
         VALUE attrs = rb_ary_new();
@@ -668,6 +668,7 @@ VALUE rb_cpool_init(VALUE self, VALUE n, VALUE opts) {
     VALUE user     = rb_hash_aref(opts, ID2SYM(rb_intern("user")));
     VALUE driver   = rb_hash_aref(opts, ID2SYM(rb_intern("driver")));
     VALUE password = rb_hash_aref(opts, ID2SYM(rb_intern("password")));
+    VALUE zone     = rb_hash_aref(opts, ID2SYM(rb_intern("timezone")));
 
     if (NIL_P(db)) rb_raise(eArgumentError, "ConnectionPool#new called without :db");
     if (NIL_P(driver)) rb_raise(eArgumentError, "ConnectionPool#new called without :driver");
@@ -685,14 +686,18 @@ VALUE rb_cpool_init(VALUE self, VALUE n, VALUE opts) {
         );
     } catch EXCEPTION("ConnectionPool#new");
 
+    rb_iv_set(self, "@timezone", zone);
     return Qnil;
 }
 
 void rb_cpool_callback(dbi::AbstractResultSet *rs) {
     VALUE callback = (VALUE)rs->context;
     // NOTE: ResultSet will be free'd by the underlying connection pool dispatcher.
-    if (!NIL_P(callback))
-        rb_proc_call(callback, rb_ary_new3(1, Data_Wrap_Struct(cResultSet, 0, 0, rs)));
+    if (!NIL_P(callback)) {
+        VALUE result = Data_Wrap_Struct(cResultSet, 0, 0, rs);
+        rb_iv_set(result, "@timezone", rb_iv_get(callback, "@timezone"));
+        rb_proc_call(callback, rb_ary_new3(1, result));
+    }
 }
 
 VALUE rb_cpool_execute(int argc, VALUE *argv, VALUE self) {
@@ -704,6 +709,13 @@ VALUE rb_cpool_execute(int argc, VALUE *argv, VALUE self) {
     VALUE request = Qnil;
 
     rb_scan_args(argc, argv, "1*&", &sql, &args, &callback);
+
+    if (NIL_P(callback))
+        rb_raise(eArgumentError, "No block given in Pool#execute");
+
+    // HACK: cheating a bit, we need the timezone when creating the resultset.
+    rb_iv_set(callback, "@timezone", rb_iv_get(self, "@timezone"));
+
     try {
         dbi::ResultRow bind;
         for (n = 0; n < RARRAY_LEN(args); n++) {

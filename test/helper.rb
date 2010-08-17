@@ -27,4 +27,5 @@ class MiniTest::Spec
   end
 end
 
+ENV['TZ'] = ":Australia/Melbourne"
 MiniTest::Unit.autorun

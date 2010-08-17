@@ -6,7 +6,6 @@ describe 'Adapter' do
     describe 'Asynchronous connection pool' do
       before do
         Swift.db do |db|
-          type = db.is_a?(Swift::DB::Postgres) ? 'bytea' : 'blob'
           db.execute %q{drop table if exists users}
           db.execute %Q{create table users(id serial, name text)}
         end

@@ -21,7 +21,7 @@ class Runner
     %w(tests runs rows).each do |name|
       instance_variable_set("@#{name}", opts[name.to_sym])
     end
-    Swift.setup :default, @driver, db: 'swift', zone: 'Australia/Melbourne'
+    Swift.setup :default, @driver, db: 'swift', timezone: 'Australia/Melbourne'
   end
 
   def run
