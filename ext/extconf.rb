@@ -32,8 +32,29 @@ def library_installed? name, hint
   end
 end
 
+def assert_dbicpp_version ver
+  passed  = false
+  header  = '/usr/include/dbic++.h'
+  message = "Swift needs dbic++ >= #{ver}. Please update your dbic++ installation."
+
+  if File.exists?(header) && match = File.read(header).match(/DBI_VERSION\s+(.*?)\n/mi)
+    rmajor, rminor, rbuild = ver.strip.split(/\./).map(&:to_i)
+    imajor, iminor, ibuild = match.captures.first.strip.split(/\./).map(&:to_i)
+    passed = (imajor >  rmajor) ||
+             (imajor == rmajor && iminor >  rminor) ||
+             (imajor == rmajor && iminor == rminor && ibuild >= rbuild)
+  else
+    message = "Cannot find #{header} or version number. You need to install dbic++ >= 0.2.6"
+    passed  = false
+  end
+
+  raise message unless passed
+end
+
 exit 1 unless library_installed? 'pcrecpp', apt_install_hint('libpcre3-dev')
 exit 1 unless library_installed? 'uuid',    apt_install_hint('uuid-dev')
 exit 1 unless library_installed? 'dbic++',  apt_install_hint('dbic++-dev')
+
+assert_dbicpp_version '0.2.6'
 
 create_makefile 'swift'

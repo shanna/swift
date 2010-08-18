@@ -345,11 +345,11 @@ VALUE rb_adapter_write(int argc, VALUE *argv, VALUE self) {
         rb_gc();
         if (TYPE(stream) == T_STRING) {
             dbi::IOStream io(RSTRING_PTR(stream), RSTRING_LEN(stream));
-            rows = h->copyIn(RSTRING_PTR(table), rfields, &io);
+            rows = h->write(RSTRING_PTR(table), rfields, &io);
         }
         else {
             IOStream io(stream);
-            rows = h->copyIn(RSTRING_PTR(table), rfields, &io);
+            rows = h->write(RSTRING_PTR(table), rfields, &io);
         }
     } catch EXCEPTION("Adapter#write");
 
@@ -556,7 +556,7 @@ static VALUE rb_statement_each(VALUE self) {
             for (r = 0; r < st->rows(); r++) {
                 VALUE row = rb_hash_new();
                 for (c = 0; c < st->columns(); c++) {
-                    data = (const char*)st->fetchValue(r,c, &len);
+                    data = (const char*)st->read(r,c, &len);
                     if (data)
                         rb_hash_aset(row, rb_ary_entry(attrs, c),
                             rb_field_typecast(types[c], data, len, adapter_tzoffset));
@@ -570,7 +570,7 @@ static VALUE rb_statement_each(VALUE self) {
             for (r = 0; r < st->rows(); r++) {
                 VALUE row = rb_hash_new();
                 for (c = 0; c < st->columns(); c++) {
-                    data = (const char*)st->fetchValue(r,c, &len);
+                    data = (const char*)st->read(r,c, &len);
                     if (data)
                         rb_hash_aset(row, rb_ary_entry(attrs, c),
                             rb_field_typecast(types[c], data, len, adapter_tzoffset));
@@ -584,22 +584,22 @@ static VALUE rb_statement_each(VALUE self) {
     return Qnil;
 }
 
-VALUE rb_statement_fetchrow(VALUE self) {
+VALUE rb_statement_read(VALUE self) {
     const char *data;
     uint r, c;
     ulong len;
     VALUE row = Qnil;
     dbi::AbstractStatement *st = DBI_STATEMENT(self);
     try {
-        r = st->currentRow();
+        r = st->tell();
         if (r < st->rows()) {
             row = rb_ary_new();
             for (c = 0; c < st->columns(); c++) {
-                data = (const char*)st->fetchValue(r, c, &len);
+                data = (const char*)st->read(r, c, &len);
                 rb_ary_push(row, data ? rb_str_new(data, len) : Qnil);
             }
         }
-    } catch EXCEPTION("Statement#fetchrow");
+    } catch EXCEPTION("Statement#read");
 
     return row;
 }
@@ -805,7 +805,7 @@ extern "C" {
         rb_define_method(cStatement, "execute",     RUBY_METHOD_FUNC(rb_statement_execute), -1);
         rb_define_method(cStatement, "each",        RUBY_METHOD_FUNC(rb_statement_each), 0);
         rb_define_method(cStatement, "rows",        RUBY_METHOD_FUNC(rb_statement_rows), 0);
-        rb_define_method(cStatement, "fetchrow",    RUBY_METHOD_FUNC(rb_statement_fetchrow), 0);
+        rb_define_method(cStatement, "read",        RUBY_METHOD_FUNC(rb_statement_read), 0);
         rb_define_method(cStatement, "finish",      RUBY_METHOD_FUNC(rb_statement_finish), 0);
         rb_define_method(cStatement, "dup",         RUBY_METHOD_FUNC(rb_statement_dup), 0);
         rb_define_method(cStatement, "clone",       RUBY_METHOD_FUNC(rb_statement_dup), 0);

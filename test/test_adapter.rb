@@ -76,8 +76,8 @@ describe 'Adapter' do
         assert_kind_of Hash, @sth.first
       end
 
-      it 'returns array rows for fetchrow' do
-        assert_kind_of Array, @sth.fetchrow
+      it 'returns array rows for read' do
+        assert_kind_of Array, @sth.read
       end
 
       it 'returns a result set on Adapter#execute{}' do
