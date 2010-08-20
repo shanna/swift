@@ -26,7 +26,7 @@ static VALUE fNew;
 static VALUE fRead;
 static VALUE fWrite;
 
-size_t tzoffset;
+size_t local_tzoffset;
 char   errstr[8192];
 
 #define CSTRING(v)    RSTRING_PTR(TYPE(v) == T_STRING ? v : rb_funcall(v, fStringify, 0))
@@ -148,14 +148,6 @@ VALUE rb_swift_init(VALUE self, VALUE path) {
 
 static void free_connection(dbi::Handle *self) {
     if (self) delete self;
-}
-
-int compute_tzoffset() {
-    struct tm tm;
-    memset(&tm, 0, sizeof(struct tm));
-    tm.tm_year = 70;
-    tm.tm_mday = 1;
-    return -1 * mktime(&tm);
 }
 
 VALUE rb_adapter_alloc(VALUE klass) {
@@ -335,7 +327,7 @@ VALUE rb_adapter_write(int argc, VALUE *argv, VALUE self) {
 
     dbi::Handle *h = DBI_HANDLE(self);
     try {
-        dbi::ResultRow rfields;
+        dbi::FieldSet rfields;
         for (int n = 0; n < RARRAY_LEN(fields); n++) {
             VALUE f = rb_ary_entry(fields, n);
             rfields << std::string(RSTRING_PTR(f), RSTRING_LEN(f));
@@ -354,6 +346,11 @@ VALUE rb_adapter_write(int argc, VALUE *argv, VALUE self) {
     } catch EXCEPTION("Adapter#write");
 
     return ULONG2NUM(rows);
+}
+
+int compute_local_tzoffset() {
+    tzset();
+    return -1 * timezone;
 }
 
 ulong rb_zone_to_offset(VALUE zone) {
@@ -508,7 +505,7 @@ VALUE rb_field_typecast(int type, const char *data, ulong len, ulong adapter_tzo
             tm.tm_year -= 1900;
             tm.tm_mon  -= 1;
             if (tm.tm_mday > 0) {
-                offset = tzoffset;
+                offset = local_tzoffset;
                 epoch  = mktime(&tm);
                 if (tzsign == '+' || tzsign == '-') {
                     offset += tzsign == '+' ?
@@ -539,6 +536,7 @@ static VALUE rb_statement_each(VALUE self) {
     VALUE scheme     = rb_iv_get(self, "@scheme");
     VALUE zone       = rb_iv_get(self, "@timezone");
     adapter_tzoffset = rb_zone_to_offset(zone);
+    local_tzoffset   = compute_local_tzoffset();
 
     try {
         VALUE attrs = rb_ary_new();
@@ -551,7 +549,6 @@ static VALUE rb_statement_each(VALUE self) {
         // TODO Code duplication
         //      Avoiding a rb_yield(NIL_P(scheme) ? row : rb_funcall(scheme, fLoad, 1, row))
         st->seek(0);
-        tzoffset = compute_tzoffset();
         if (NIL_P(scheme)) {
             for (r = 0; r < st->rows(); r++) {
                 VALUE row = rb_hash_new();
