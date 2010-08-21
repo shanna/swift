@@ -244,8 +244,11 @@ VALUE rb_adapter_execute(int argc, VALUE *argv, VALUE self) {
         BlockingQuery query;
         query.sql    = CSTRING(argv[0]);
         query.handle = h;
-        if (argc == 1)
+        if (argc == 1) {
+            if (dbi::_trace)
+                dbi::logMessage(dbi::_trace_fd, query.sql);
             rows = rb_thread_blocking_region(THREAD_BLOCKING_FUNCTION(handle_execute), &query, 0, 0);
+        }
         else {
             rb_extract_bind_params(argc-1, argv+1, query.bind);
             if (dbi::_trace)
