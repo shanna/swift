@@ -6,7 +6,7 @@ describe 'Adapter' do
     describe 'time parsing and time zones' do
 
       before do
-        @db = Swift.db.class.new Swift.db.options.merge({timezone: 'Asia/Kabul'})
+        @db = Swift.db.class.new Swift.db.options.merge(timezone: 'Asia/Kabul')
       end
 
       it 'should parse timestamps and do conversion accordingly' do
