@@ -90,17 +90,6 @@ describe 'Adapter' do
       end
     end
 
-    describe 'transactions' do
-      it 'yields db to block' do
-        Swift.db.transaction do |db|
-          assert_kind_of Swift::Adapter, db
-        end
-
-        Swift.db.transaction :sweet do |db|
-          assert_kind_of Swift::Adapter, db
-        end
-      end
-    end
 
     #--
     # TODO: Not sure how I feel about the block in write; feels like it's just there to get around the fields in the

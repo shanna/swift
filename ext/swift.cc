@@ -300,22 +300,27 @@ VALUE rb_adapter_rollback(int argc, VALUE *argv, VALUE self) {
 VALUE rb_adapter_transaction(int argc, VALUE *argv, VALUE self) {
     int status;
     VALUE sp, block;
+
+    dbi::Handle *h  = DBI_HANDLE(self);
+
     rb_scan_args(argc, argv, "01&", &sp, &block);
+    if (NIL_P(block))
+        rb_raise(eArgumentError, "Adapter#transaction{} called without a block");
 
     std::string save_point = NIL_P(sp) ? "SP" + dbi::generateCompactUUID() : CSTRING(sp);
-    dbi::Handle *h         = DBI_HANDLE(self);
 
     try {
         h->begin(save_point);
         rb_protect(rb_yield, self, &status);
-        if (status == 0 && h->transactions().back() == save_point) {
+        if (!status && h->transactions().size() > 0) {
             h->commit(save_point);
         }
-        else if (status != 0) {
-            if (h->transactions().back() == save_point) h->rollback(save_point);
+        else if (status && h->transactions().size() > 0) {
+            h->rollback(save_point);
             rb_jump_tag(status);
         }
     } catch EXCEPTION("Adapter#transaction{}");
+    return Qtrue;
 }
 
 VALUE rb_adapter_write(int argc, VALUE *argv, VALUE self) {
