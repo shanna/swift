@@ -760,6 +760,10 @@ VALUE rb_request_process(VALUE self) {
     return rc;
 }
 
+VALUE rb_special_constant(VALUE self, VALUE obj) {
+    return rb_special_const_p(obj) ? Qtrue : Qfalse;
+}
+
 extern "C" {
     void Init_swift(void) {
         rb_require("bigdecimal");
@@ -787,7 +791,7 @@ extern "C" {
 
         rb_define_module_function(mSwift, "init",  RUBY_METHOD_FUNC(rb_swift_init), 1);
         rb_define_module_function(mSwift, "trace", RUBY_METHOD_FUNC(rb_swift_trace), -1);
-        rb_define_module_function(mSwift, "dup?",  RUBY_METHOD_FUNC(rb_special_const_p), 1);
+        rb_define_module_function(mSwift, "special_constant?", RUBY_METHOD_FUNC(rb_special_constant), 1);
 
         rb_define_alloc_func(cAdapter, rb_adapter_alloc);
 

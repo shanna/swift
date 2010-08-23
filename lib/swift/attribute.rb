@@ -14,10 +14,10 @@ module Swift
     def default
       if @default.respond_to?(:call)
         @default.call
-      elsif Swift.dup?(@default)
-        @default.dup
-      else
+      elsif Swift.special_constant?(@default)
         @default
+      else
+        @default.dup
       end
     end
 
