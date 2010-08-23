@@ -787,6 +787,7 @@ extern "C" {
 
         rb_define_module_function(mSwift, "init",  RUBY_METHOD_FUNC(rb_swift_init), 1);
         rb_define_module_function(mSwift, "trace", RUBY_METHOD_FUNC(rb_swift_trace), -1);
+        rb_define_module_function(mSwift, "dup?",  RUBY_METHOD_FUNC(rb_special_const_p), 1);
 
         rb_define_alloc_func(cAdapter, rb_adapter_alloc);
 

@@ -8,6 +8,7 @@ describe 'scheme' do
       attribute :name,       Swift::Type::String,  default: "dave"
       attribute :age,        Swift::Type::Integer, default: 18
       attribute :email,      Swift::Type::String
+      attribute :verified,   Swift::Type::Boolean, default: false
       attribute :created_at, Swift::Type::Time,    default: proc { Time.now }
     end
   end
@@ -32,6 +33,7 @@ describe 'scheme' do
       assert_equal 'dave', instance.name
       assert_equal 18,     instance.age
       assert_equal nil,    instance.email
+      assert_equal false,  instance.verified
     end
 
     it 'returns a new instance' do

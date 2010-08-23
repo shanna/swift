@@ -12,14 +12,12 @@ module Swift
     end
 
     def default
-      if @default.nil?
-        nil
-      elsif @default.respond_to?(:call)
+      if @default.respond_to?(:call)
         @default.call
-      elsif @default.kind_of?(Numeric) or @default.kind_of?(Symbol)
-        @default
-      else
+      elsif Swift.dup?(@default)
         @default.dup
+      else
+        @default
       end
     end
 
