@@ -12,12 +12,20 @@ module Swift
     end
 
     def default
-      @default.respond_to?(:call) ? @default.call : (@default.nil? ? nil : @default.dup)
+      if @default.nil?
+        nil
+      elsif @default.respond_to?(:call)
+        @default.call
+      elsif @default.kind_of?(Numeric) or @default.kind_of?(Symbol)
+        @default
+      else
+        @default.dup
+      end
     end
 
     def define_scheme_methods scheme
       scheme.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-        def #{name};        tuple.fetch(:#{field})        end
+        def #{name};        tuple.fetch(:#{field}, nil)   end
         def #{name}= value; tuple.store(:#{field}, value) end
       RUBY
     end
