@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-  s.date = %q{2010-08-23}
+  s.date = %q{2010-08-24}
   s.description = %q{A rational rudimentary database abstraction.}
   s.email = ["shane.hanna@gmail.com", "deepfryed@gmail.com"]
   s.extensions = ["ext/extconf.rb"]
@@ -43,7 +43,9 @@ Gem::Specification.new do |s|
      "test/test_identity_map.rb",
      "test/test_io.rb",
      "test/test_pool.rb",
+     "test/test_scheme.rb",
      "test/test_timestamps.rb",
+     "test/test_transactions.rb",
      "test/test_validations.rb"
   ]
   s.homepage = %q{http://github.com/shanna/swift}
@@ -52,7 +54,9 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.5}
   s.summary = %q{A rational rudimentary database abstraction.}
   s.test_files = [
-    "test/helper.rb",
+    "test/test_scheme.rb",
+     "test/test_transactions.rb",
+     "test/helper.rb",
      "test/test_adapter.rb",
      "test/test_pool.rb",
      "test/test_io.rb",
