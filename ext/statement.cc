@@ -2,7 +2,7 @@
 
 VALUE cSwiftStatement;
 
-static void statement_free(dbi::AbstractStatement *self) {
+void statement_free(dbi::AbstractStatement *self) {
   if (self) {
     self->cleanup();
     delete self;

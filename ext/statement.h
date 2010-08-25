@@ -6,7 +6,7 @@
 extern VALUE cSwiftStatement;
 
 void init_swift_statement();
-static void statement_free(dbi::AbstractStatement*);
+void statement_free(dbi::AbstractStatement*);
 
 #endif
 
