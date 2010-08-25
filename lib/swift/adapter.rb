@@ -13,8 +13,8 @@ module Swift
     end
 
     def first scheme, conditions = '', *binds, &block
-      where = "where #{exchange_names(scheme, conditions)} limit 1" unless conditions.empty?
-      prepare(scheme, "select * from #{scheme.store} #{where}").execute(*binds, &block).first
+      where = "where #{exchange_names(scheme, conditions)}" unless conditions.empty?
+      prepare(scheme, "select * from #{scheme.store} #{where} limit 1").execute(*binds, &block).first
     end
 
     def create scheme, *relations
