@@ -126,6 +126,101 @@ static VALUE adapter_initialize(VALUE self, VALUE options) {
   return Qnil;
 }
 
+static VALUE adapter_prepare(int argc, VALUE *argv, VALUE self) {
+  VALUE sql, scheme, prepared;
+
+  rb_scan_args(argc, argv, "11", &scheme, &sql);
+  if (TYPE(scheme) != T_CLASS) {
+    sql    = scheme;
+    scheme = Qnil;
+  }
+
+  dbi::Handle *handle = adapter_handle(self);
+  try {
+    dbi::AbstractStatement *st = handle->conn()->prepare(CSTRING(sql));
+    prepared                   = Data_Wrap_Struct(cSwiftStatement, 0, statement_free, st);
+    rb_iv_set(prepared, "@scheme",   scheme);
+    rb_iv_set(prepared, "@timezone", rb_iv_get(self, "@timezone"));
+  }
+  CATCH_DBI_EXCEPTIONS();
+
+  return prepared;
+}
+
+static VALUE adapter_rollback(int argc, VALUE *argv, VALUE self) {
+  VALUE save_point;
+  rb_scan_args(argc, argv, "01", &save_point);
+
+  dbi::Handle *handle = adapter_handle(self);
+  try {
+    NIL_P(save_point) ? handle->rollback() : handle->rollback(CSTRING(save_point));
+  }
+  CATCH_DBI_EXCEPTIONS();
+}
+
+static VALUE adapter_transaction(int argc, VALUE *argv, VALUE self) {
+  int status;
+  VALUE sp, block;
+  rb_scan_args(argc, argv, "01&", &sp, &block);
+  if (NIL_P(block)) rb_raise(eArgumentError, "Transaction called without a block.");
+
+  dbi::Handle *handle    = adapter_handle(self);
+  std::string save_point = NIL_P(sp) ? "SP" + dbi::generateCompactUUID() : CSTRING(sp);
+  try {
+    handle->begin(save_point);
+    rb_protect(rb_yield, self, &status);
+    if (!status && handle->transactions().size() > 0) {
+      handle->commit(save_point);
+    }
+    else if (status && handle->transactions().size() > 0) {
+      handle->rollback(save_point);
+      rb_jump_tag(status);
+    }
+  }
+  CATCH_DBI_EXCEPTIONS();
+
+  return Qtrue;
+}
+
+static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
+  ulong rows = 0;
+  VALUE stream, table, fields;
+
+  rb_scan_args(argc, argv, "30", &table, &fields, &stream);
+  if (TYPE(stream) != T_STRING && !rb_respond_to(stream, rb_intern("read")))
+    rb_raise(eArgumentError, "Stream must be a String or IO object.");
+  if (TYPE(fields) != T_ARRAY)
+    rb_raise(eArgumentError, "Fields must be an Array.");
+
+  dbi::Handle *handle = adapter_handle(self);
+  try {
+    dbi::FieldSet write_fields;
+    for (int i = 0; i < RARRAY_LEN(fields); i++) {
+      VALUE field = TO_S(rb_ary_entry(fields, i));
+      write_fields << std::string(RSTRING_PTR(field), RSTRING_LEN(field));
+    }
+
+    /*
+      TODO: Adapter specific code is balls.
+      This is just for the friggin mysql support - mysql does not like a statement close command being send on a
+      handle when the writing has started.
+    */
+    rb_gc();
+
+    if (TYPE(stream) == T_STRING) {
+      dbi::IOStream io(RSTRING_PTR(stream), RSTRING_LEN(stream));
+      rows = handle->write(RSTRING_PTR(table), write_fields, &io);
+    }
+    else {
+      IOStream io(stream);
+      rows = handle->write(RSTRING_PTR(table), write_fields, &io);
+    }
+  }
+  CATCH_DBI_EXCEPTIONS();
+
+  return ULONG2NUM(rows);
+}
+
 void init_swift_adapter() {
   eArgumentError = CONST_GET(rb_mKernel, "ArgumentError");
   eStandardError = CONST_GET(rb_mKernel, "StandardError");
@@ -143,16 +238,13 @@ void init_swift_adapter() {
   rb_define_method(cSwiftAdapter, "escape",      RUBY_METHOD_FUNC(adapter_escape),      1);
   rb_define_method(cSwiftAdapter, "execute",     RUBY_METHOD_FUNC(adapter_execute),     -1);
   rb_define_method(cSwiftAdapter, "initialize",  RUBY_METHOD_FUNC(adapter_initialize),  1);
-  /*
-  TODO:
   rb_define_method(cSwiftAdapter, "prepare",     RUBY_METHOD_FUNC(adapter_prepare),     -1);
   rb_define_method(cSwiftAdapter, "rollback",    RUBY_METHOD_FUNC(adapter_rollback),    -1);
   rb_define_method(cSwiftAdapter, "transaction", RUBY_METHOD_FUNC(adapter_transaction), -1);
   rb_define_method(cSwiftAdapter, "write",       RUBY_METHOD_FUNC(adapter_write),       -1);
 
   // TODO: Deprecate? Seems risky.
-  rb_define_method(cSwiftAdapter, "results",     RUBY_METHOD_FUNC(adapter_results),     0);
-  */
+  // rb_define_method(cSwiftAdapter, "results",     RUBY_METHOD_FUNC(adapter_results),     0);
 }
 
 

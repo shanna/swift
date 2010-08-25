@@ -3,6 +3,7 @@
 
 #include "swift.h"
 #include "query.h"
+#include "statement.h"
 
 void init_swift_adapter();
 dbi::Handle *adapter_handle(VALUE);

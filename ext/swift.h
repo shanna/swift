@@ -13,14 +13,15 @@ extern VALUE cSwiftConnectionError;
 
 #define CATCH_DBI_EXCEPTIONS() \
   catch (dbi::ConnectionError &error) { \
-    rb_raise(cSwiftConnectionError, CSTRING(rb_str_new2(error.what()))); \
+    rb_raise(cSwiftConnectionError, "%s", CSTRING(rb_str_new2(error.what()))); \
   } \
-  catch (dbi::Error &error) {\
-    rb_raise(cSwiftConnectionError, CSTRING(rb_str_new2(error.what()))); \
+  catch (dbi::Error &error) { \
+    rb_raise(cSwiftConnectionError, "%s", CSTRING(rb_str_new2(error.what()))); \
   }
 
 #include "adapter.h"
 #include "query.h"
+#include "statement.h"
 
 #endif
 
