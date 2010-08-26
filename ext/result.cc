@@ -2,11 +2,18 @@
 
 VALUE cSwiftResult;
 
+static VALUE eRuntimeError;
+
 void result_free(dbi::AbstractResultSet *result) {
   if (result) {
     result->cleanup();
     delete result;
   }
+}
+
+VALUE result_alloc(VALUE klass) {
+  dbi::AbstractResultSet *result = 0;
+  return Data_Wrap_Struct(klass, 0, result_free, result);
 }
 
 // TODO:
@@ -23,7 +30,7 @@ VALUE result_each(VALUE self) {
   ulong length;
   const char *data;
 
-  dbi::AbstractStatement *handle = result_handle(self);
+  dbi::AbstractResultSet *handle = result_handle(self);
   VALUE adapter                  = rb_iv_get(self, "@adapter");
   VALUE scheme                   = rb_iv_get(self, "@scheme");
 
@@ -59,7 +66,17 @@ VALUE result_each(VALUE self) {
   return Qnil;
 }
 
+dbi::AbstractResultSet* result_handle(VALUE self) {
+  dbi::AbstractResultSet *handle;
+  Data_Get_Struct(self, dbi::AbstractResultSet, handle);
+  if (!handle) rb_raise(eRuntimeError, "Invalid object, did you forget to call #super?");
+
+  return handle;
+}
+
 void init_swift_result() {
+  eRuntimeError  = CONST_GET(rb_mKernel, "RuntimeError");
+
   rb_require("bigdecimal");
   rb_require("stringio");
 
@@ -72,6 +89,7 @@ void init_swift_result() {
   rb_define_method(cSwiftResult, "clone",      RUBY_METHOD_FUNC(result_clone),     0);
   rb_define_method(cSwiftResult, "dup",        RUBY_METHOD_FUNC(result_dup),       0);
   rb_define_method(cSwiftResult, "each",       RUBY_METHOD_FUNC(result_each),      0);
+  /* TODO:
   rb_define_method(cSwiftResult, "execute",    RUBY_METHOD_FUNC(result_execute),   -1);
   rb_define_method(cSwiftResult, "finish",     RUBY_METHOD_FUNC(result_finish),    0);
   rb_define_method(cSwiftResult, "initialize", RUBY_METHOD_FUNC(result_init),      2);
@@ -79,6 +97,7 @@ void init_swift_result() {
   rb_define_method(cSwiftResult, "read",       RUBY_METHOD_FUNC(result_read),      0);
   rb_define_method(cSwiftResult, "rewind",     RUBY_METHOD_FUNC(result_rewind),    0);
   rb_define_method(cSwiftResult, "rows",       RUBY_METHOD_FUNC(result_rows),      0);
+  */
 }
 
 /*
@@ -87,7 +106,7 @@ void init_swift_result() {
   * Perfer embedded > adapter > local timezone.
 */
 VALUE typecast_datetime(VALUE adapter, const char *data, ulong length) {
-  return rb_funcall(CONST_GET("DateTime", rb_mKernel), rb_intern("iso8601"), 1, rb_str_new(data, length));
+  return rb_funcall(CONST_GET(rb_mKernel, "DateTime"), rb_intern("iso8601"), 1, rb_str_new(data, length));
 }
 
 VALUE typecast_field(VALUE adapter, int type, const char *data, ulong length) {
@@ -97,14 +116,14 @@ VALUE typecast_field(VALUE adapter, int type, const char *data, ulong length) {
     case DBI_TYPE_INT:
       return rb_cstr2inum(data, 10);
     case DBI_TYPE_BLOB:
-      return rb_funcall(CONST_GET("StringIO", rb_mKernel), rb_intern("new"), 1, rb_str_new(data, length));
+      return rb_funcall(CONST_GET(rb_mKernel, "StringIO"), rb_intern("new"), 1, rb_str_new(data, length));
     case DBI_TYPE_TEXT:
       // Forcing UTF8 convention here. Do we really care about people using non utf8 client encodings and databases?
       return rb_enc_str_new(data, length, rb_utf8_encoding());
     case DBI_TYPE_TIME:
-      return result_typecast_datetime(self, data, length);
+      return typecast_datetime(adapter, data, length);
     case DBI_TYPE_NUMERIC:
-      return rb_funcall(CONST_GET("BigDecimal", rb_mKernel), rb_intern("new"), 1, rb_str_new2(data));
+      return rb_funcall(CONST_GET(rb_mKernel, "BigDecimal"), rb_intern("new"), 1, rb_str_new2(data));
     case DBI_TYPE_FLOAT:
       return rb_float_new(atof(data));
   }

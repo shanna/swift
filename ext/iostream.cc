@@ -5,7 +5,7 @@ IOStream::IOStream(VALUE s) {
 }
 
 std::string& IOStream::read() {
-  VALUE response = rb_funcall(stream, fRead, 0);
+  VALUE response = rb_funcall(stream, rb_intern("read"), 0);
   if (response == Qnil) {
     return empty;
   }
@@ -13,7 +13,7 @@ std::string& IOStream::read() {
     // Attempt TO_S first before complaining?
     if (TYPE(response) != T_STRING) {
       rb_raise(
-        eArgumentError,
+        CONST_GET(rb_mKernel, "ArgumentError"),
         "Write can only process string data. You need to stringify values returned in the callback."
       );
     }

@@ -3,6 +3,7 @@
 
 #include "swift.h"
 #include "query.h"
+#include "result.h"
 #include "statement.h"
 
 void init_swift_adapter();

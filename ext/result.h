@@ -8,6 +8,7 @@ extern VALUE cSwiftResult;
 void init_swift_result();
 void result_free(dbi::AbstractResultSet*);
 VALUE result_each(VALUE);
+dbi::AbstractResultSet* result_handle(VALUE);
 
 VALUE typecast_field(VALUE, int, const char*, ulong);
 VALUE typecast_datetime(VALUE, const char*, ulong);
