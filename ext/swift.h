@@ -20,9 +20,10 @@ extern VALUE cSwiftConnectionError;
   }
 
 #include "adapter.h"
-#include "query.h"
-#include "statement.h"
 #include "iostream.h"
+#include "query.h"
+#include "result.h"
+#include "statement.h"
 
 #endif
 

@@ -26,7 +26,7 @@ static VALUE adapter_close(VALUE self) {
 
 // TODO:
 static VALUE adapter_clone(VALUE self) {
-  rb_raise(eRuntimeError, "Adapter#clone is not allowed.");
+  rb_raise(eRuntimeError, "clone is not allowed.");
 }
 
 static VALUE adapter_commit(int argc, VALUE *argv, VALUE self) {
@@ -42,7 +42,7 @@ static VALUE adapter_commit(int argc, VALUE *argv, VALUE self) {
 
 // TODO:
 static VALUE adapter_dup(VALUE self) {
-  rb_raise(eRuntimeError, "Adapter#dup is not allowed.");
+  rb_raise(eRuntimeError, "dup is not allowed.");
 }
 
 // TODO: Attempt TO_S() before escaping?
@@ -77,22 +77,15 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
     rows = rb_thread_blocking_region(((VALUE (*)(void*)) query_execute), &query, 0, 0);
 
     if (rb_block_given_p()) {
+      // TODO: Move into a result_* constructor.
       dbi::AbstractResultSet *rs = handle->results();
-      /*
-      TODO: Swift::Result, Swift::Statement ...
-      result = Data_Wrap_Struct(cResultSet, 0, free_statement, rs);
-
-      // TODO: Breaks encapsulation. Eventually you'll want to hand over either the adapter or the timezone as part
-      // of a constructor for Results.
-      rb_iv_set(result, "@timezone", rb_iv_get(self, "@timezone"));
-      */
+      result                     = Data_Wrap_Struct(cSwiftResult, 0, result_free, rs);
+      rb_iv_set(result, "@adapter", self);
     }
   }
   CATCH_DBI_EXCEPTIONS();
 
-  // TODO: statement_each in statement.{cc|h}
-  return rows;
-  // return result ? rb_statement_each(result) : rows;
+  return result ? result_each(result) : rows;
 }
 
 dbi::Handle* adapter_handle(VALUE self) {
@@ -137,10 +130,11 @@ static VALUE adapter_prepare(int argc, VALUE *argv, VALUE self) {
 
   dbi::Handle *handle = adapter_handle(self);
   try {
+    // TODO: Move to statement_* constructor.
     dbi::AbstractStatement *st = handle->conn()->prepare(CSTRING(sql));
     prepared                   = Data_Wrap_Struct(cSwiftStatement, 0, statement_free, st);
-    rb_iv_set(prepared, "@scheme",   scheme);
-    rb_iv_set(prepared, "@timezone", rb_iv_get(self, "@timezone"));
+    rb_iv_set(prepared, "@adapter", self);
+    rb_iv_set(prepared, "@scheme",  scheme);
   }
   CATCH_DBI_EXCEPTIONS();
 

@@ -2,14 +2,17 @@
 
 VALUE cSwiftStatement;
 
-void statement_free(dbi::AbstractStatement *self) {
-  if (self) {
-    self->cleanup();
-    delete self;
+void statement_free(dbi::Statement *statement) {
+  if (statement) {
+    statement->cleanup();
+    delete statement;
   }
 }
 
 void init_swift_statement() {
   VALUE swift     = rb_define_module("Swift");
-  cSwiftStatement = rb_define_class_under(swift, "Statement", rb_cObject);
+
+  // Confusing but (prepared) Statement inherits from ResultSet which inherits from AbstractStatement.
+  cSwiftStatement = rb_define_class_under(swift, "Statement", cSwiftResult);
 }
+
