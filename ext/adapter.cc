@@ -73,8 +73,8 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
     query.sql    = CSTRING(statement);
     query.handle = handle;
     if (RARRAY_LEN(bind_values) > 0) query_bind_values(&query, bind_values);
-    if (dbi::_trace)                 dbi::logMessage(dbi::_trace_fd, query.sql);
-    rows = rb_thread_blocking_region(((VALUE (*)(void*)) query_execute), &query, 0, 0);
+    if (dbi::_trace)                 dbi::logMessage(dbi::_trace_fd, dbi::formatParams(query.sql, query.bind));
+    rows = rb_thread_blocking_region(((VALUE (*)(void*))query_execute), &query, 0, 0);
 
     if (rb_block_given_p()) {
       // TODO: Move into a result_* constructor.

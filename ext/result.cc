@@ -74,6 +74,25 @@ dbi::AbstractResultSet* result_handle(VALUE self) {
   return handle;
 }
 
+// TODO: Change bind_values to an array in the interface? Avoid array -> splat -> array.
+static VALUE result_execute(int argc, VALUE *argv, VALUE self) {
+  VALUE bind_values, block;
+  rb_scan_args(argc, argv, "0*&", &bind_values, &block);
+
+  dbi::AbstractStatement *st = (dbi::AbstractStatement*)result_handle(self);
+  try {
+    Query query;
+    query.stmt = st;
+    if (RARRAY_LEN(bind_values) > 0) query_bind_values(&query, bind_values);
+    if (dbi::_trace)                 dbi::logMessage(dbi::_trace_fd, dbi::formatParams(st->command(), query.bind));
+    rb_thread_blocking_region(((VALUE (*)(void*))query_execute), &query, 0, 0);
+  }
+  CATCH_DBI_EXCEPTIONS();
+
+  if (rb_block_given_p()) return result_each(self);
+  return self;
+}
+
 void init_swift_result() {
   eRuntimeError  = CONST_GET(rb_mKernel, "RuntimeError");
 
@@ -89,8 +108,8 @@ void init_swift_result() {
   rb_define_method(cSwiftResult, "clone",      RUBY_METHOD_FUNC(result_clone),     0);
   rb_define_method(cSwiftResult, "dup",        RUBY_METHOD_FUNC(result_dup),       0);
   rb_define_method(cSwiftResult, "each",       RUBY_METHOD_FUNC(result_each),      0);
-  /* TODO:
   rb_define_method(cSwiftResult, "execute",    RUBY_METHOD_FUNC(result_execute),   -1);
+  /* TODO:
   rb_define_method(cSwiftResult, "finish",     RUBY_METHOD_FUNC(result_finish),    0);
   rb_define_method(cSwiftResult, "initialize", RUBY_METHOD_FUNC(result_init),      2);
   rb_define_method(cSwiftResult, "insert_id",  RUBY_METHOD_FUNC(result_insert_id), 0);
