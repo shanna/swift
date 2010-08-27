@@ -3,6 +3,7 @@
 VALUE cSwiftResult;
 
 static VALUE eRuntimeError;
+static VALUE eArgumentError;
 
 void result_free(dbi::AbstractResultSet *result) {
   if (result) {
@@ -93,7 +94,30 @@ static VALUE result_execute(int argc, VALUE *argv, VALUE self) {
   return self;
 }
 
+static VALUE result_finish(VALUE self) {
+  dbi::AbstractStatement *st = (dbi::AbstractStatement*)result_handle(self);
+  try {
+    st->finish();
+  }
+  CATCH_DBI_EXCEPTIONS();
+}
+
+VALUE result_initialize(VALUE self, VALUE adapter, VALUE sql) {
+  dbi::Handle *handle = adapter_handle(adapter);
+
+  if (NIL_P(adapter) || !handle) rb_raise(eArgumentError, "Statement#new called without an Adapter instance.");
+  if (NIL_P(sql))                rb_raise(eArgumentError, "Statement#new called without a SQL command.");
+
+  try {
+     DATA_PTR(self) = handle->conn()->prepare(CSTRING(sql));
+  }
+  CATCH_DBI_EXCEPTIONS();
+
+  return Qnil;
+}
+
 void init_swift_result() {
+  eArgumentError = CONST_GET(rb_mKernel, "ArgumentError");
   eRuntimeError  = CONST_GET(rb_mKernel, "RuntimeError");
 
   rb_require("bigdecimal");
@@ -105,13 +129,13 @@ void init_swift_result() {
   rb_define_alloc_func(cSwiftResult, result_alloc);
   rb_include_module(cSwiftResult, CONST_GET(rb_mKernel, "Enumerable"));
 
-  rb_define_method(cSwiftResult, "clone",      RUBY_METHOD_FUNC(result_clone),     0);
-  rb_define_method(cSwiftResult, "dup",        RUBY_METHOD_FUNC(result_dup),       0);
-  rb_define_method(cSwiftResult, "each",       RUBY_METHOD_FUNC(result_each),      0);
-  rb_define_method(cSwiftResult, "execute",    RUBY_METHOD_FUNC(result_execute),   -1);
+  rb_define_method(cSwiftResult, "clone",      RUBY_METHOD_FUNC(result_clone),      0);
+  rb_define_method(cSwiftResult, "dup",        RUBY_METHOD_FUNC(result_dup),        0);
+  rb_define_method(cSwiftResult, "each",       RUBY_METHOD_FUNC(result_each),       0);
+  rb_define_method(cSwiftResult, "execute",    RUBY_METHOD_FUNC(result_execute),    -1);
+  rb_define_method(cSwiftResult, "finish",     RUBY_METHOD_FUNC(result_finish),     0);
+  rb_define_method(cSwiftResult, "initialize", RUBY_METHOD_FUNC(result_initialize), 2);
   /* TODO:
-  rb_define_method(cSwiftResult, "finish",     RUBY_METHOD_FUNC(result_finish),    0);
-  rb_define_method(cSwiftResult, "initialize", RUBY_METHOD_FUNC(result_init),      2);
   rb_define_method(cSwiftResult, "insert_id",  RUBY_METHOD_FUNC(result_insert_id), 0);
   rb_define_method(cSwiftResult, "read",       RUBY_METHOD_FUNC(result_read),      0);
   rb_define_method(cSwiftResult, "rewind",     RUBY_METHOD_FUNC(result_rewind),    0);
