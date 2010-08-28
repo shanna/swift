@@ -13,8 +13,8 @@ void statement_free(dbi::AbstractStatement *statement) {
 }
 
 VALUE statement_alloc(VALUE klass) {
-    dbi::AbstractStatement *statement = 0;
-    return Data_Wrap_Struct(klass, 0, statement_free, statement);
+  dbi::AbstractStatement *statement = 0;
+  return Data_Wrap_Struct(klass, 0, statement_free, statement);
 }
 
 dbi::AbstractStatement* statement_handle(VALUE self) {
@@ -51,7 +51,7 @@ VALUE statement_initialize(VALUE self, VALUE adapter, VALUE sql) {
   if (NIL_P(sql))     rb_raise(eSwiftArgumentError, "Statement#new called without a command.");
 
   try {
-     DATA_PTR(self) = handle->conn()->prepare(CSTRING(sql));
+    DATA_PTR(self) = handle->conn()->prepare(CSTRING(sql));
   }
   CATCH_DBI_EXCEPTIONS();
 

@@ -1,4 +1,5 @@
 #include "result.h"
+    .scheme
 
 VALUE cSwiftResult;
 VALUE cDateTime;
@@ -87,18 +88,15 @@ static VALUE result_finish(VALUE self) {
   CATCH_DBI_EXCEPTIONS();
 }
 
-//  TODO:
-//  1. Parse components in C. Exactly what sorts of formats need to be parsed by this?
-//  2. Perfer embedded > adapter > local timezone.
-
 // Calculates local offset at a given time, including dst.
 size_t client_tzoffset(struct tm *given) {
   struct tm tm;
   uint64_t utc, local, dst = 0;
   memcpy(&tm, given, sizeof(tm));
+
   tm.tm_isdst = -1;
-  local = mktime(&tm);
-  dst = tm.tm_isdst ? 3600 : 0;
+  local       = mktime(&tm);
+  dst         = tm.tm_isdst ? 3600 : 0;
   gmtime_r((const time_t*)&local, &tm);
   utc = mktime(&tm);
   return local+dst-utc;
@@ -131,15 +129,15 @@ VALUE typecast_datetime(const char *data, ulong len) {
     adjust = client_tzoffset(&tm);
     offset = adjust;
     if (tzsign == '+' || tzsign == '-') {
-      offset = tzsign == '+' ?
-          (time_t)tzhour *  3600 + (time_t)tzmin *  60
+      offset = tzsign == '+'
+        ? (time_t)tzhour *  3600 + (time_t)tzmin *  60
         : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
     }
     VALUE ajd = rb_rational_new(ULONG2NUM(epoch_ajd_n + epoch + adjust - offset), day_secs);
     return rb_funcall(cDateTime, fNewBang, 3, ajd, rb_rational_new(INT2FIX(offset), day_secs), INT2NUM(2299161));
   }
 
-  // TODO throw a warning ?
+  // TODO: throw a warning ?
   return rb_str_new(data, len);
 }
 
@@ -216,10 +214,10 @@ void init_swift_result() {
   rb_define_alloc_func(cSwiftResult, result_alloc);
   rb_include_module(cSwiftResult, CONST_GET(rb_mKernel, "Enumerable"));
 
-  rb_define_method(cSwiftResult, "clone",      RUBY_METHOD_FUNC(result_clone),      0);
-  rb_define_method(cSwiftResult, "dup",        RUBY_METHOD_FUNC(result_dup),        0);
-  rb_define_method(cSwiftResult, "each",       RUBY_METHOD_FUNC(result_each),       0);
-  rb_define_method(cSwiftResult, "finish",     RUBY_METHOD_FUNC(result_finish),     0);
+  rb_define_method(cSwiftResult, "clone",      RUBY_METHOD_FUNC(result_clone),     0);
+  rb_define_method(cSwiftResult, "dup",        RUBY_METHOD_FUNC(result_dup),       0);
+  rb_define_method(cSwiftResult, "each",       RUBY_METHOD_FUNC(result_each),      0);
+  rb_define_method(cSwiftResult, "finish",     RUBY_METHOD_FUNC(result_finish),    0);
   rb_define_method(cSwiftResult, "insert_id",  RUBY_METHOD_FUNC(result_insert_id), 0);
   rb_define_method(cSwiftResult, "rows",       RUBY_METHOD_FUNC(result_rows),      0);
   rb_define_method(cSwiftResult, "columns",    RUBY_METHOD_FUNC(result_columns),   0);
