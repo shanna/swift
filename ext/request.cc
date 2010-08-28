@@ -14,7 +14,7 @@ VALUE request_alloc(VALUE klass) {
 static dbi::Request* request_handle(VALUE self) {
     dbi::Request *request;
     Data_Get_Struct(self, dbi::Request, request);
-    if (!request) rb_raise(eRuntimeError, "Invalid object, did you forget to call #super ?");
+    if (!request) rb_raise(eSwiftRuntimeError, "Invalid object, did you forget to call #super ?");
     return request;
 }
 

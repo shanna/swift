@@ -24,12 +24,12 @@ VALUE result_alloc(VALUE klass) {
 
 // TODO:
 static VALUE result_clone(VALUE self) {
-  rb_raise(eRuntimeError, "clone is not allowed.");
+  rb_raise(eSwiftRuntimeError, "clone is not allowed.");
 }
 
 // TODO:
 static VALUE result_dup(VALUE self) {
-  rb_raise(eRuntimeError, "dup is not allowed.");
+  rb_raise(eSwiftRuntimeError, "dup is not allowed.");
 }
 
 VALUE result_each(VALUE self) {
@@ -74,7 +74,7 @@ VALUE result_each(VALUE self) {
 dbi::AbstractResultSet* result_handle(VALUE self) {
   dbi::AbstractResultSet *result;
   Data_Get_Struct(self, dbi::AbstractResultSet, result);
-  if (!result) rb_raise(eRuntimeError, "Invalid object, did you forget to call #super?");
+  if (!result) rb_raise(eSwiftRuntimeError, "Invalid object, did you forget to call #super?");
 
   return result;
 }
@@ -204,8 +204,8 @@ void init_swift_result() {
   rb_require("stringio");
   rb_require("date");
 
-  VALUE swift  = rb_define_module("Swift");
-  cSwiftResult = rb_define_class_under(swift, "Result", rb_cObject);
+  VALUE mSwift = rb_define_module("Swift");
+  cSwiftResult = rb_define_class_under(mSwift, "Result", rb_cObject);
   cDateTime    = CONST_GET(rb_mKernel, "DateTime");
   cStringIO    = CONST_GET(rb_mKernel, "StringIO");
   cBigDecimal  = CONST_GET(rb_mKernel, "BigDecimal");

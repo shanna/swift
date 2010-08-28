@@ -1,8 +1,11 @@
 #include "swift.h"
 
 static VALUE mSwift;
-VALUE eRuntimeError;
-VALUE eArgumentError;
+
+VALUE eSwiftError;
+VALUE eSwiftArgumentError;
+VALUE eSwiftRuntimeError;
+VALUE eSwiftConnectionError;
 
 VALUE rb_special_constant(VALUE self, VALUE obj) {
   return rb_special_const_p(obj) ? Qtrue : Qfalse;
@@ -21,7 +24,7 @@ VALUE swift_trace(int argc, VALUE *argv, VALUE self) {
     rb_scan_args(argc, argv, "11", &flag, &io);
 
     if (TYPE(flag) != T_TRUE && TYPE(flag) != T_FALSE)
-        rb_raise(eArgumentError, "Swift#trace expects a boolean flag, got %s", CSTRING(flag));
+        rb_raise(eSwiftArgumentError, "Swift#trace expects a boolean flag, got %s", CSTRING(flag));
 
     if (!NIL_P(io)) {
         GetOpenFile(rb_convert_type(io, T_FILE, "IO", "to_io"), fptr);
@@ -36,12 +39,10 @@ extern "C" {
   void Init_swift(void) {
     mSwift = rb_define_module("Swift");
 
-    // TODO
-    // SwiftError           < StandardError
-    // SwiftRuntimeError    < SwiftError
-    // SwiftConnectionError < SwiftError
-    eArgumentError = CONST_GET(rb_mKernel, "ArgumentError");
-    eRuntimeError  = CONST_GET(rb_mKernel, "RuntimeError");
+    eSwiftError           = rb_define_class("SwiftError", CONST_GET(rb_mKernel, "StandardError"));
+    eSwiftArgumentError   = rb_define_class("SwiftArgumentError",   eSwiftError);
+    eSwiftRuntimeError    = rb_define_class("SwiftRuntimeError",    eSwiftError);
+    eSwiftConnectionError = rb_define_class("SwiftConnectionError", eSwiftError);
 
     init_swift_adapter();
     init_swift_result();

@@ -20,7 +20,7 @@ VALUE statement_alloc(VALUE klass) {
 dbi::AbstractStatement* statement_handle(VALUE self) {
   dbi::AbstractStatement *handle;
   Data_Get_Struct(self, dbi::AbstractStatement, handle);
-  if (!handle) rb_raise(eRuntimeError, "Invalid object, did you forget to call #super?");
+  if (!handle) rb_raise(eSwiftRuntimeError, "Invalid object, did you forget to call #super?");
 
   return handle;
 }
@@ -47,8 +47,8 @@ static VALUE statement_execute(int argc, VALUE *argv, VALUE self) {
 VALUE statement_initialize(VALUE self, VALUE adapter, VALUE sql) {
   dbi::Handle *handle = adapter_handle(adapter);
 
-  if (NIL_P(adapter)) rb_raise(eArgumentError, "Statement#new called without an Adapter instance.");
-  if (NIL_P(sql))     rb_raise(eArgumentError, "Statement#new called without a command.");
+  if (NIL_P(adapter)) rb_raise(eSwiftArgumentError, "Statement#new called without an Adapter instance.");
+  if (NIL_P(sql))     rb_raise(eSwiftArgumentError, "Statement#new called without a command.");
 
   try {
      DATA_PTR(self) = handle->conn()->prepare(CSTRING(sql));
@@ -59,7 +59,7 @@ VALUE statement_initialize(VALUE self, VALUE adapter, VALUE sql) {
 }
 
 void init_swift_statement() {
-  VALUE swift = rb_define_module("Swift");
+  VALUE mSwift = rb_define_module("Swift");
 
   /*
     TODO Inheritance confusion.
@@ -76,7 +76,7 @@ void init_swift_statement() {
     inefficient when doing tons on non-select style queries.
   */
 
-  cSwiftStatement = rb_define_class_under(swift, "Statement", cSwiftResult);
+  cSwiftStatement = rb_define_class_under(mSwift, "Statement", cSwiftResult);
   rb_define_method(cSwiftStatement, "execute",    RUBY_METHOD_FUNC(statement_execute),   -1);
   rb_define_method(cSwiftStatement, "initialize", RUBY_METHOD_FUNC(statement_initialize), 2);
   rb_define_alloc_func(cSwiftStatement, statement_alloc);

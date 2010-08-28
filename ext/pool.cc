@@ -14,7 +14,7 @@ VALUE pool_alloc(VALUE klass) {
 static dbi::ConnectionPool* pool_handle(VALUE self) {
     dbi::ConnectionPool *pool;
     Data_Get_Struct(self, dbi::ConnectionPool, pool);
-    if (!pool) rb_raise(eRuntimeError, "Invalid object, did you forget to call #super ?");
+    if (!pool) rb_raise(eSwiftRuntimeError, "Invalid object, did you forget to call #super ?");
     return pool;
 }
 
@@ -27,12 +27,12 @@ VALUE pool_init(VALUE self, VALUE n, VALUE options) {
     VALUE password = rb_hash_aref(options, ID2SYM(rb_intern("password")));
     VALUE zone     = rb_hash_aref(options, ID2SYM(rb_intern("timezone")));
 
-    if (NIL_P(db)) rb_raise(eArgumentError, "Pool#new called without :db");
-    if (NIL_P(driver)) rb_raise(eArgumentError, "#new called without :driver");
+    if (NIL_P(db)) rb_raise(eSwiftArgumentError, "Pool#new called without :db");
+    if (NIL_P(driver)) rb_raise(eSwiftArgumentError, "#new called without :driver");
 
     user = NIL_P(user) ? rb_str_new2(getlogin()) : user;
 
-    if (NUM2INT(n) < 1) rb_raise(eArgumentError, "Pool#new called with invalid pool size.");
+    if (NUM2INT(n) < 1) rb_raise(eSwiftArgumentError, "Pool#new called with invalid pool size.");
 
     try {
         DATA_PTR(self) = new dbi::ConnectionPool(
@@ -67,7 +67,7 @@ VALUE pool_execute(int argc, VALUE *argv, VALUE self) {
     rb_scan_args(argc, argv, "1*&", &sql, &bind_values, &callback);
 
     if (NIL_P(callback))
-        rb_raise(eArgumentError, "No block given in Pool#execute");
+        rb_raise(eSwiftArgumentError, "No block given in Pool#execute");
 
     try {
         Query query;
