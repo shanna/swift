@@ -233,8 +233,9 @@ Intel Core2Duo P8700 2.53GHz and stock PostgreSQL 8.4.1.
 == TODO
 
 * Tests.
-* Assertions for dumb stuff. model < Model for methods in Adapter.
-* Profile.
+* Extension performance. Remove all repeated rb_intern() calls etc.
+* Assertions for dumb stuff.
+* Abstract interface for other adapters? Move dbic++ to Swift::DBI::(Adapter, Pool, Result, Statment etc.)
 
 == Contributing
 

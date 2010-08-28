@@ -19,8 +19,9 @@ module Swift
       end
     end # Handler
 
+
     def initialize size, options
-      @pool         = Swift::ConnectionPool.new size, options
+      @pool         = Swift::DB::Pool.new size, options
       @stop_reactor = EM.reactor_running? ? false : true
       @pending      = {}
       @queue        = []

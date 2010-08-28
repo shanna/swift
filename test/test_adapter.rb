@@ -84,17 +84,13 @@ describe 'Adapter' do
         assert_kind_of Hash, @sth.first
       end
 
-      it 'returns array rows for read' do
-        assert_kind_of Array, @sth.read
-      end
-
       it 'returns a result set on Adapter#execute{}' do
         @db.execute('select * from users') {|r| assert_kind_of Hash, r }
       end
 
       it 'returns a result set on Adapter#results' do
         @db.execute('select * from users')
-        assert_kind_of Swift::ResultSet, @db.results
+        assert_kind_of Swift::Result, @db.results
       end
     end
 
