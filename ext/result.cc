@@ -1,5 +1,4 @@
 #include "result.h"
-    .scheme
 
 VALUE cSwiftResult;
 VALUE cDateTime;
@@ -89,17 +88,10 @@ static VALUE result_finish(VALUE self) {
 }
 
 // Calculates local offset at a given time, including dst.
-size_t client_tzoffset(struct tm *given) {
+size_t client_tzoffset(uint64_t local, int isdst) {
   struct tm tm;
-  uint64_t utc, local, dst = 0;
-  memcpy(&tm, given, sizeof(tm));
-
-  tm.tm_isdst = -1;
-  local       = mktime(&tm);
-  dst         = tm.tm_isdst ? 3600 : 0;
   gmtime_r((const time_t*)&local, &tm);
-  utc = mktime(&tm);
-  return local+dst-utc;
+  return local + (isdst ? 3600 : 0) - mktime(&tm);
 }
 
 VALUE typecast_datetime(const char *data, ulong len) {
@@ -121,18 +113,21 @@ VALUE typecast_datetime(const char *data, ulong len) {
       &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec,
       &tzsign, &tzhour, &tzmin);
   }
+
   tm.tm_year  -= 1900;
   tm.tm_mon   -= 1;
   tm.tm_isdst = -1;
   if (tm.tm_mday > 0) {
     epoch  = mktime(&tm);
-    adjust = client_tzoffset(&tm);
+    adjust = client_tzoffset(epoch, tm.tm_isdst);
     offset = adjust;
+
     if (tzsign == '+' || tzsign == '-') {
       offset = tzsign == '+'
         ? (time_t)tzhour *  3600 + (time_t)tzmin *  60
         : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
     }
+
     VALUE ajd = rb_rational_new(ULONG2NUM(epoch_ajd_n + epoch + adjust - offset), day_secs);
     return rb_funcall(cDateTime, fNewBang, 3, ajd, rb_rational_new(INT2FIX(offset), day_secs), INT2NUM(2299161));
   }

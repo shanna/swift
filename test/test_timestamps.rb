@@ -14,9 +14,14 @@ describe 'Adapter' do
         assert_timestamp_like time, fetch_timestamp_at(time), 'parses correctly'
       end
 
-      it 'should handle DST' do
+      it 'should parse correctly when DST is on' do
         time  = DateTime.parse('2010-10-02 20:31:00+04:30')
-        assert_timestamp_like time, fetch_timestamp_at(time), 'DST conversion'
+        assert_timestamp_like time, fetch_timestamp_at(time), 'DST on'
+      end
+
+      it 'should parse correctly when DST is off' do
+        time  = DateTime.parse('2010-04-04 20:31:00+04:30')
+        assert_timestamp_like time, fetch_timestamp_at(time), 'DST off'
       end
 
       def fetch_timestamp_at value
