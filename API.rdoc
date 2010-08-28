@@ -4,87 +4,87 @@
 
 Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
 
-    Swift
-      .setup  #=> Adapter
-      .db     #=> Adapter
-      .schema #=> [Scheme, ...]
-      .trace
+  Swift
+    .setup  #=> Adapter
+    .db     #=> Adapter
+    .schema #=> [Scheme, ...]
+    .trace
 
-      # Abstract.
-      Adapter
-        .new         #=> Adapter
-        #all         #=> Result
-        #begin       #=> Adapter
-        #commit
-        #create      #=> Scheme
-        #destroy     #=> Result
-        #execute     #=> Result
-        #first       #=> Scheme
-        #get         #=> Scheme
-        #prepare     #=> Statement
-        #rollback
-        #transaction #=> Adapter
-        #update      #=> Result
+    # Abstract.
+    Adapter
+      .new         #=> Adapter
+      #all         #=> Result
+      #begin       #=> Adapter
+      #commit
+      #create      #=> Scheme
+      #destroy     #=> Result
+      #execute     #=> Result
+      #first       #=> Scheme
+      #get         #=> Scheme
+      #prepare     #=> Statement
+      #rollback
+      #transaction #=> Adapter
+      #update      #=> Result
 
-        DBI < Adapter
-          # returning? #=> true or false
+      # TODO: DBI < Adapter
+        # returning? #=> true or false
 
-      # Concrete.
-      DB
-        Mysql    < Adapter # TODO: Adapter::DBI?
-        Postgres < Adapter # TODO: Adapter::DBI?
+    # Concrete.
+    DB
+      Mysql    < Adapter # TODO: Adapter::DBI?
+      Postgres < Adapter # TODO: Adapter::DBI?
 
-      # Enumerable collection of Scheme or Hash tuples.
-      Result
-        .new       #=> Result
-        #insert_id #=> Numeric
+    # Enumerable collection of Scheme or Hash tuples.
+    Result
+      .new       #=> Result
+      #insert_id #=> Numeric
 
-      Statement < Result
-        .new     #=> Statement
-        #execute #=> Statement
+    Statement < Result
+      .new     #=> Statement
+      #execute #=> Statement
 
-      Scheme
-        .all       #=> Result
-        .attribute #=> Type
-        .create    #=> Scheme
-        .first     #=> Scheme
-        .get       #=> Scheme
-        .header    #=> Header
-        .load      #=> Scheme
-        .new       #=> Scheme
-        .scheme    #=> Alias for self.class
-        .store     #=> Symbol
-        #destroy   #=> Result
-        #tuple     #=> Hash
-        #update    #=> Result
+    Scheme
+      .all       #=> Result
+      .attribute #=> Type
+      .create    #=> Scheme
+      .first     #=> Scheme
+      .get       #=> Scheme
+      .header    #=> Header
+      .load      #=> Scheme
+      .new       #=> Scheme
+      .scheme    #=> Alias for self.class
+      .store     #=> Symbol
+      #destroy   #=> Result
+      #tuple     #=> Hash
+      #update    #=> Result
 
-      # Enumerable collection of Types for Scheme
-      Header
-        .new        #=> Header
-        #all        #=> [Type, ...]
-        #insertable #=> [Type, ...]
-        #keys       #=> [Symbol, ...]
-        #new_tuple  #=> Hash
-        #push       #=> Type
-        #serial     #=> Symbol or nil.
-        #updatable  #=> [Type, ...]
+    # Enumerable collection of Types for Scheme
+    Header
+      .new        #=> Header
+      #all        #=> [Type, ...]
+      #insertable #=> [Type, ...]
+      #keys       #=> [Symbol, ...]
+      #new_tuple  #=> Hash
+      #push       #=> Type
+      #serial     #=> Symbol or nil.
+      #updatable  #=> [Type, ...]
 
-      # Abstract.
-      Attribute
-        .new                   #=> Attribute
-        #name                  #=> Symbol
-        #field                 #=> Symbol
-        #key                   #=> true or false
-        #serial                #=> Symbol or nil
-        #default               #=> Object
-        #define_scheme_methods
+    # Abstract.
+    Attribute
+      .new                   #=> Attribute
+      #name                  #=> Symbol
+      #field                 #=> Symbol
+      #key                   #=> true or false
+      #serial                #=> Symbol or nil
+      #default               #=> Object
+      #define_scheme_methods
 
-      # Concrete
-      Type
-        BigDecimal < Attribute
-        Boolean    < Attribute
-        Float      < Attribute
-        Integer    < Attribute
-        IO         < Attribute
-        String     < Attribute
-        Time       < Attribute # Soon to be DateTime?
+    # Concrete
+    Type
+      BigDecimal < Attribute
+      Boolean    < Attribute
+      Float      < Attribute
+      Integer    < Attribute
+      IO         < Attribute
+      String     < Attribute
+      Time       < Attribute # Soon to be DateTime?
