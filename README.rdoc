@@ -40,7 +40,7 @@ dbic++ can be found here http://github.com/deepfryed/dbicpp
 
     # Save points are supported.
     db.transaction :named_save_point do
-      st = db.prepare('insert into users (name, email) values (?, ?)')
+      st = db.prepare('insert into users (name, email) values (?, ?) returning id')
       puts st.execute('Apple Arthurton', 'apple@arthurton.local').insert_id
       puts st.execute('Benny Arthurton', 'benny@arthurton.local').insert_id
     end

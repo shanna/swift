@@ -44,6 +44,14 @@ describe 'Adapter' do
         assert sth.execute('Apple Arthurton')
         assert sth.execute('Benny Arthurton')
       end
+
+      it 'has insert_id' do
+        sql = case @db
+          when Swift::DB::Postgres then %q{insert into users (name, created_at) values (?, now()) returning id}
+          when Swift::DB::Mysql    then %q{insert into users (name, created_at) values (?, now())}
+        end
+        assert_kind_of Numeric, @db.prepare(sql).execute('Connie Arthurton').insert_id
+      end
     end
 
     describe 'executed prepared statements' do
