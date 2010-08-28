@@ -36,8 +36,7 @@ VALUE request_process(VALUE self) {
 
 void init_swift_request() {
   VALUE mSwift  = rb_define_module("Swift");
-  VALUE mDB     = rb_define_module_under(mSwift, "DB");
-  cSwiftRequest = rb_define_class_under(mDB, "Request", rb_cObject);
+  cSwiftRequest = rb_define_class_under(mSwift, "Request", rb_cObject);
 
   rb_define_alloc_func(cSwiftRequest, request_alloc);
   rb_define_method(cSwiftRequest, "socket",  RUBY_METHOD_FUNC(request_socket),  0);

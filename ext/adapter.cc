@@ -11,6 +11,14 @@ VALUE adapter_alloc(VALUE klass) {
     return Data_Wrap_Struct(klass, 0, adapter_free, handle);
 }
 
+dbi::Handle* adapter_handle(VALUE self) {
+  dbi::Handle *handle;
+  Data_Get_Struct(self, dbi::Handle, handle);
+  if (!handle) rb_raise(eSwiftRuntimeError, "Invalid object, did you forget to call #super?");
+
+  return handle;
+}
+
 static VALUE adapter_begin(int argc, VALUE *argv, VALUE self) {
   VALUE save_point;
   rb_scan_args(argc, argv, "01", &save_point);
@@ -20,6 +28,7 @@ static VALUE adapter_begin(int argc, VALUE *argv, VALUE self) {
     NIL_P(save_point) ? handle->begin() : handle->begin(CSTRING(save_point));
   }
   CATCH_DBI_EXCEPTIONS();
+  return Qtrue;
 }
 
 static VALUE adapter_close(VALUE self) {
@@ -42,6 +51,7 @@ static VALUE adapter_commit(int argc, VALUE *argv, VALUE self) {
     NIL_P(save_point) ? handle->commit() : handle->commit(CSTRING(save_point));
   }
   CATCH_DBI_EXCEPTIONS();
+  return Qtrue;
 }
 
 // TODO:
@@ -51,27 +61,23 @@ static VALUE adapter_dup(VALUE self) {
 
 // TODO: Attempt TO_S() before escaping?
 static VALUE adapter_escape(VALUE self, VALUE value) {
-  VALUE escaped = Qnil;
   if (TYPE(value) != T_STRING) rb_raise(eSwiftArgumentError, "Cannot escape non-string value.");
 
   dbi::Handle *handle = adapter_handle(self);
   try {
     std::string safe = handle->escape(std::string(RSTRING_PTR(value), RSTRING_LEN(value)));
-    escaped          = rb_str_new(safe.data(), safe.length());
+    return rb_str_new(safe.data(), safe.length());
   }
   CATCH_DBI_EXCEPTIONS();
-
-  return escaped;
 }
 
 // TODO: Change bind_values to an array in the interface? Avoid array -> splat -> array.
 static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
   VALUE statement, bind_values, block, rows;
-  VALUE result = 0;
-
-  rb_scan_args(argc, argv, "1*&", &statement, &bind_values, &block);
 
   dbi::Handle *handle = adapter_handle(self);
+  rb_scan_args(argc, argv, "1*&", &statement, &bind_values, &block);
+
   try {
     Query query;
     query.sql    = CSTRING(statement);
@@ -81,23 +87,13 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
     rows = rb_thread_blocking_region(((VALUE (*)(void*))query_execute), &query, 0, 0);
 
     if (rb_block_given_p()) {
-      // TODO: Move into a result_* constructor.
-      dbi::AbstractResultSet *rs = handle->results();
-      result                     = Data_Wrap_Struct(cSwiftResult, 0, result_free, rs);
-      rb_iv_set(result, "@adapter", self);
+      dbi::AbstractResultSet *result = handle->results();
+      return result_each(Data_Wrap_Struct(cSwiftResult, 0, result_free, result));
     }
   }
   CATCH_DBI_EXCEPTIONS();
 
-  return result ? result_each(result) : rows;
-}
-
-dbi::Handle* adapter_handle(VALUE self) {
-  dbi::Handle *handle;
-  Data_Get_Struct(self, dbi::Handle, handle);
-  if (!handle) rb_raise(eSwiftRuntimeError, "Invalid object, did you forget to call #super?");
-
-  return handle;
+  return rows;
 }
 
 static VALUE adapter_initialize(VALUE self, VALUE options) {
@@ -128,6 +124,7 @@ static VALUE adapter_initialize(VALUE self, VALUE options) {
 
 static VALUE adapter_prepare(int argc, VALUE *argv, VALUE self) {
   VALUE sql, scheme, prepared;
+  dbi::AbstractStatement *statement;
 
   rb_scan_args(argc, argv, "11", &scheme, &sql);
   if (TYPE(scheme) != T_CLASS) {
@@ -138,35 +135,37 @@ static VALUE adapter_prepare(int argc, VALUE *argv, VALUE self) {
   dbi::Handle *handle = adapter_handle(self);
   try {
     // TODO: Move to statement_* constructor.
-    dbi::AbstractStatement *st = handle->conn()->prepare(CSTRING(sql));
-    prepared                   = Data_Wrap_Struct(cSwiftStatement, 0, statement_free, st);
-    rb_iv_set(prepared, "@adapter", self);
+    statement = handle->conn()->prepare(CSTRING(sql));
+    prepared  = Data_Wrap_Struct(cSwiftStatement, 0, statement_free, statement);
     rb_iv_set(prepared, "@scheme",  scheme);
+    return prepared;
   }
   CATCH_DBI_EXCEPTIONS();
-
-  return prepared;
 }
 
 static VALUE adapter_rollback(int argc, VALUE *argv, VALUE self) {
   VALUE save_point;
+  dbi::Handle *handle = adapter_handle(self);
   rb_scan_args(argc, argv, "01", &save_point);
 
-  dbi::Handle *handle = adapter_handle(self);
   try {
     NIL_P(save_point) ? handle->rollback() : handle->rollback(CSTRING(save_point));
   }
   CATCH_DBI_EXCEPTIONS();
+  return Qtrue;
 }
 
 static VALUE adapter_transaction(int argc, VALUE *argv, VALUE self) {
   int status;
   VALUE sp, block;
-  rb_scan_args(argc, argv, "01&", &sp, &block);
-  if (NIL_P(block)) rb_raise(eSwiftArgumentError, "Transaction called without a block.");
 
-  dbi::Handle *handle    = adapter_handle(self);
+  dbi::Handle *handle = adapter_handle(self);
+
+  rb_scan_args(argc, argv, "01&", &sp, &block);
+
+  if (NIL_P(block)) rb_raise(eSwiftArgumentError, "Transaction called without a block.");
   std::string save_point = NIL_P(sp) ? "SP" + dbi::generateCompactUUID() : CSTRING(sp);
+
   try {
     handle->begin(save_point);
     rb_protect(rb_yield, self, &status);
@@ -216,10 +215,9 @@ static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
       IOStream io(stream);
       rows = handle->write(RSTRING_PTR(table), write_fields, &io);
     }
+    return ULONG2NUM(rows);
   }
   CATCH_DBI_EXCEPTIONS();
-
-  return ULONG2NUM(rows);
 }
 
 VALUE adapter_results(VALUE self) {
