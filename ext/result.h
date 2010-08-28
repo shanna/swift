@@ -10,7 +10,7 @@ void result_free(dbi::AbstractResultSet*);
 VALUE result_each(VALUE);
 dbi::AbstractResultSet* result_handle(VALUE);
 
-VALUE typecast_field(int, const char*, ulong);
-VALUE typecast_datetime(const char*, ulong);
+VALUE typecast_field(int, const char*, uint64_t);
+VALUE typecast_datetime(const char*, uint64_t);
 
 #endif

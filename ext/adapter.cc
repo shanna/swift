@@ -183,7 +183,7 @@ static VALUE adapter_transaction(int argc, VALUE *argv, VALUE self) {
 }
 
 static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
-  ulong rows = 0;
+  uint64_t rows = 0;
   VALUE stream, table, fields;
   dbi::Handle *handle = adapter_handle(self);
 

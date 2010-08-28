@@ -9,9 +9,9 @@ class IOStream : public dbi::IOStream {
     public:
       IOStream(VALUE);
       std::string& read();
-      uint read(char *, uint);
+      uint32_t read(char *, uint32_t);
       void write(const char *);
-      void write(const char *, ulong);
+      void write(const char *, uint64_t);
 };
 
 #endif

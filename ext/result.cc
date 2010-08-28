@@ -33,7 +33,7 @@ static VALUE result_dup(VALUE self) {
 }
 
 VALUE result_each(VALUE self) {
-  ulong length;
+  uint64_t length;
   const char *data;
 
   dbi::AbstractResultSet *result = result_handle(self);
@@ -43,14 +43,14 @@ VALUE result_each(VALUE self) {
     VALUE fields                      = rb_ary_new();
     std::vector<string> result_fields = result->fields();
     std::vector<int>    result_types  = result->types();
-    for (uint i = 0; i < result_fields.size(); i++) {
+    for (uint32_t i = 0; i < result_fields.size(); i++) {
       rb_ary_push(fields, ID2SYM(rb_intern(result_fields[i].c_str())));
     }
 
     result->seek(0);
-    for (uint row = 0; row < result->rows(); row++) {
+    for (uint32_t row = 0; row < result->rows(); row++) {
       VALUE tuple = rb_hash_new();
-      for (uint column = 0; column < result->columns(); column++) {
+      for (uint32_t column = 0; column < result->columns(); column++) {
         data = (const char*)result->read(row, column, &length);
         if (data) {
           rb_hash_aset(
@@ -94,7 +94,7 @@ size_t client_tzoffset(uint64_t local, int isdst) {
   return local + (isdst ? 3600 : 0) - mktime(&tm);
 }
 
-VALUE typecast_datetime(const char *data, ulong len) {
+VALUE typecast_datetime(const char *data, uint64_t len) {
   struct tm tm;
   uint64_t epoch, adjust, offset, tzoffset;
 
@@ -136,7 +136,7 @@ VALUE typecast_datetime(const char *data, ulong len) {
   return rb_str_new(data, len);
 }
 
-VALUE typecast_field(int type, const char *data, ulong length) {
+VALUE typecast_field(int type, const char *data, uint64_t length) {
   switch(type) {
     case DBI_TYPE_BOOLEAN:
       return strcmp(data, "t") == 0 || strcmp(data, "1") == 0 ? Qtrue : Qfalse;

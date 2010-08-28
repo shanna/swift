@@ -22,7 +22,7 @@ std::string& IOStream::read() {
   }
 }
 
-uint IOStream::read(char *buffer, uint length) {
+uint32_t IOStream::read(char *buffer, uint32_t length) {
   VALUE response = rb_funcall(stream, rb_intern("read"), 1, INT2NUM(length));
   if (response == Qnil) {
     return 0;
@@ -38,7 +38,7 @@ void IOStream::write(const char *str) {
   rb_funcall(stream, rb_intern("write"), 1, rb_str_new2(str));
 }
 
-void IOStream::write(const char *str, ulong l) {
+void IOStream::write(const char *str, uint64_t l) {
   rb_funcall(stream, rb_intern("write"), 1, rb_str_new(str, l));
 }
 
