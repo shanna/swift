@@ -6,11 +6,12 @@
 struct Query {
   char                   *sql;
   dbi::Handle            *handle;
-  dbi::AbstractStatement *stmt;
+  dbi::AbstractStatement *statement;
   dbi::ResultRow         bind;
 };
 
 VALUE query_execute(Query*);
+VALUE query_execute_statement(Query*);
 void query_bind_values(Query*, VALUE);
 
 #endif

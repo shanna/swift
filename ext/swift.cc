@@ -1,14 +1,57 @@
 #include "swift.h"
 
 static VALUE mSwift;
+VALUE eRuntimeError;
+VALUE eArgumentError;
+
+VALUE rb_special_constant(VALUE self, VALUE obj) {
+  return rb_special_const_p(obj) ? Qtrue : Qfalse;
+}
+
+VALUE swift_init(VALUE self, VALUE path) {
+  try { dbi::dbiInitialize(CSTRING(path)); } CATCH_DBI_EXCEPTIONS();
+  return Qtrue;
+}
+
+VALUE swift_trace(int argc, VALUE *argv, VALUE self) {
+    VALUE flag, io;
+    rb_io_t *fptr;
+    int fd = 2; // defaults to stderr
+
+    rb_scan_args(argc, argv, "11", &flag, &io);
+
+    if (TYPE(flag) != T_TRUE && TYPE(flag) != T_FALSE)
+        rb_raise(eArgumentError, "Swift#trace expects a boolean flag, got %s", CSTRING(flag));
+
+    if (!NIL_P(io)) {
+        GetOpenFile(rb_convert_type(io, T_FILE, "IO", "to_io"), fptr);
+        fd = fptr->fd;
+    }
+
+    dbi::trace(flag == Qtrue ? true : false, fd);
+    return flag;
+}
 
 extern "C" {
   void Init_swift(void) {
     mSwift = rb_define_module("Swift");
 
+    // TODO
+    // SwiftError           < StandardError
+    // SwiftRuntimeError    < SwiftError
+    // SwiftConnectionError < SwiftError
+    eArgumentError = CONST_GET(rb_mKernel, "ArgumentError");
+    eRuntimeError  = CONST_GET(rb_mKernel, "RuntimeError");
+
     init_swift_adapter();
-    init_swift_statement();
     init_swift_result();
+    init_swift_statement();
+    init_swift_request();
+    init_swift_pool();
+
+    rb_define_module_function(mSwift, "init",  RUBY_METHOD_FUNC(swift_init), 1);
+    rb_define_module_function(mSwift, "trace", RUBY_METHOD_FUNC(swift_trace), -1);
+    rb_define_module_function(mSwift, "special_constant?", RUBY_METHOD_FUNC(rb_special_constant), 1);
   }
 }
 

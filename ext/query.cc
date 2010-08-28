@@ -8,6 +8,14 @@ VALUE query_execute(Query *query) {
   );
 }
 
+VALUE query_execute_statement(Query *query) {
+  return UINT2NUM(
+    query->bind.size() == 0
+      ? query->statement->execute()
+      : query->statement->execute(query->bind)
+  );
+}
+
 void query_bind_values(Query *query, VALUE bind_values) {
   for (int i = 0; i < RARRAY_LEN(bind_values); i++) {
     VALUE bind_value = rb_ary_entry(bind_values, i);

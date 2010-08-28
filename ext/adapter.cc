@@ -1,11 +1,16 @@
 #include "adapter.h"
 
 static VALUE cSwiftAdapter;
-static VALUE eSwiftConnectionError;
+VALUE eSwiftConnectionError;
 
-static VALUE eArgumentError;
-static VALUE eRuntimeError;
-static VALUE eStandardError;
+static void adapter_free(dbi::Handle *handle) {
+    if (handle) delete handle;
+}
+
+VALUE adapter_alloc(VALUE klass) {
+    dbi::Handle *handle = 0;
+    return Data_Wrap_Struct(klass, 0, adapter_free, handle);
+}
 
 static VALUE adapter_begin(int argc, VALUE *argv, VALUE self) {
   VALUE save_point;
@@ -97,16 +102,19 @@ dbi::Handle* adapter_handle(VALUE self) {
 }
 
 static VALUE adapter_initialize(VALUE self, VALUE options) {
-  VALUE db     = rb_hash_aref(options, ID2SYM(rb_intern("db")));
-  VALUE driver = rb_hash_aref(options, ID2SYM(rb_intern("driver")));
+  VALUE db       = rb_hash_aref(options, ID2SYM(rb_intern("db")));
+  VALUE driver   = rb_hash_aref(options, ID2SYM(rb_intern("driver")));
+  VALUE user     = rb_hash_aref(options, ID2SYM(rb_intern("user")));
 
   if (NIL_P(db))     rb_raise(eArgumentError, "Adapter#new called without :db");
   if (NIL_P(driver)) rb_raise(eArgumentError, "Adapter#new called without :driver");
 
+  user = NIL_P(user) ? rb_str_new2(getlogin()) : user;
+
   try {
     DATA_PTR(self) = new dbi::Handle(
       CSTRING(driver),
-      CSTRING(rb_hash_aref(options, ID2SYM(rb_intern("user")))),
+      CSTRING(user),
       CSTRING(rb_hash_aref(options, ID2SYM(rb_intern("password")))),
       CSTRING(db),
       CSTRING(rb_hash_aref(options, ID2SYM(rb_intern("host")))),
@@ -179,6 +187,7 @@ static VALUE adapter_transaction(int argc, VALUE *argv, VALUE self) {
 static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
   ulong rows = 0;
   VALUE stream, table, fields;
+  dbi::Handle *handle = adapter_handle(self);
 
   rb_scan_args(argc, argv, "30", &table, &fields, &stream);
   if (TYPE(stream) != T_STRING && !rb_respond_to(stream, rb_intern("read")))
@@ -186,7 +195,6 @@ static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
   if (TYPE(fields) != T_ARRAY)
     rb_raise(eArgumentError, "Fields must be an Array.");
 
-  dbi::Handle *handle = adapter_handle(self);
   try {
     dbi::FieldSet write_fields;
     for (int i = 0; i < RARRAY_LEN(fields); i++) {
@@ -215,11 +223,16 @@ static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
   return ULONG2NUM(rows);
 }
 
-void init_swift_adapter() {
-  eArgumentError = CONST_GET(rb_mKernel, "ArgumentError");
-  eStandardError = CONST_GET(rb_mKernel, "StandardError");
-  eRuntimeError  = CONST_GET(rb_mKernel, "RuntimeError");
+VALUE adapter_results(VALUE self) {
+  dbi::Handle *handle = adapter_handle(self);
+  try {
+      dbi::AbstractResultSet *result = handle->results();
+      return Data_Wrap_Struct(cSwiftResult, 0, result_free, result);
+  }
+  CATCH_DBI_EXCEPTIONS();
+}
 
+void init_swift_adapter() {
   VALUE swift           = rb_define_module("Swift");
   cSwiftAdapter         = rb_define_class_under(swift, "Adapter",         rb_cObject);
   eSwiftConnectionError = rb_define_class_under(swift, "ConnectionError", eRuntimeError);
@@ -237,8 +250,10 @@ void init_swift_adapter() {
   rb_define_method(cSwiftAdapter, "transaction", RUBY_METHOD_FUNC(adapter_transaction), -1);
   rb_define_method(cSwiftAdapter, "write",       RUBY_METHOD_FUNC(adapter_write),       -1);
 
-  // TODO: Deprecate? Seems risky.
-  // rb_define_method(cSwiftAdapter, "results",     RUBY_METHOD_FUNC(adapter_results),     0);
+  rb_define_alloc_func(cSwiftAdapter, adapter_alloc);
+
+  // TODO Figure out how to avoid race conditions.
+  rb_define_method(cSwiftAdapter, "results",     RUBY_METHOD_FUNC(adapter_results),     0);
 }
 
 
