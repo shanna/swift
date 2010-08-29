@@ -215,7 +215,7 @@ static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
       IOStream io(stream);
       rows = handle->write(RSTRING_PTR(table), write_fields, &io);
     }
-    return ULONG2NUM(rows);
+    return SIZET2NUM(rows);
   }
   CATCH_DBI_EXCEPTIONS();
 }

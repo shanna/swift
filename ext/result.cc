@@ -8,7 +8,7 @@ VALUE cBigDecimal;
 VALUE fNew, fNewBang;
 
 uint64_t epoch_ajd_n, epoch_ajd_d;
-VALUE day_secs;
+VALUE daysecs, sg;
 
 void result_free(dbi::AbstractResultSet *result) {
   if (result) {
@@ -94,9 +94,21 @@ size_t client_tzoffset(uint64_t local, int isdst) {
   return local + (isdst ? 3600 : 0) - mktime(&tm);
 }
 
+// pinched from do_postgres
+static void reduce(uint64_t *numerator, uint64_t *denominator) {
+  uint64_t a, b, c;
+  a = *numerator;
+  b = *denominator;
+  while (a) {
+    c = a; a = b % a; b = c;
+  }
+  *numerator   = *numerator   / b;
+  *denominator = *denominator / b;
+}
+
 VALUE typecast_datetime(const char *data, uint64_t len) {
   struct tm tm;
-  uint64_t epoch, adjust, offset, tzoffset;
+  uint64_t epoch, adjust, offset;
 
   double usec = 0;
   char tzsign = 0;
@@ -128,8 +140,15 @@ VALUE typecast_datetime(const char *data, uint64_t len) {
         : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
     }
 
-    VALUE ajd = rb_rational_new(ULONG2NUM(epoch_ajd_n + epoch + adjust - offset), day_secs);
-    return rb_funcall(cDateTime, fNewBang, 3, ajd, rb_rational_new(INT2FIX(offset), day_secs), INT2NUM(2299161));
+    // 32bit platforms are for weenies
+    uint64_t ajd_n = (epoch + adjust - offset), ajd_d = 86400L;
+    reduce(&ajd_n, &ajd_d);
+    ajd_n = epoch_ajd_n*ajd_d  + ajd_n*epoch_ajd_d;
+    ajd_d = epoch_ajd_d*ajd_d;
+    reduce(&ajd_n, &ajd_d);
+
+    VALUE ajd = rb_rational_new(SIZET2NUM(ajd_n), SIZET2NUM(ajd_d));
+    return rb_funcall(cDateTime, fNewBang, 3, ajd, rb_rational_new(INT2FIX(offset), daysecs), sg);
   }
 
   // TODO: throw a warning ?
@@ -158,7 +177,7 @@ VALUE typecast_field(int type, const char *data, uint64_t length) {
 VALUE result_insert_id(VALUE self) {
   dbi::AbstractResultSet *result = result_handle(self);
   try {
-    return ULONG2NUM(result->lastInsertID());
+    return SIZET2NUM(result->lastInsertID());
   }
   CATCH_DBI_EXCEPTIONS();
   return Qnil;
@@ -167,7 +186,7 @@ VALUE result_insert_id(VALUE self) {
 VALUE result_rows(VALUE self) {
   dbi::AbstractResultSet *result = result_handle(self);
   try {
-    return ULONG2NUM(result->rows());
+    return SIZET2NUM(result->rows());
   }
   CATCH_DBI_EXCEPTIONS();
 }
@@ -175,7 +194,7 @@ VALUE result_rows(VALUE self) {
 VALUE result_columns(VALUE self) {
   dbi::AbstractResultSet *result = result_handle(self);
   try {
-    return ULONG2NUM(result->columns());
+    return SIZET2NUM(result->columns());
   }
   CATCH_DBI_EXCEPTIONS();
 }
@@ -218,9 +237,10 @@ void init_swift_result() {
   rb_define_method(cSwiftResult, "columns",    RUBY_METHOD_FUNC(result_columns),   0);
   rb_define_method(cSwiftResult, "fields",     RUBY_METHOD_FUNC(result_fields),    0);
 
-  // setup variables need for typecast_datetime
-  epoch_ajd_d = 86400;
-  epoch_ajd_n = (2440587L*2+1) * 43200L;
-  day_secs    = INT2FIX(86400);
+  // typecast_datetime setup.
+  epoch_ajd_d = 2;
+  epoch_ajd_n = 4881175L;            // 1970-01-01 00:00:00 is 2440587.5 in ajd
+  daysecs     = SIZET2NUM(86400L);
+  sg          = SIZET2NUM(2299161L); // day of calendar reform Date::ITALY
 }
 

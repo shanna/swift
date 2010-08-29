@@ -44,7 +44,7 @@ def assert_dbicpp_version ver
              (imajor == rmajor && iminor >  rminor) ||
              (imajor == rmajor && iminor == rminor && ibuild >= rbuild)
   else
-    message = "Cannot find #{header} or version number. You need to install dbic++ >= 0.2.6"
+    message = "Cannot find #{header} or version number. You need to install dbic++ >= #{ver}"
     passed  = false
   end
 
@@ -55,6 +55,6 @@ exit 1 unless library_installed? 'pcrecpp', apt_install_hint('libpcre3-dev')
 exit 1 unless library_installed? 'uuid',    apt_install_hint('uuid-dev')
 exit 1 unless library_installed? 'dbic++',  apt_install_hint('dbic++-dev')
 
-assert_dbicpp_version '0.2.6'
+assert_dbicpp_version '0.3.0'
 
 create_makefile 'swift'
