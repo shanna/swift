@@ -1,19 +1,31 @@
 #include "query.h"
 
 VALUE query_execute(Query *query) {
-  return UINT2NUM(
-    query->bind.size() == 0
-      ? query->handle->conn()->execute(query->sql)
-      : query->handle->conn()->execute(query->sql, query->bind)
-  );
+  try {
+    return UINT2NUM(
+      query->bind.size() == 0
+        ? query->handle->conn()->execute(query->sql)
+        : query->handle->conn()->execute(query->sql, query->bind)
+    );
+  }
+  catch (dbi::Error &e) {
+    query->error = e.what();
+    return Qfalse;
+  }
 }
 
 VALUE query_execute_statement(Query *query) {
-  return UINT2NUM(
-    query->bind.size() == 0
-      ? query->statement->execute()
-      : query->statement->execute(query->bind)
-  );
+  try {
+    return UINT2NUM(
+      query->bind.size() == 0
+        ? query->statement->execute()
+        : query->statement->execute(query->bind)
+    );
+  }
+  catch (dbi::Error &e) {
+    query->error = e.what();
+    return Qfalse;
+  }
 }
 
 void query_bind_values(Query *query, VALUE bind_values) {

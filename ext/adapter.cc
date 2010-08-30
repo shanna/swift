@@ -86,10 +86,9 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
     if (RARRAY_LEN(bind_values) > 0) query_bind_values(&query, bind_values);
     if (dbi::_trace)                 dbi::logMessage(dbi::_trace_fd, dbi::formatParams(query.sql, query.bind));
 
-    // TODO: http://redmine.ruby-lang.org/issues/show/3762
-    //       rb_thread_blocking_region and C++ exceptions don't mix in 1.9.2.
-    // rows = rb_thread_blocking_region(((VALUE (*)(void*))query_execute), &query, RUBY_UBF_IO, 0);
-    rows = query_execute(&query);
+    if ((rows = rb_thread_blocking_region(((VALUE (*)(void*))query_execute), &query, RUBY_UBF_IO, 0)) == Qfalse)
+      rb_raise(eSwiftRuntimeError, "%s", query.error);
+
     if (rb_block_given_p()) {
       dbi::AbstractResultSet *result = handle->results();
       return result_each(Data_Wrap_Struct(cSwiftResult, 0, result_free, result));

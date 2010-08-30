@@ -17,10 +17,10 @@ extern VALUE eSwiftConnectionError;
 
 #define CATCH_DBI_EXCEPTIONS() \
   catch (dbi::ConnectionError &error) { \
-    rb_raise(eSwiftConnectionError, "%s", CSTRING(rb_str_new2(error.what()))); \
+    rb_raise(eSwiftConnectionError, "%s", error.what()); \
   } \
   catch (dbi::Error &error) { \
-    rb_raise(eSwiftRuntimeError, "%s", CSTRING(rb_str_new2(error.what()))); \
+    rb_raise(eSwiftRuntimeError, "%s", error.what()); \
   }
 
 #include "adapter.h"

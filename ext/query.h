@@ -8,6 +8,7 @@ struct Query {
   dbi::Handle            *handle;
   dbi::AbstractStatement *statement;
   dbi::ResultRow         bind;
+  const char             *error;
 };
 
 VALUE query_execute(Query*);
