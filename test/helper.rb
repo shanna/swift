@@ -27,6 +27,4 @@ class MiniTest::Spec
   end
 end
 
-# All tests run in this timezone.
-ENV['TZ'] = ":Australia/Melbourne"
 MiniTest::Unit.autorun

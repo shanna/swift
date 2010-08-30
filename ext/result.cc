@@ -88,10 +88,10 @@ static VALUE result_finish(VALUE self) {
 }
 
 // Calculates local offset at a given time, including dst.
-size_t client_tzoffset(uint64_t local, int isdst) {
+int64_t client_tzoffset(int64_t local, int isdst) {
   struct tm tm;
   gmtime_r((const time_t*)&local, &tm);
-  return local + (isdst ? 3600 : 0) - mktime(&tm);
+  return (int64_t)(local + (isdst ? 3600 : 0) - mktime(&tm));
 }
 
 // pinched from do_postgres
@@ -108,7 +108,7 @@ static void reduce(uint64_t *numerator, uint64_t *denominator) {
 
 VALUE typecast_datetime(const char *data, uint64_t len) {
   struct tm tm;
-  uint64_t epoch, adjust, offset;
+  int64_t epoch, adjust, offset;
 
   double usec = 0;
   char tzsign = 0;
@@ -148,7 +148,7 @@ VALUE typecast_datetime(const char *data, uint64_t len) {
     reduce(&ajd_n, &ajd_d);
 
     VALUE ajd = rb_rational_new(SIZET2NUM(ajd_n), SIZET2NUM(ajd_d));
-    return rb_funcall(cDateTime, fNewBang, 3, ajd, rb_rational_new(INT2FIX(offset), daysecs), sg);
+    return rb_funcall(cDateTime, fNewBang, 3, ajd, rb_rational_new(INT2FIX(adjust), daysecs), sg);
   }
 
   // TODO: throw a warning ?
