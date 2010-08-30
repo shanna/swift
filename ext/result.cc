@@ -91,6 +91,7 @@ static VALUE result_finish(VALUE self) {
 int64_t client_tzoffset(int64_t local, int isdst) {
   struct tm tm;
   gmtime_r((const time_t*)&local, &tm);
+  // TODO: This won't work in Lord Howe Island, Australia which uses half hour shift.
   return (int64_t)(local + (isdst ? 3600 : 0) - mktime(&tm));
 }
 
@@ -158,7 +159,7 @@ VALUE typecast_datetime(const char *data, uint64_t len) {
 VALUE typecast_field(int type, const char *data, uint64_t length) {
   switch(type) {
     case DBI_TYPE_BOOLEAN:
-      return strcmp(data, "t") == 0 || strcmp(data, "1") == 0 ? Qtrue : Qfalse;
+      return (data && (data[0] =='t' || data[0] == '1')) ? Qtrue : Qfalse;
     case DBI_TYPE_INT:
       return rb_cstr2inum(data, 10);
     case DBI_TYPE_BLOB:

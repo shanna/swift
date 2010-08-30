@@ -35,6 +35,12 @@ void query_bind_values(Query *query, VALUE bind_values) {
     if (bind_value == Qnil) {
       query->bind.push_back(dbi::PARAM(dbi::null()));
     }
+    else if (bind_value == Qtrue) {
+      query->bind.push_back(dbi::PARAM("1"));
+    }
+    else if (bind_value == Qfalse) {
+      query->bind.push_back(dbi::PARAM("0"));
+    }
     else if (rb_obj_is_kind_of(bind_value, rb_cIO) ==  Qtrue || rb_obj_is_kind_of(bind_value, cStringIO) ==  Qtrue) {
       bind_value = rb_funcall(bind_value, rb_intern("read"), 0);
       query->bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(bind_value), RSTRING_LEN(bind_value)));
