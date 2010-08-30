@@ -36,7 +36,11 @@ static VALUE statement_execute(int argc, VALUE *argv, VALUE self) {
     query.statement = statement;
     if (RARRAY_LEN(bind_values) > 0) query_bind_values(&query, bind_values);
     if (dbi::_trace)                 dbi::logMessage(dbi::_trace_fd, dbi::formatParams(statement->command(), query.bind));
-    rb_thread_blocking_region(((VALUE (*)(void*))query_execute_statement), &query, 0, 0);
+
+    // TODO: http://redmine.ruby-lang.org/issues/show/3762
+    //       rb_thread_blocking_region and C++ exceptions don't mix in 1.9.2.
+    // rb_thread_blocking_region(((VALUE (*)(void*))query_execute_statement), &query, RUBY_UBF_IO, 0);
+    query_execute_statement(&query);
   }
   CATCH_DBI_EXCEPTIONS();
 

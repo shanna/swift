@@ -4,6 +4,7 @@
 #include "swift.h"
 
 extern VALUE cSwiftResult;
+extern VALUE cStringIO;
 
 void init_swift_result();
 void result_free(dbi::AbstractResultSet*);
