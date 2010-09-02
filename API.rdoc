@@ -38,6 +38,7 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
     Result
       .new       #=> Result
       #insert_id #=> Numeric
+      #fields    #=> [Symbol, ...] # Field names identical to .first.keys if rows > 0
 
     Statement < Result
       .new     #=> Statement
