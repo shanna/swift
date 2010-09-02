@@ -92,6 +92,10 @@ describe 'Adapter' do
         @db.execute('select * from users')
         assert_kind_of Swift::Result, @db.results
       end
+
+      it 'returns fields' do
+        assert_equal [ :id, :name, :created_at ], @sth.fields
+      end
     end
 
 
