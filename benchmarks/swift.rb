@@ -11,7 +11,7 @@ class User < Swift::Scheme
   attribute :id,         Swift::Type::Integer, serial: true, key: true
   attribute :name,       Swift::Type::String
   attribute :email,      Swift::Type::String
-  attribute :updated_at, Swift::Type::DateTime
+  attribute :updated_at, Swift::Type::Time
 end # User
 
 class Runner
