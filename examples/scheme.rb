@@ -9,12 +9,12 @@ require 'swift/validations'
 
 class User < Swift::Scheme
   store     :users
-  attribute :id,       Swift::Type::Integer, serial: true, key: true
+  attribute :id,       Swift::Type::Integer,  serial: true, key: true
   attribute :name,     Swift::Type::String
   attribute :email,    Swift::Type::String
   attribute :active,   Swift::Type::Boolean
-  attribute :created,  Swift::Type::Time,   default: proc { Time.now }
-  attribute :optional, Swift::Type::String, default: 'woot'
+  attribute :created,  Swift::Type::DateTime, default: proc { Time.now }
+  attribute :optional, Swift::Type::String,   default: 'woot'
 
   validations do |errors|
     errors << [:name, 'is blank'] if name.to_s.empty?

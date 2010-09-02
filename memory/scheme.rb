@@ -13,7 +13,7 @@ class User < Swift::Scheme
   attribute :id,         Swift::Type::Integer, serial: true, key: true
   attribute :name,       Swift::Type::String
   attribute :email,      Swift::Type::String
-  attribute :updated_at, Swift::Type::Time
+  attribute :updated_at, Swift::Type::DateTime
 end # User
 
 rows = (ARGV[1] || 500).to_i

@@ -4,12 +4,12 @@ describe 'scheme' do
   before do
     @user = Class.new(Swift::Scheme) do
       store     :users
-      attribute :id,         Swift::Type::Integer, serial: true, key: true
-      attribute :name,       Swift::Type::String,  default: "dave"
-      attribute :age,        Swift::Type::Integer, default: 18
+      attribute :id,         Swift::Type::Integer,  serial: true, key: true
+      attribute :name,       Swift::Type::String,   default: "dave"
+      attribute :age,        Swift::Type::Integer,  default: 18
       attribute :email,      Swift::Type::String
-      attribute :verified,   Swift::Type::Boolean, default: false
-      attribute :created_at, Swift::Type::Time,    default: proc { Time.now }
+      attribute :verified,   Swift::Type::Boolean,  default: false
+      attribute :created_at, Swift::Type::DateTime, default: proc { Time.now }
     end
   end
 
