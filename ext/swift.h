@@ -31,5 +31,13 @@ extern VALUE eSwiftConnectionError;
 #include "request.h"
 #include "pool.h"
 
+#undef SIZET2NUM
+#ifdef HAVE_LONG_LONG
+  #define SIZET2NUM(x) ULL2NUM(x)
+  #define DAYMICROSECS 86400000000LL
+#else
+  #define SIZET2NUM(x) ULONG2NUM(x)
+  #define DAYMICROSECS 86400000000L
 #endif
 
+#endif

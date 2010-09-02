@@ -142,7 +142,7 @@ VALUE typecast_datetime(const char *data, uint64_t len) {
     }
 
     // 32bit platforms are for weenies
-    uint64_t ajd_n = (epoch + adjust - offset), ajd_d = 86400L;
+    uint64_t ajd_n = (epoch + adjust - offset)*1000000 + usec*1000000, ajd_d = DAYMICROSECS;
     reduce(&ajd_n, &ajd_d);
     ajd_n = epoch_ajd_n*ajd_d  + ajd_n*epoch_ajd_d;
     ajd_d = epoch_ajd_d*ajd_d;
