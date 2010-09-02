@@ -9,7 +9,7 @@ describe 'scheme' do
       attribute :age,        Swift::Type::Integer,  default: 18
       attribute :email,      Swift::Type::String
       attribute :verified,   Swift::Type::Boolean,  default: false
-      attribute :created_at, Swift::Type::DateTime, default: proc { Time.now }
+      attribute :created_at, Swift::Type::Time,     default: proc { Time.now }
     end
   end
 
