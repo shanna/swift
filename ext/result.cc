@@ -1,9 +1,10 @@
 #include "result.h"
 
-VALUE cSwiftResult;
+VALUE cBigDecimal;
+VALUE cDate;
 VALUE cDateTime;
 VALUE cStringIO;
-VALUE cBigDecimal;
+VALUE cSwiftResult;
 
 VALUE fNew, fNewBang;
 
@@ -107,7 +108,7 @@ static void reduce(uint64_t *numerator, uint64_t *denominator) {
   *denominator = *denominator / b;
 }
 
-VALUE typecast_datetime(const char *data, uint64_t len) {
+VALUE typecast_timestamp(VALUE klass, const char *data, uint64_t len) {
   struct tm tm;
   int64_t epoch, adjust, offset;
 
@@ -149,12 +150,15 @@ VALUE typecast_datetime(const char *data, uint64_t len) {
     reduce(&ajd_n, &ajd_d);
 
     VALUE ajd = rb_rational_new(SIZET2NUM(ajd_n), SIZET2NUM(ajd_d));
-    return rb_funcall(cDateTime, fNewBang, 3, ajd, rb_rational_new(INT2FIX(adjust), daysecs), sg);
+    return rb_funcall(klass, fNewBang, 3, ajd, rb_rational_new(INT2FIX(adjust), daysecs), sg);
   }
 
   // TODO: throw a warning ?
   return rb_str_new(data, len);
 }
+
+#define typecast_datetime(data,len) typecast_timestamp(cDateTime, data, len)
+#define typecast_date(data,len)     typecast_timestamp(cDate,     data, len)
 
 VALUE typecast_field(int type, const char *data, uint64_t length) {
   switch(type) {
@@ -168,6 +172,8 @@ VALUE typecast_field(int type, const char *data, uint64_t length) {
       return rb_enc_str_new(data, length, rb_utf8_encoding());
     case DBI_TYPE_TIME:
       return typecast_datetime(data, length);
+    case DBI_TYPE_DATE:
+      return typecast_date(data, length);
     case DBI_TYPE_NUMERIC:
       return rb_funcall(cBigDecimal, fNew, 1, rb_str_new2(data));
     case DBI_TYPE_FLOAT:
@@ -220,6 +226,7 @@ void init_swift_result() {
   VALUE mSwift = rb_define_module("Swift");
   cSwiftResult = rb_define_class_under(mSwift, "Result", rb_cObject);
   cDateTime    = CONST_GET(rb_mKernel, "DateTime");
+  cDate        = CONST_GET(rb_mKernel, "Date");
   cStringIO    = CONST_GET(rb_mKernel, "StringIO");
   cBigDecimal  = CONST_GET(rb_mKernel, "BigDecimal");
 
