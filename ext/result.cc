@@ -1,12 +1,10 @@
 #include "result.h"
 
 VALUE cBigDecimal;
-VALUE cDate;
-VALUE cDateTime;
 VALUE cStringIO;
 VALUE cSwiftResult;
 
-VALUE fNew, fNewBang;
+VALUE fNew, fToDate;
 
 uint64_t epoch_ajd_n, epoch_ajd_d;
 VALUE daysecs, sg;
@@ -108,7 +106,7 @@ static void reduce(uint64_t *numerator, uint64_t *denominator) {
   *denominator = *denominator / b;
 }
 
-VALUE typecast_timestamp(VALUE klass, const char *data, uint64_t len) {
+VALUE typecast_timestamp(const char *data, uint64_t len) {
   struct tm tm;
   int64_t epoch, adjust, offset;
 
@@ -142,23 +140,14 @@ VALUE typecast_timestamp(VALUE klass, const char *data, uint64_t len) {
         : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
     }
 
-    // 32bit platforms are for weenies
-    uint64_t ajd_n = (epoch + adjust - offset)*1000000 + usec*1000000, ajd_d = DAYMICROSECS;
-    reduce(&ajd_n, &ajd_d);
-    ajd_n = epoch_ajd_n*ajd_d  + ajd_n*epoch_ajd_d;
-    ajd_d = epoch_ajd_d*ajd_d;
-    reduce(&ajd_n, &ajd_d);
-
-    VALUE ajd = rb_rational_new(SIZET2NUM(ajd_n), SIZET2NUM(ajd_d));
-    return rb_funcall(klass, fNewBang, 3, ajd, rb_rational_new(INT2FIX(adjust), daysecs), sg);
+    return rb_time_new(epoch+adjust-offset, usec*1000);
   }
 
   // TODO: throw a warning ?
   return rb_str_new(data, len);
 }
 
-#define typecast_datetime(data,len) typecast_timestamp(cDateTime, data, len)
-#define typecast_date(data,len)     typecast_timestamp(cDate,     data, len)
+#define typecast_date(data,len)   rb_funcall(typecast_timestamp(data, len), fToDate, 0)
 
 VALUE typecast_field(int type, const char *data, uint64_t length) {
   switch(type) {
@@ -171,7 +160,7 @@ VALUE typecast_field(int type, const char *data, uint64_t length) {
     case DBI_TYPE_TEXT:
       return rb_enc_str_new(data, length, rb_utf8_encoding());
     case DBI_TYPE_TIME:
-      return typecast_datetime(data, length);
+      return typecast_timestamp(data, length);
     case DBI_TYPE_DATE:
       return typecast_date(data, length);
     case DBI_TYPE_NUMERIC:
@@ -225,13 +214,11 @@ void init_swift_result() {
 
   VALUE mSwift = rb_define_module("Swift");
   cSwiftResult = rb_define_class_under(mSwift, "Result", rb_cObject);
-  cDateTime    = CONST_GET(rb_mKernel, "DateTime");
-  cDate        = CONST_GET(rb_mKernel, "Date");
   cStringIO    = CONST_GET(rb_mKernel, "StringIO");
   cBigDecimal  = CONST_GET(rb_mKernel, "BigDecimal");
 
   fNew         = rb_intern("new");
-  fNewBang     = rb_intern("new!");
+  fToDate      = rb_intern("to_date");
 
   rb_define_alloc_func(cSwiftResult, result_alloc);
   rb_include_module(cSwiftResult, CONST_GET(rb_mKernel, "Enumerable"));

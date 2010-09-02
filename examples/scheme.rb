@@ -13,7 +13,7 @@ class User < Swift::Scheme
   attribute :name,     Swift::Type::String
   attribute :email,    Swift::Type::String
   attribute :active,   Swift::Type::Boolean
-  attribute :created,  Swift::Type::DateTime, default: proc { Time.now }
+  attribute :created,  Swift::Type::Time,     default: proc { Time.now }
   attribute :optional, Swift::Type::String,   default: 'woot'
 
   validations do |errors|
