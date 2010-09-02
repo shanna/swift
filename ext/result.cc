@@ -212,7 +212,7 @@ VALUE result_fields(VALUE self) {
     std::vector<string> result_fields = result->fields();
     VALUE fields = rb_ary_new();
     for (int i = 0; i < result_fields.size(); i++)
-      rb_ary_push(fields, rb_str_new2(result_fields[i].c_str()));
+      rb_ary_push(fields, ID2SYM(rb_intern(result_fields[i].c_str())));
     return fields;
   }
   CATCH_DBI_EXCEPTIONS();
