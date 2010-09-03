@@ -35,6 +35,15 @@ VALUE swift_trace(int argc, VALUE *argv, VALUE self) {
     return flag;
 }
 
+VALUE atexit_gc(...) {
+  rb_gc();
+  return Qnil;
+}
+
+void atexit_caller(VALUE data) {
+  rb_proc_call(data, rb_ary_new());
+}
+
 extern "C" {
   void Init_swift(void) {
     mSwift = rb_define_module("Swift");
@@ -53,6 +62,12 @@ extern "C" {
     rb_define_module_function(mSwift, "init",  RUBY_METHOD_FUNC(swift_init), 1);
     rb_define_module_function(mSwift, "trace", RUBY_METHOD_FUNC(swift_trace), -1);
     rb_define_module_function(mSwift, "special_constant?", RUBY_METHOD_FUNC(rb_special_constant), 1);
+
+    // NOTE
+    // Swift adapter and statement objects need to be deallocated or garbage collected in the reverse
+    // allocation order. rb_gc() does that but gc at exit time seems to do it in allocation order which
+    // stuffs up dbic++ destructors.
+    rb_set_end_proc(atexit_caller, rb_proc_new(atexit_gc, mSwift));
   }
 }
 
