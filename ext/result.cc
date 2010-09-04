@@ -110,15 +110,15 @@ VALUE typecast_timestamp(const char *data, uint64_t len) {
   struct tm tm;
   int64_t epoch, adjust, offset;
 
-  double usec = 0;
+  long double sec_fraction = 0;
   char tzsign = 0;
   int tzhour  = 0, tzmin = 0;
 
   memset(&tm, 0, sizeof(struct tm));
   if (strchr(data, '.')) {
-    sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%lf%c%02d:%02d",
+    sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%Lf%c%02d:%02d",
       &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec,
-      &usec, &tzsign, &tzhour, &tzmin);
+      &sec_fraction, &tzsign, &tzhour, &tzmin);
   }
   else {
     sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%c%02d:%02d",
@@ -140,7 +140,7 @@ VALUE typecast_timestamp(const char *data, uint64_t len) {
         : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
     }
 
-    return rb_time_new(epoch+adjust-offset, usec*1000);
+    return rb_time_new(epoch+adjust-offset, (uint64_t)(sec_fraction*1000000L));
   }
 
   // TODO: throw a warning ?
