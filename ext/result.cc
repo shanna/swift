@@ -9,7 +9,7 @@ VALUE fNew, fToDate;
 uint64_t epoch_ajd_n, epoch_ajd_d;
 VALUE daysecs, sg;
 
-void result_free(dbi::AbstractResultSet *result) {
+void result_free(dbi::AbstractResult *result) {
   if (result) {
     result->cleanup();
     delete result;
@@ -17,7 +17,7 @@ void result_free(dbi::AbstractResultSet *result) {
 }
 
 VALUE result_alloc(VALUE klass) {
-  dbi::AbstractResultSet *result = 0;
+  dbi::AbstractResult *result = 0;
   return Data_Wrap_Struct(klass, 0, result_free, result);
 }
 
@@ -35,7 +35,7 @@ VALUE result_each(VALUE self) {
   uint64_t length;
   const char *data;
 
-  dbi::AbstractResultSet *result = result_handle(self);
+  dbi::AbstractResult *result = result_handle(self);
   VALUE scheme = rb_iv_get(self, "@scheme");
 
   try {
@@ -70,16 +70,16 @@ VALUE result_each(VALUE self) {
   return Qnil;
 }
 
-dbi::AbstractResultSet* result_handle(VALUE self) {
-  dbi::AbstractResultSet *result;
-  Data_Get_Struct(self, dbi::AbstractResultSet, result);
+dbi::AbstractResult* result_handle(VALUE self) {
+  dbi::AbstractResult *result;
+  Data_Get_Struct(self, dbi::AbstractResult, result);
   if (!result) rb_raise(eSwiftRuntimeError, "Invalid object, did you forget to call #super?");
 
   return result;
 }
 
 static VALUE result_finish(VALUE self) {
-  dbi::AbstractResultSet *result = result_handle(self);
+  dbi::AbstractResult *result = result_handle(self);
   try {
     result->finish();
   }
@@ -150,6 +150,10 @@ VALUE typecast_timestamp(const char *data, uint64_t len) {
 #define typecast_date(data,len)   rb_funcall(typecast_timestamp(data, len), fToDate, 0)
 
 VALUE typecast_field(int type, const char *data, uint64_t length) {
+  // This is my wish list below for rubycore - to be built into core ruby.
+  // 1. Time class represents time - time zone invariant
+  // 2. Date class represents a date - time zone invariant
+  // 3. DateTime class represents a timestamp with full zoneinfo support.
   switch(type) {
     case DBI_TYPE_BOOLEAN:
       return (data && (data[0] =='t' || data[0] == '1')) ? Qtrue : Qfalse;
@@ -157,9 +161,12 @@ VALUE typecast_field(int type, const char *data, uint64_t length) {
       return rb_cstr2inum(data, 10);
     case DBI_TYPE_BLOB:
       return rb_funcall(cStringIO, fNew, 1, rb_str_new(data, length));
+    // I'm undecided on typecasting TIME only types into native ruby types due to lack
+    // of support in core.
+    case DBI_TYPE_TIME:
     case DBI_TYPE_TEXT:
       return rb_enc_str_new(data, length, rb_utf8_encoding());
-    case DBI_TYPE_TIME:
+    case DBI_TYPE_TIMESTAMP:
       return typecast_timestamp(data, length);
     case DBI_TYPE_DATE:
       return typecast_date(data, length);
@@ -171,7 +178,7 @@ VALUE typecast_field(int type, const char *data, uint64_t length) {
 }
 
 VALUE result_insert_id(VALUE self) {
-  dbi::AbstractResultSet *result = result_handle(self);
+  dbi::AbstractResult *result = result_handle(self);
   try {
     return SIZET2NUM(result->lastInsertID());
   }
@@ -180,7 +187,7 @@ VALUE result_insert_id(VALUE self) {
 }
 
 VALUE result_rows(VALUE self) {
-  dbi::AbstractResultSet *result = result_handle(self);
+  dbi::AbstractResult *result = result_handle(self);
   try {
     return SIZET2NUM(result->rows());
   }
@@ -188,7 +195,7 @@ VALUE result_rows(VALUE self) {
 }
 
 VALUE result_columns(VALUE self) {
-  dbi::AbstractResultSet *result = result_handle(self);
+  dbi::AbstractResult *result = result_handle(self);
   try {
     return SIZET2NUM(result->columns());
   }
@@ -196,7 +203,7 @@ VALUE result_columns(VALUE self) {
 }
 
 VALUE result_fields(VALUE self) {
-  dbi::AbstractResultSet *result = result_handle(self);
+  dbi::AbstractResult *result = result_handle(self);
   try {
     std::vector<string> result_fields = result->fields();
     VALUE fields = rb_ary_new();

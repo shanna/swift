@@ -90,7 +90,7 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
       rb_raise(eSwiftRuntimeError, "%s", query.error);
 
     if (rb_block_given_p()) {
-      dbi::AbstractResultSet *result = handle->results();
+      dbi::AbstractResult *result = handle->results();
       return result_each(Data_Wrap_Struct(cSwiftResult, 0, result_free, result));
     }
     else
@@ -226,7 +226,7 @@ static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
 VALUE adapter_results(VALUE self) {
   dbi::Handle *handle = adapter_handle(self);
   try {
-      dbi::AbstractResultSet *result = handle->results();
+      dbi::AbstractResult *result = handle->results();
       return Data_Wrap_Struct(cSwiftResult, 0, result_free, result);
   }
   CATCH_DBI_EXCEPTIONS();
