@@ -33,7 +33,7 @@ describe 'Adapter' do
 
         def assert_timestamp_like expect, given, comment
           match = Regexp.new expect.to_time.strftime('%F %T')
-          assert_kind_of DateTime, given
+          assert_kind_of Time, given
           assert_match match, given.strftime('%F %T'), comment
         end
       end

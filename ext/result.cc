@@ -1,17 +1,15 @@
 #include "result.h"
 
 VALUE cBigDecimal;
-VALUE cDate;
-VALUE cDateTime;
 VALUE cStringIO;
 VALUE cSwiftResult;
 
-VALUE fNew, fNewBang;
+VALUE fNew, fToDate;
 
 uint64_t epoch_ajd_n, epoch_ajd_d;
 VALUE daysecs, sg;
 
-void result_free(dbi::AbstractResultSet *result) {
+void result_free(dbi::AbstractResult *result) {
   if (result) {
     result->cleanup();
     delete result;
@@ -19,7 +17,7 @@ void result_free(dbi::AbstractResultSet *result) {
 }
 
 VALUE result_alloc(VALUE klass) {
-  dbi::AbstractResultSet *result = 0;
+  dbi::AbstractResult *result = 0;
   return Data_Wrap_Struct(klass, 0, result_free, result);
 }
 
@@ -37,7 +35,7 @@ VALUE result_each(VALUE self) {
   uint64_t length;
   const char *data;
 
-  dbi::AbstractResultSet *result = result_handle(self);
+  dbi::AbstractResult *result = result_handle(self);
   VALUE scheme = rb_iv_get(self, "@scheme");
 
   try {
@@ -72,16 +70,16 @@ VALUE result_each(VALUE self) {
   return Qnil;
 }
 
-dbi::AbstractResultSet* result_handle(VALUE self) {
-  dbi::AbstractResultSet *result;
-  Data_Get_Struct(self, dbi::AbstractResultSet, result);
+dbi::AbstractResult* result_handle(VALUE self) {
+  dbi::AbstractResult *result;
+  Data_Get_Struct(self, dbi::AbstractResult, result);
   if (!result) rb_raise(eSwiftRuntimeError, "Invalid object, did you forget to call #super?");
 
   return result;
 }
 
 static VALUE result_finish(VALUE self) {
-  dbi::AbstractResultSet *result = result_handle(self);
+  dbi::AbstractResult *result = result_handle(self);
   try {
     result->finish();
   }
@@ -108,19 +106,19 @@ static void reduce(uint64_t *numerator, uint64_t *denominator) {
   *denominator = *denominator / b;
 }
 
-VALUE typecast_timestamp(VALUE klass, const char *data, uint64_t len) {
+VALUE typecast_timestamp(const char *data, uint64_t len) {
   struct tm tm;
   int64_t epoch, adjust, offset;
 
-  double usec = 0;
+  long double sec_fraction = 0;
   char tzsign = 0;
   int tzhour  = 0, tzmin = 0;
 
   memset(&tm, 0, sizeof(struct tm));
   if (strchr(data, '.')) {
-    sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%lf%c%02d:%02d",
+    sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%Lf%c%02d:%02d",
       &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec,
-      &usec, &tzsign, &tzhour, &tzmin);
+      &sec_fraction, &tzsign, &tzhour, &tzmin);
   }
   else {
     sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%c%02d:%02d",
@@ -142,25 +140,20 @@ VALUE typecast_timestamp(VALUE klass, const char *data, uint64_t len) {
         : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
     }
 
-    // 32bit platforms are for weenies
-    uint64_t ajd_n = (epoch + adjust - offset)*1000000 + usec*1000000, ajd_d = DAYMICROSECS;
-    reduce(&ajd_n, &ajd_d);
-    ajd_n = epoch_ajd_n*ajd_d  + ajd_n*epoch_ajd_d;
-    ajd_d = epoch_ajd_d*ajd_d;
-    reduce(&ajd_n, &ajd_d);
-
-    VALUE ajd = rb_rational_new(SIZET2NUM(ajd_n), SIZET2NUM(ajd_d));
-    return rb_funcall(klass, fNewBang, 3, ajd, rb_rational_new(INT2FIX(adjust), daysecs), sg);
+    return rb_time_new(epoch+adjust-offset, (uint64_t)(sec_fraction*1000000L));
   }
 
   // TODO: throw a warning ?
   return rb_str_new(data, len);
 }
 
-#define typecast_datetime(data,len) typecast_timestamp(cDateTime, data, len)
-#define typecast_date(data,len)     typecast_timestamp(cDate,     data, len)
+#define typecast_date(data,len)   rb_funcall(typecast_timestamp(data, len), fToDate, 0)
 
 VALUE typecast_field(int type, const char *data, uint64_t length) {
+  // This is my wish list below for rubycore - to be built into core ruby.
+  // 1. Time class represents time - time zone invariant
+  // 2. Date class represents a date - time zone invariant
+  // 3. DateTime class represents a timestamp with full zoneinfo support.
   switch(type) {
     case DBI_TYPE_BOOLEAN:
       return (data && (data[0] =='t' || data[0] == '1')) ? Qtrue : Qfalse;
@@ -168,10 +161,13 @@ VALUE typecast_field(int type, const char *data, uint64_t length) {
       return rb_cstr2inum(data, 10);
     case DBI_TYPE_BLOB:
       return rb_funcall(cStringIO, fNew, 1, rb_str_new(data, length));
+    // I'm undecided on typecasting TIME only types into native ruby types due to lack
+    // of support in core.
+    case DBI_TYPE_TIME:
     case DBI_TYPE_TEXT:
       return rb_enc_str_new(data, length, rb_utf8_encoding());
-    case DBI_TYPE_TIME:
-      return typecast_datetime(data, length);
+    case DBI_TYPE_TIMESTAMP:
+      return typecast_timestamp(data, length);
     case DBI_TYPE_DATE:
       return typecast_date(data, length);
     case DBI_TYPE_NUMERIC:
@@ -182,7 +178,7 @@ VALUE typecast_field(int type, const char *data, uint64_t length) {
 }
 
 VALUE result_insert_id(VALUE self) {
-  dbi::AbstractResultSet *result = result_handle(self);
+  dbi::AbstractResult *result = result_handle(self);
   try {
     return SIZET2NUM(result->lastInsertID());
   }
@@ -191,7 +187,7 @@ VALUE result_insert_id(VALUE self) {
 }
 
 VALUE result_rows(VALUE self) {
-  dbi::AbstractResultSet *result = result_handle(self);
+  dbi::AbstractResult *result = result_handle(self);
   try {
     return SIZET2NUM(result->rows());
   }
@@ -199,7 +195,7 @@ VALUE result_rows(VALUE self) {
 }
 
 VALUE result_columns(VALUE self) {
-  dbi::AbstractResultSet *result = result_handle(self);
+  dbi::AbstractResult *result = result_handle(self);
   try {
     return SIZET2NUM(result->columns());
   }
@@ -207,7 +203,7 @@ VALUE result_columns(VALUE self) {
 }
 
 VALUE result_fields(VALUE self) {
-  dbi::AbstractResultSet *result = result_handle(self);
+  dbi::AbstractResult *result = result_handle(self);
   try {
     std::vector<string> result_fields = result->fields();
     VALUE fields = rb_ary_new();
@@ -225,13 +221,11 @@ void init_swift_result() {
 
   VALUE mSwift = rb_define_module("Swift");
   cSwiftResult = rb_define_class_under(mSwift, "Result", rb_cObject);
-  cDateTime    = CONST_GET(rb_mKernel, "DateTime");
-  cDate        = CONST_GET(rb_mKernel, "Date");
   cStringIO    = CONST_GET(rb_mKernel, "StringIO");
   cBigDecimal  = CONST_GET(rb_mKernel, "BigDecimal");
 
   fNew         = rb_intern("new");
-  fNewBang     = rb_intern("new!");
+  fToDate      = rb_intern("to_date");
 
   rb_define_alloc_func(cSwiftResult, result_alloc);
   rb_include_module(cSwiftResult, CONST_GET(rb_mKernel, "Enumerable"));

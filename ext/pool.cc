@@ -49,7 +49,7 @@ VALUE pool_init(VALUE self, VALUE n, VALUE options) {
   return Qnil;
 }
 
-void pool_callback(dbi::AbstractResultSet *result) {
+void pool_callback(dbi::AbstractResult *result) {
   VALUE callback = (VALUE)result->context;
   // NOTE ResultSet will be free'd by the underlying connection pool dispatcher ib dbic++
   if (!NIL_P(callback)) rb_proc_call(callback, rb_ary_new3(1, Data_Wrap_Struct(cSwiftResult, 0, 0, result)));
