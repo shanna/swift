@@ -3,7 +3,10 @@
 static VALUE cSwiftAdapter;
 
 static void adapter_free(dbi::Handle *handle) {
-    if (handle) delete handle;
+    if (handle) {
+      handle->conn()->cleanup();
+      delete handle;
+    }
 }
 
 VALUE adapter_alloc(VALUE klass) {
