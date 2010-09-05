@@ -31,6 +31,12 @@ describe 'Adapter' do
         end
       end
 
+      it 'executes via Statement#new' do
+        result = []
+        Swift::Statement.new(@db, 'select count(*) as n from users').execute {|r| result << r[:n] }
+        assert_kind_of Integer, result[0]
+      end
+
       it 'executes without bind values' do
         assert @db.prepare(%q{insert into users (name, created_at) values ('Apple Arthurton', now())}).execute
       end

@@ -69,7 +69,13 @@ VALUE statement_initialize(VALUE self, VALUE adapter, VALUE sql) {
   if (NIL_P(sql))     rb_raise(eSwiftArgumentError, "Statement#new called without a command.");
 
   try {
-    DATA_PTR(self) = handle->conn()->prepare(CSTRING(sql));
+    // needs to happen before wrapping in case it raises errors.
+    dbi::AbstractStatement *statement  = handle->conn()->prepare(CSTRING(sql));
+    StatementWrapper *statement_handle = new StatementWrapper;
+    statement_handle->statement        = statement;
+    statement_handle->adapter          = adapter;
+    statement_handle->free             = true;
+    DATA_PTR(self)                     = statement_handle;
   }
   CATCH_DBI_EXCEPTIONS();
 

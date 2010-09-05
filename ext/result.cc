@@ -25,8 +25,8 @@ void result_free(ResultWrapper *handle) {
 }
 
 VALUE result_alloc(VALUE klass) {
-  ResultWrapper *result = 0;
-  return Data_Wrap_Struct(klass, result_mark, result_free, result);
+  ResultWrapper *handle = 0;
+  return Data_Wrap_Struct(klass, result_mark, result_free, handle);
 }
 
 VALUE result_wrap_handle(VALUE klass, VALUE adapter, dbi::AbstractResult *result) {
