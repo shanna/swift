@@ -9,16 +9,40 @@ VALUE fNew, fToDate;
 uint64_t epoch_ajd_n, epoch_ajd_d;
 VALUE daysecs, sg;
 
-void result_free(dbi::AbstractResult *result) {
-  if (result) {
-    result->cleanup();
-    delete result;
+void result_mark(ResultWrapper *handle) {
+  if (handle)
+    rb_gc_mark(handle->adapter);
+}
+
+void result_free(ResultWrapper *handle) {
+  if (handle) {
+    if (handle->free) {
+      handle->result->cleanup();
+      delete handle->result;
+    }
+    delete handle;
   }
 }
 
 VALUE result_alloc(VALUE klass) {
-  dbi::AbstractResult *result = 0;
-  return Data_Wrap_Struct(klass, 0, result_free, result);
+  ResultWrapper *result = 0;
+  return Data_Wrap_Struct(klass, result_mark, result_free, result);
+}
+
+VALUE result_wrap_handle(VALUE klass, VALUE adapter, dbi::AbstractResult *result) {
+  ResultWrapper *handle = new ResultWrapper;
+  handle->result  = result;
+  handle->adapter = adapter;
+  handle->free    = true;
+  return Data_Wrap_Struct(klass, result_mark, result_free, handle);
+}
+
+dbi::AbstractResult* result_handle(VALUE self) {
+  ResultWrapper *handle;
+  Data_Get_Struct(self, ResultWrapper, handle);
+  if (!handle) rb_raise(eSwiftRuntimeError, "Invalid object, did you forget to call #super?");
+
+  return handle->result;
 }
 
 // TODO:
@@ -68,14 +92,6 @@ VALUE result_each(VALUE self) {
   CATCH_DBI_EXCEPTIONS();
 
   return Qnil;
-}
-
-dbi::AbstractResult* result_handle(VALUE self) {
-  dbi::AbstractResult *result;
-  Data_Get_Struct(self, dbi::AbstractResult, result);
-  if (!result) rb_raise(eSwiftRuntimeError, "Invalid object, did you forget to call #super?");
-
-  return result;
 }
 
 static VALUE result_finish(VALUE self) {

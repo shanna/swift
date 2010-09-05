@@ -3,7 +3,10 @@
 static VALUE cSwiftAdapter;
 
 static void adapter_free(dbi::Handle *handle) {
-    if (handle) delete handle;
+    if (handle) {
+      handle->conn()->cleanup();
+      delete handle;
+    }
 }
 
 VALUE adapter_alloc(VALUE klass) {
@@ -91,7 +94,7 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
 
     if (rb_block_given_p()) {
       dbi::AbstractResult *result = handle->results();
-      return result_each(Data_Wrap_Struct(cSwiftResult, 0, result_free, result));
+      return result_each(result_wrap_handle(cSwiftResult, self, result));
     }
     else
       return rows;
@@ -139,7 +142,7 @@ static VALUE adapter_prepare(int argc, VALUE *argv, VALUE self) {
   try {
     // TODO: Move to statement_* constructor.
     statement = handle->conn()->prepare(CSTRING(sql));
-    prepared  = Data_Wrap_Struct(cSwiftStatement, 0, statement_free, statement);
+    prepared  = statement_wrap_handle(cSwiftStatement, self, statement);
     rb_iv_set(prepared, "@scheme",  scheme);
     return prepared;
   }
@@ -227,7 +230,7 @@ VALUE adapter_results(VALUE self) {
   dbi::Handle *handle = adapter_handle(self);
   try {
       dbi::AbstractResult *result = handle->results();
-      return Data_Wrap_Struct(cSwiftResult, 0, result_free, result);
+      return result_wrap_handle(cSwiftResult, self, result);
   }
   CATCH_DBI_EXCEPTIONS();
 }

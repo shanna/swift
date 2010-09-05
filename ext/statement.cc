@@ -5,24 +5,40 @@
 
 VALUE cSwiftStatement;
 
-void statement_free(dbi::AbstractStatement *statement) {
-  if (statement) {
-    statement->cleanup();
-    delete statement;
+void statement_mark(StatementWrapper *handle) {
+  if (handle)
+    rb_gc_mark(handle->adapter);
+}
+
+void statement_free(StatementWrapper *handle) {
+  if (handle) {
+    if (handle->free) {
+      handle->statement->cleanup();
+      delete handle->statement;
+    }
+    delete handle;
   }
 }
 
 VALUE statement_alloc(VALUE klass) {
-  dbi::AbstractStatement *statement = 0;
-  return Data_Wrap_Struct(klass, 0, statement_free, statement);
+  StatementWrapper *handle = 0;
+  return Data_Wrap_Struct(klass, statement_mark, statement_free, handle);
+}
+
+VALUE statement_wrap_handle(VALUE klass, VALUE adapter, dbi::AbstractStatement *statement) {
+  StatementWrapper *handle = new StatementWrapper;
+  handle->statement = statement;
+  handle->adapter   = adapter;
+  handle->free      = true;
+  return Data_Wrap_Struct(klass, statement_mark, statement_free, handle);
 }
 
 dbi::AbstractStatement* statement_handle(VALUE self) {
-  dbi::AbstractStatement *handle;
-  Data_Get_Struct(self, dbi::AbstractStatement, handle);
+  StatementWrapper *handle;
+  Data_Get_Struct(self, StatementWrapper, handle);
   if (!handle) rb_raise(eSwiftRuntimeError, "Invalid object, did you forget to call #super?");
 
-  return handle;
+  return handle->statement;
 }
 
 // TODO: Change bind_values to an array in the interface? Avoid array -> splat -> array.
