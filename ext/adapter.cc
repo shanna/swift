@@ -86,7 +86,7 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
     query.sql    = CSTRING(statement);
     query.handle = handle;
 
-    if (RARRAY_LEN(bind_values) > 0) query_bind_values(&query, bind_values);
+    if (RARRAY_LEN(bind_values) > 0) query_bind_values(&query, bind_values, handle->driver());
     if (dbi::_trace)                 dbi::logMessage(dbi::_trace_fd, dbi::formatParams(query.sql, query.bind));
 
     if ((rows = rb_thread_blocking_region(((VALUE (*)(void*))query_execute), &query, RUBY_UBF_IO, 0)) == Qfalse)

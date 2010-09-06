@@ -28,7 +28,13 @@ VALUE query_execute_statement(Query *query) {
   }
 }
 
-void query_bind_values(Query *query, VALUE bind_values) {
+void query_bind_values(Query *query, VALUE bind_values, std::string driver) {
+  VALUE fstrftime = rb_intern("strftime");
+  VALUE fto_s     = rb_intern("to_s");
+  VALUE fusec     = rb_intern("usec");
+  VALUE dtformat  = rb_str_new2("%F %T.");
+  VALUE tzformat  = rb_str_new2(" %z");
+
   for (int i = 0; i < RARRAY_LEN(bind_values); i++) {
     VALUE bind_value = rb_ary_entry(bind_values, i);
 
@@ -44,6 +50,17 @@ void query_bind_values(Query *query, VALUE bind_values) {
     else if (rb_obj_is_kind_of(bind_value, rb_cIO) ==  Qtrue || rb_obj_is_kind_of(bind_value, cStringIO) ==  Qtrue) {
       bind_value = rb_funcall(bind_value, rb_intern("read"), 0);
       query->bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(bind_value), RSTRING_LEN(bind_value)));
+    }
+    // We're not just calling to_s on time values to make sure microsecs is passed on as well.
+    // TODO there must be a cleaner way of doing this.
+    else if (rb_obj_is_kind_of(bind_value, rb_cTime)) {
+      std::string timestamp = RSTRING_PTR(rb_funcall(bind_value, fstrftime, 1, dtformat));
+
+      timestamp += RSTRING_PTR(rb_funcall(rb_funcall(bind_value, fusec, 0), fto_s, 0));
+      if (driver != "db2")
+        timestamp += RSTRING_PTR(rb_funcall(bind_value, fstrftime, 1, tzformat));
+
+      query->bind.push_back(dbi::PARAM(timestamp));
     }
     else {
       bind_value = TO_S(bind_value);

@@ -53,8 +53,12 @@ module Swift
       fields =  scheme.header.map{|p| field_definition(p)}.join(', ')
       fields += ", primary key (#{keys.join(', ')})" unless keys.empty?
 
-      execute("drop table if exists #{scheme.store}")
+      drop_store scheme.store
       execute("create table #{scheme.store} (#{fields})")
+    end
+
+    def drop_store name
+      execute("drop table if exists #{name}")
     end
 
     protected
@@ -102,7 +106,11 @@ module Swift
       end
 
       def field_definition attribute
-        "#{attribute.field} " + case attribute
+        "#{attribute.field} " + field_type(attribute)
+      end
+
+      def field_type attribute
+        case attribute
           when Type::String     then 'text'
           when Type::Integer    then attribute.serial ? 'serial' : 'integer'
           when Type::Float      then 'float'

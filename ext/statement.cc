@@ -50,7 +50,7 @@ static VALUE statement_execute(int argc, VALUE *argv, VALUE self) {
   try {
     Query query;
     query.statement = statement;
-    if (RARRAY_LEN(bind_values) > 0) query_bind_values(&query, bind_values);
+    if (RARRAY_LEN(bind_values) > 0) query_bind_values(&query, bind_values, statement->driver());
     if (dbi::_trace)                 dbi::logMessage(dbi::_trace_fd, dbi::formatParams(statement->command(), query.bind));
 
     if (rb_thread_blocking_region(((VALUE (*)(void*))query_execute_statement), &query, RUBY_UBF_IO, 0) == Qfalse)
