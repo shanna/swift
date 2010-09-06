@@ -73,7 +73,7 @@ VALUE pool_execute(int argc, VALUE *argv, VALUE self) {
 
   try {
     Query query;
-    query_bind_values(&query, bind_values);
+    query_bind_values(&query, bind_values, pool->driver());
     request = request_alloc(cSwiftRequest);
     DATA_PTR(request) = pool->execute(CSTRING(sql), query.bind, pool_callback, (void*)callback);
     return request;
