@@ -4,8 +4,7 @@ require 'minitest/spec'
 require 'minitest/unit'
 require 'swift'
 
-class MiniTest::Unit::TestCase
-end
+# db2 database name is limited to 8 characters, gonna use swift instead of swift_test
 
 class MiniTest::Spec
   def self.supported_by *adapters, &block

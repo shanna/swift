@@ -1,15 +1,12 @@
 require_relative 'helper'
 describe 'Adapter' do
-  supported_by Swift::DB::Postgres do #, Swift::DB::Mysql do
-    before do
-      Swift.db.execute %q{drop table if exists users}
-      Swift.db.execute %q{create table users(id serial, name text, created_at timestamp)}
-    end
-
+  supported_by Swift::DB::Postgres, Swift::DB::Mysql do
     describe 'transactions' do
       before do
         @name = 'test1 - transaction 1'
         @db   = Swift.db
+        @db.execute %q{drop table if exists users}
+        @db.execute %q{create table users(id serial, name text, created_at timestamp)}
       end
 
       it 'yields db to block' do
