@@ -29,11 +29,11 @@ VALUE result_alloc(VALUE klass) {
   return Data_Wrap_Struct(klass, result_mark, result_free, handle);
 }
 
-VALUE result_wrap_handle(VALUE klass, VALUE adapter, dbi::AbstractResult *result) {
+VALUE result_wrap_handle(VALUE klass, VALUE adapter, dbi::AbstractResult *result, bool free) {
   ResultWrapper *handle = new ResultWrapper;
   handle->result  = result;
   handle->adapter = adapter;
-  handle->free    = true;
+  handle->free    = free;
   return Data_Wrap_Struct(klass, result_mark, result_free, handle);
 }
 

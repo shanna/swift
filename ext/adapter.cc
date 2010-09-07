@@ -94,7 +94,7 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
 
     if (rb_block_given_p()) {
       dbi::AbstractResult *result = handle->results();
-      return result_each(result_wrap_handle(cSwiftResult, self, result));
+      return result_wrap_handle(cSwiftResult, self, result, false);
     }
     else
       return rows;
@@ -229,8 +229,8 @@ static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
 VALUE adapter_results(VALUE self) {
   dbi::Handle *handle = adapter_handle(self);
   try {
-      dbi::AbstractResult *result = handle->results();
-      return result_wrap_handle(cSwiftResult, self, result);
+    dbi::AbstractResult *result = handle->results();
+    return result_wrap_handle(cSwiftResult, self, result, false);
   }
   CATCH_DBI_EXCEPTIONS();
 }

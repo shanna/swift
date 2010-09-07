@@ -17,7 +17,7 @@ void init_swift_result();
 void  result_free(ResultWrapper *);
 void  result_mark(ResultWrapper *);
 
-VALUE result_wrap_handle(VALUE, VALUE, dbi::AbstractResult *);
+VALUE result_wrap_handle(VALUE, VALUE, dbi::AbstractResult *, bool free);
 dbi::AbstractResult* result_handle(VALUE);
 
 VALUE result_each(VALUE);
