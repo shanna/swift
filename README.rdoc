@@ -9,15 +9,13 @@ A rational rudimentary object relational mapper.
 == Dependencies
 
 * ruby   >= 1.9.1
-* dbic++ >= 0.1.6
+* dbic++ >= 0.4.0 (http://github.com/deepfryed/dbicpp)
 * mysql  >= 5.0.17 or postgresql >= 8.4 or db2 >= 9.7.2
 
 == Caveats
 
 * db2 needs to be running under DB2_COMPATIBILITY_VECTOR=77FF
 * db2 driver does not have support for asynchronous operations yet.
-
-dbic++ can be found here http://github.com/deepfryed/dbicpp
 
 == Features
 
