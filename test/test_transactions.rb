@@ -7,6 +7,7 @@ describe 'Adapter' do
         @db   = Swift.db
         @db.execute %q{drop table users} rescue nil
         @db.execute %q{create table users(name varchar(512), created_at timestamp)}
+        @sth = @db.prepare('select count(*) as c from users where name = ?')
       end
 
       it 'yields db to block' do
@@ -25,7 +26,7 @@ describe 'Adapter' do
         end
 
         after do
-          @db.execute('select count(*) as c from users where name = ?', @name) {|r| assert_equal 1, r[:c] }
+          assert_equal 1, @sth.execute(@name).first[:c]
         end
 
         it 'should allow explicit commits' do
@@ -40,29 +41,15 @@ describe 'Adapter' do
             db.execute('insert into users(name) values(?)', @name)
           end
         end
-
-        it 'should autocommit and autorollback' do
-          @db.transaction do |db|
-            db.execute('insert into users(name) values(?)', @name)
-            begin
-              db.transaction do
-                db.execute('insert into users(name) values(?)', @name)
-                raise 'foo'
-              end
-            rescue RuntimeError
-            end
-          end
-        end
-      end
+      end # commits work
 
       describe 'rollbacks work' do
-
         before do
           @db.execute('truncate users')
         end
 
         after do
-          @db.execute('select count(*) as c from users where name = ?', @name) {|r| assert_equal 0, r[:c] }
+          assert_equal 0, @sth.execute(@name).first[:c]
         end
 
         it 'should allow explicit rollbacks' do
@@ -80,7 +67,31 @@ describe 'Adapter' do
             end
           end
         end
-      end
-    end
-  end
-end
+      end # rollbacks work
+
+      describe 'nested transactions' do
+        before do
+          @db.execute('truncate users')
+        end
+
+        after do
+          assert_equal 1, @sth.execute(@name).first[:c]
+        end
+
+        it 'should autocommit and autorollback' do
+          @db.transaction do |db|
+            db.execute('insert into users(name) values(?)', @name)
+            begin
+              db.transaction do
+                db.execute('insert into users(name) values(?)', @name)
+                raise 'foo'
+              end
+            rescue RuntimeError
+            end
+          end
+        end
+      end # nested transactions
+
+    end # transactions
+  end # supported_by
+end # adapter
