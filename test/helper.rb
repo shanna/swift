@@ -11,15 +11,15 @@ class MiniTest::Spec
   def self.supported_by *adapters, &block
     adapters.each do |adapter|
       begin
-        Swift.setup :default, adapter, db: 'swift_test'
+        Swift.setup :default, adapter, db: 'swift'
       rescue => error
-        warn "Unable to setup 'swift_test' db for #{adapter}, #{error.message}. Skipping..."
+        warn "Unable to setup 'swift' db for #{adapter}, #{error.message}. Skipping..."
         next
       end
 
       describe("Adapter #{adapter.name}") do
         before do
-          Swift.setup :default, adapter, db: 'swift_test'
+          Swift.setup :default, adapter, db: 'swift'
         end
         block.call(adapter)
       end
