@@ -13,3 +13,4 @@ benchmarks/bin
 pkg/*
 memory/driver
 memory/driver.o
+dbtest.rb
