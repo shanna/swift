@@ -94,7 +94,7 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
 
     if (rb_block_given_p()) {
       dbi::AbstractResult *result = handle->results();
-      return result_wrap_handle(cSwiftResult, self, result, false);
+      return result_each(result_wrap_handle(cSwiftResult, self, result, false));
     }
     else
       return rows;
