@@ -17,12 +17,19 @@ module Swift
           @pool.detach self
         end
       end
+
+      def notify_writable
+        notify_readable
+      end
     end # Handler
 
 
     def initialize size, options
       @pool         = Swift::DB::Pool.new size, options
-      @stop_reactor = EM.reactor_running? ? false : true
+
+      # TODO move driver specific options to extension.
+      @writable     = options[:driver] == 'db2'
+
       @pending      = {}
       @queue        = []
     end
@@ -33,9 +40,7 @@ module Swift
 
     def detach c
       @pending.delete(c)
-      if @queue.empty?
-        EM.stop if @stop_reactor && @pending.empty?
-      else
+      unless @queue.empty?
         sql, bind, callback = @queue.shift
         execute(sql, *bind, &callback)
       end
@@ -54,7 +59,7 @@ module Swift
       if request && !attached?(request.socket)
         EM.watch(request.socket, Handler, request, self) do |c|
           attach c
-          c.notify_writable = false
+          c.notify_writable = @writable
           c.notify_readable = true
         end
       else
