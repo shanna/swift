@@ -1,7 +1,7 @@
 require_relative 'helper'
 
 describe 'Adapter' do
-  supported_by Swift::DB::Postgres, Swift::DB::Mysql do
+  supported_by Swift::DB::Postgres, Swift::DB::Mysql, Swift::DB::DB2 do
     describe 'Storing binary objects' do
       before do
         user = Class.new(Swift::Scheme) do
