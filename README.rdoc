@@ -14,8 +14,11 @@ A rational rudimentary object relational mapper.
 
 == Caveats
 
-* db2 needs to be running under DB2_COMPATIBILITY_VECTOR=77FF
-* db2 driver does not have support for asynchronous operations yet.
+=== DB2
+* The server needs to be running under DB2_COMPATIBILITY_VECTOR=77FF if you want to use the ORM
+  features of swift.
+* DB2 asynchronous operations are highly experimental at this point due to inherent limitations of the
+  underlying api. It is more an academic exercise and is not ready for real-world use.
 
 == Features
 
@@ -172,7 +175,7 @@ Swift comes with a simple identity map. Just require it after you load swift.
 
 === Bulk inserts
 
-Swift comes with adapter level support for bulk inserts for MySQL and PostgreSQL. This
+Swift comes with adapter level support for bulk inserts for MySQL, PostgreSQL and DB2. This
 is usually very fast (~5-10x faster) than regular prepared insert statements for larger
 sets of data.
 
@@ -194,8 +197,8 @@ But you can do it almost as fast in ruby,
     end
   end
 
-You are not just limited to files - you can stream data from anywhere into MySQL and
-PostgreSQL directly without creating temporary files.
+You are not just limited to files - you can stream data from anywhere into your database without
+creating temporary files.
 
 == Performance
 

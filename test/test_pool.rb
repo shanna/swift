@@ -2,7 +2,7 @@ require_relative 'helper'
 require 'swift/pool'
 
 describe 'Adapter' do
-  supported_by Swift::DB::Postgres, Swift::DB::Mysql, Swift::DB::DB2 do
+  supported_by Swift::DB::Postgres, Swift::DB::Mysql do
     describe 'Asynchronous connection pool' do
       before do
         Swift.db do |db|
