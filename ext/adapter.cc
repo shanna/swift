@@ -124,7 +124,8 @@ static VALUE adapter_initialize(VALUE self, VALUE options) {
   }
   CATCH_DBI_EXCEPTIONS();
 
-  rb_iv_set(self, "@options", options);
+  rb_iv_set(self, "@timezone", rb_hash_aref(options, ID2SYM(rb_intern("timezone"))));
+  rb_iv_set(self, "@options",  options);
   return Qnil;
 }
 

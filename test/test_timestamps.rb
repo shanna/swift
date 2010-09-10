@@ -25,8 +25,25 @@ describe 'Adapter' do
           assert_timestamp_like time, fetch_timestamp_at(time), 'DST off'
         end
 
-        def fetch_timestamp_at value
-          sql = "select '%s'::timestamp with time zone as now" % value.strftime('%F %T%z')
+        describe 'Adapter timezone' do
+          %w(+05:30 -05:30).each do |offset|
+            it 'should parse timestamps and do conversion accordingly for offset ' + offset do
+              @db = Swift::DB::Postgres.new(@db.options.merge(timezone: offset))
+              server = DateTime.parse('2010-01-01 10:00:00')
+              local  = DateTime.parse('2010-01-01 10:00:00 ' + offset)
+              assert_timestamp_like local, fetch_timestamp_at(server, ''), 'parses correctly'
+            end
+          end
+        end
+
+        def fetch_timestamp_at value, zone='%z'
+          sql = if zone.empty?
+            "select '%s'::timestamp as now"
+          else
+            "select '%s'::timestamp with time zone as now"
+          end
+
+          sql = sql % value.strftime('%F %T' + zone)
           @db.execute(sql)
           @db.results.first.fetch(:now)
         end

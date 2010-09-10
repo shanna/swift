@@ -22,7 +22,6 @@ dbi::AbstractResult* result_handle(VALUE);
 
 VALUE result_each(VALUE);
 
-VALUE typecast_field(int, const char*, uint64_t);
-VALUE typecast_datetime(const char*, uint64_t);
+VALUE typecast_field(int, const char*, uint64_t, VALUE);
 
 #endif

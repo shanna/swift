@@ -6,9 +6,6 @@ VALUE cSwiftResult;
 
 VALUE fNew, fToDate;
 
-uint64_t epoch_ajd_n, epoch_ajd_d;
-VALUE daysecs, sg;
-
 void result_mark(ResultWrapper *handle) {
   if (handle)
     rb_gc_mark(handle->adapter);
@@ -34,7 +31,12 @@ VALUE result_wrap_handle(VALUE klass, VALUE adapter, dbi::AbstractResult *result
   handle->result  = result;
   handle->adapter = adapter;
   handle->free    = free;
-  return Data_Wrap_Struct(klass, result_mark, result_free, handle);
+
+  VALUE obj = Data_Wrap_Struct(klass, result_mark, result_free, handle);
+  if (!NIL_P(adapter))
+    rb_iv_set(obj, "@timezone", rb_iv_get(adapter, "@timezone"));
+
+  return obj;
 }
 
 dbi::AbstractResult* result_handle(VALUE self) {
@@ -60,7 +62,8 @@ VALUE result_each(VALUE self) {
   const char *data;
 
   dbi::AbstractResult *result = result_handle(self);
-  VALUE scheme = rb_iv_get(self, "@scheme");
+  VALUE scheme   = rb_iv_get(self, "@scheme");
+  VALUE timezone = rb_iv_get(self, "@timezone");
 
   try {
     VALUE fields                      = rb_ary_new();
@@ -79,7 +82,7 @@ VALUE result_each(VALUE self) {
           rb_hash_aset(
             tuple,
             rb_ary_entry(fields, column),
-            typecast_field(result_types[column], data, length)
+            typecast_field(result_types[column], data, length, timezone)
           );
         }
         else {
@@ -110,25 +113,46 @@ int64_t client_tzoffset(int64_t local, int isdst) {
   return (int64_t)(local + (isdst ? 3600 : 0) - mktime(&tm));
 }
 
-// pinched from do_postgres
-static void reduce(uint64_t *numerator, uint64_t *denominator) {
-  uint64_t a, b, c;
-  a = *numerator;
-  b = *denominator;
-  while (a) {
-    c = a; a = b % a; b = c;
+// Calculates server offset at a given time, including dst.
+int64_t server_tzoffset(struct tm* tm, const char *zone) {
+  uint64_t local;
+  int64_t  offset;
+  char buffer[512];
+  char *old, saved[512];
+  struct tm tm_copy;
+
+  // save current zone setting.
+  if ((old = getenv("TZ"))) {
+    strncpy(saved, old, 512);
+    saved[511] = 0;
   }
-  *numerator   = *numerator   / b;
-  *denominator = *denominator / b;
+
+  // setup.
+  snprintf(buffer, 512, ":%s", zone);
+  setenv("TZ", buffer, 1);
+  tzset();
+
+  // pretend we're on server timezone and calculate offset.
+  memcpy(&tm_copy, tm, sizeof(struct tm));
+  tm_copy.tm_isdst = -1;
+  local  = mktime(&tm_copy);
+  offset = client_tzoffset(local, tm_copy.tm_isdst);
+
+  // reset timezone to what it was before.
+  old ? setenv("TZ", saved, 1) : unsetenv("TZ");
+  tzset();
+
+  return offset;
 }
 
-VALUE typecast_timestamp(const char *data, uint64_t len) {
+VALUE typecast_timestamp(const char *data, uint64_t len, VALUE timezone) {
   struct tm tm;
   int64_t epoch, adjust, offset;
 
-  long double sec_fraction = 0;
   char tzsign = 0;
   int tzhour  = 0, tzmin = 0;
+  long double sec_fraction = 0;
+  const char *zone  = NIL_P(timezone) ? "" : CSTRING(timezone);
 
   memset(&tm, 0, sizeof(struct tm));
   if (strchr(data, '.')) {
@@ -155,6 +179,14 @@ VALUE typecast_timestamp(const char *data, uint64_t len) {
         ? (time_t)tzhour *  3600 + (time_t)tzmin *  60
         : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
     }
+    else if (*zone) {
+      if (strncasecmp(zone, "UTC", 3) == 0 || strncasecmp(zone, "GMT", 3) == 0)
+        offset = 0;
+      else if (sscanf(zone, "%03d%02d",  &tzhour, &tzmin) < 2 && sscanf(zone, "%03d:%02d", &tzhour, &tzmin) < 1)
+        offset = server_tzoffset(&tm, zone);
+      else
+        offset = tzhour*3600 + tzmin*60*tzhour/abs(tzhour);
+    }
 
     return rb_time_new(epoch+adjust-offset, (uint64_t)(sec_fraction*1000000L));
   }
@@ -163,9 +195,9 @@ VALUE typecast_timestamp(const char *data, uint64_t len) {
   return rb_str_new(data, len);
 }
 
-#define typecast_date(data,len)   rb_funcall(typecast_timestamp(data, len), fToDate, 0)
+#define typecast_date(data,len,tz)   rb_funcall(typecast_timestamp(data,len,tz), fToDate, 0)
 
-VALUE typecast_field(int type, const char *data, uint64_t length) {
+VALUE typecast_field(int type, const char *data, uint64_t length, VALUE timezone) {
   // This is my wish list below for rubycore - to be built into core ruby.
   // 1. Time class represents time - time zone invariant
   // 2. Date class represents a date - time zone invariant
@@ -183,9 +215,9 @@ VALUE typecast_field(int type, const char *data, uint64_t length) {
     case DBI_TYPE_TEXT:
       return rb_enc_str_new(data, length, rb_utf8_encoding());
     case DBI_TYPE_TIMESTAMP:
-      return typecast_timestamp(data, length);
+      return typecast_timestamp(data, length, timezone);
     case DBI_TYPE_DATE:
-      return typecast_date(data, length);
+      return typecast_date(data, length, timezone);
     case DBI_TYPE_NUMERIC:
       return rb_funcall(cBigDecimal, fNew, 1, rb_str_new2(data));
     case DBI_TYPE_FLOAT:
@@ -254,11 +286,5 @@ void init_swift_result() {
   rb_define_method(cSwiftResult, "rows",       RUBY_METHOD_FUNC(result_rows),      0);
   rb_define_method(cSwiftResult, "columns",    RUBY_METHOD_FUNC(result_columns),   0);
   rb_define_method(cSwiftResult, "fields",     RUBY_METHOD_FUNC(result_fields),    0);
-
-  // typecast_datetime setup.
-  epoch_ajd_d = 2;
-  epoch_ajd_n = 4881175L;            // 1970-01-01 00:00:00 is 2440587.5 in ajd
-  daysecs     = SIZET2NUM(86400L);
-  sg          = SIZET2NUM(2299161L); // day of calendar reform Date::ITALY
 }
 

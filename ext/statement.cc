@@ -30,7 +30,12 @@ VALUE statement_wrap_handle(VALUE klass, VALUE adapter, dbi::AbstractStatement *
   handle->statement = statement;
   handle->adapter   = adapter;
   handle->free      = true;
-  return Data_Wrap_Struct(klass, statement_mark, statement_free, handle);
+
+  VALUE obj = Data_Wrap_Struct(klass, statement_mark, statement_free, handle);
+  if (!NIL_P(adapter))
+    rb_iv_set(obj, "@timezone", rb_iv_get(adapter, "@timezone"));
+
+  return obj;
 }
 
 dbi::AbstractStatement* statement_handle(VALUE self) {

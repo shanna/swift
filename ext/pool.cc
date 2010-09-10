@@ -18,15 +18,10 @@ static dbi::ConnectionPool* pool_handle(VALUE self) {
   return pool;
 }
 
-// TODO: Remove unnecessary assignments. See Adapter.
 VALUE pool_init(VALUE self, VALUE n, VALUE options) {
   VALUE db       = rb_hash_aref(options, ID2SYM(rb_intern("db")));
-  VALUE host     = rb_hash_aref(options, ID2SYM(rb_intern("host")));
-  VALUE port     = rb_hash_aref(options, ID2SYM(rb_intern("port")));
   VALUE user     = rb_hash_aref(options, ID2SYM(rb_intern("user")));
   VALUE driver   = rb_hash_aref(options, ID2SYM(rb_intern("driver")));
-  VALUE password = rb_hash_aref(options, ID2SYM(rb_intern("password")));
-  VALUE zone     = rb_hash_aref(options, ID2SYM(rb_intern("timezone")));
 
   if (NIL_P(db))     rb_raise(eSwiftArgumentError, "Pool#new called without :db");
   if (NIL_P(driver)) rb_raise(eSwiftArgumentError, "#new called without :driver");
@@ -39,21 +34,28 @@ VALUE pool_init(VALUE self, VALUE n, VALUE options) {
       NUM2INT(n),
       CSTRING(driver),
       CSTRING(user),
-      CSTRING(password),
+      CSTRING(rb_hash_aref(options, ID2SYM(rb_intern("password")))),
       CSTRING(db),
-      CSTRING(host),
-      CSTRING(port)
+      CSTRING(rb_hash_aref(options, ID2SYM(rb_intern("host")))),
+      CSTRING(rb_hash_aref(options, ID2SYM(rb_intern("port"))))
     );
+
+    rb_iv_set(self, "@timezone", rb_hash_aref(options, ID2SYM(rb_intern("timezone"))));
   }
   CATCH_DBI_EXCEPTIONS();
+
   return Qnil;
 }
 
 void pool_callback(dbi::AbstractResult *result) {
   VALUE callback = (VALUE)result->context;
-  // NOTE ResultSet will be free'd by the underlying connection pool dispatcher ib dbic++
-  if (!NIL_P(callback))
-    rb_proc_call(callback, rb_ary_new3(1, result_wrap_handle(cSwiftResult, 0, result, false)));
+
+  // NOTE: C Result object will be deallocated in dbic++
+  if (!NIL_P(callback)) {
+    VALUE obj = result_wrap_handle(cSwiftResult, 0, result, false);
+    rb_iv_set(obj, "@timezone", rb_iv_get(callback, "@timezone"));
+    rb_proc_call(callback, rb_ary_new3(1, obj));
+  }
 }
 
 VALUE pool_execute(int argc, VALUE *argv, VALUE self) {
@@ -66,7 +68,11 @@ VALUE pool_execute(int argc, VALUE *argv, VALUE self) {
   dbi::ConnectionPool *pool = pool_handle(self);
   rb_scan_args(argc, argv, "1*&", &sql, &bind_values, &callback);
 
-  if (NIL_P(callback)) rb_raise(eSwiftArgumentError, "No block given in Pool#execute");
+  // The only way to pass timezone to the C callback routine.
+  if (NIL_P(callback))
+    rb_raise(eSwiftArgumentError, "No block given in Pool#execute");
+  else
+    rb_iv_set(callback, "@timezone", rb_iv_get(self, "@timezone"));
 
   try {
     Query query;
