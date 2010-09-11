@@ -19,16 +19,19 @@ end # User
 rows = (ARGV[1] || 500).to_i
 iter = (ARGV[2] ||   5).to_i
 
+User.migrate!
+
 50.times do |r|
+  Swift.db.execute 'truncate users'
+
   puts '', "-- run #{r} --", ''
   puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)
 
-  User.migrate!
   rows.times{|n| User.create(name: "test #{n}", email: "test@example.com", updated_at: Time.now) }
   iter.times{|n| User.all.each{|m| [ m.id, m.name, m.email, m.updated_at ] } }
   iter.times{|n| User.all.each{|m| m.update(name: "foo", email: "foo@example.com", updated_at: Time.now) } }
 
-  User.migrate!
+  Swift.db.execute 'truncate users'
   rows.times{|n| Swift.db.write('users', %w{name email updated_at}, "test #{n}\ttest@example.com\t#{Time.now}\n") }
   puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)
 
