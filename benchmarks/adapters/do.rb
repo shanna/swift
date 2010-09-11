@@ -25,7 +25,6 @@ class Runner
   end
 
   def run
-    GC.disable
     migrate! if tests.include?(:create)
     yield run_creates if tests.include?(:create)
     yield run_selects if tests.include?(:select)

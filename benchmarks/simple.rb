@@ -56,6 +56,8 @@ if args[:verbose]
 end
 
 require_relative args[:script].shift
+
+GC.disable
 Runner.new(args).run {|result| puts result.output }
 
 if !args[:script].empty?

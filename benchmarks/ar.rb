@@ -21,8 +21,7 @@ class Runner
   end
 
   def run
-    GC.disable
-    User.connection.execute 'truncate users' if tests.include?(:create) or tests.include?(:update)
+    User.connection.execute 'truncate users' if tests.include?(:create)
     yield run_creates if tests.include?(:create)
     yield run_selects if tests.include?(:select)
     yield run_updates if tests.include?(:update)
