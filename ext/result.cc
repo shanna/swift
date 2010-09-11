@@ -182,10 +182,14 @@ VALUE typecast_timestamp(const char *data, uint64_t len, VALUE timezone) {
     else if (*zone) {
       if (strncasecmp(zone, "UTC", 3) == 0 || strncasecmp(zone, "GMT", 3) == 0)
         offset = 0;
-      else if (sscanf(zone, "%03d%02d",  &tzhour, &tzmin) < 2 && sscanf(zone, "%03d:%02d", &tzhour, &tzmin) < 1)
-        offset = server_tzoffset(&tm, zone);
+      else if (strcmp(zone, "+00:00") == 0 || strcmp(zone, "+0000") == 0)
+        offset = 0;
+      else if (sscanf(zone, "%c%02d%02d",  &tzsign, &tzhour, &tzmin) == 3)
+        offset = tzsign == '+' ? (time_t)tzhour*3600 + (time_t)tzmin*60 : -1*((time_t)tzhour*3600 + (time_t)tzmin*60);
+      else if (sscanf(zone, "%c%02d:%02d", &tzsign, &tzhour, &tzmin) >= 2)
+        offset = tzsign == '+' ? (time_t)tzhour*3600 + (time_t)tzmin*60 : -1*((time_t)tzhour*3600 + (time_t)tzmin*60);
       else
-        offset = tzhour*3600 + tzmin*60*tzhour/abs(tzhour);
+        offset = server_tzoffset(&tm, zone);
     }
 
     return rb_time_new(epoch+adjust-offset, (uint64_t)(sec_fraction*1000000L));
