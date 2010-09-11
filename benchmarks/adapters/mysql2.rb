@@ -21,7 +21,7 @@ class Runner
 
   def migrate!
     adapter.query('drop table if exists users')
-    adapter.query('create table users(id serial, name text, email text, updated_at timestamp, primary key(id)')
+    adapter.query('create table users(id serial, name text, email text, updated_at timestamp, primary key(id))')
   end
 
   def run_creates

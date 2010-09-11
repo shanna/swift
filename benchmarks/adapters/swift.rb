@@ -20,7 +20,7 @@ class Runner
 
   def migrate!
     Swift.db.execute('drop table if exists users')
-    Swift.db.execute('create table users(id serial, name text, email text, updated_at timestamp, primary key(id)')
+    Swift.db.execute('create table users(id serial, name text, email text, updated_at timestamp, primary key(id))')
   end
 
   def run_creates
