@@ -46,7 +46,7 @@ OptionParser.new do |opts|
 end.parse!
 
 args[:script].uniq!
-args[:script] = %w(dm ar sequel swift) if args[:script].empty?
+args[:script] = %w(ar dm sequel swift) if args[:script].empty?
 args[:tests]  = %w(create select update).map(&:to_sym) if args[:tests].empty?
 args[:rows]   = '*' if args[:tests] == [ :select ]
 
