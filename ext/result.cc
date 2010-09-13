@@ -157,8 +157,8 @@ VALUE typecast_timestamp(const char *data, uint64_t len, VALUE timezone) {
   memset(&tm, 0, sizeof(struct tm));
   if (strchr(data, '.')) {
     sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%Lf%c%02d:%02d",
-      &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec,
-      &sec_fraction, &tzsign, &tzhour, &tzmin);
+      &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec, &sec_fraction,
+      &tzsign, &tzhour, &tzmin);
   }
   else {
     sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%c%02d:%02d",
@@ -174,7 +174,7 @@ VALUE typecast_timestamp(const char *data, uint64_t len, VALUE timezone) {
     adjust = client_tzoffset(epoch, tm.tm_isdst);
     offset = adjust;
 
-    if (tzsign == '+' || tzsign == '-') {
+    if (tzsign) {
       offset = tzsign == '+'
         ? (time_t)tzhour *  3600 + (time_t)tzmin *  60
         : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
@@ -185,9 +185,13 @@ VALUE typecast_timestamp(const char *data, uint64_t len, VALUE timezone) {
       else if (strcmp(zone, "+00:00") == 0 || strcmp(zone, "+0000") == 0)
         offset = 0;
       else if (sscanf(zone, "%c%02d%02d",  &tzsign, &tzhour, &tzmin) == 3)
-        offset = tzsign == '+' ? (time_t)tzhour*3600 + (time_t)tzmin*60 : -1*((time_t)tzhour*3600 + (time_t)tzmin*60);
+        offset = tzsign == '+'
+          ? (time_t)tzhour *  3600 + (time_t)tzmin *  60
+          : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
       else if (sscanf(zone, "%c%02d:%02d", &tzsign, &tzhour, &tzmin) >= 2)
-        offset = tzsign == '+' ? (time_t)tzhour*3600 + (time_t)tzmin*60 : -1*((time_t)tzhour*3600 + (time_t)tzmin*60);
+        offset = tzsign == '+'
+          ? (time_t)tzhour *  3600 + (time_t)tzmin *  60
+          : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
       else
         offset = server_tzoffset(&tm, zone);
     }
