@@ -4,7 +4,7 @@ VALUE cBigDecimal;
 VALUE cStringIO;
 VALUE cSwiftResult;
 
-VALUE fNew, fToDate;
+VALUE fNew, fToDate, fLoad;
 
 void result_mark(ResultWrapper *handle) {
   if (handle)
@@ -89,7 +89,7 @@ VALUE result_each(VALUE self) {
           rb_hash_aset(tuple, rb_ary_entry(fields, column), Qnil);
         }
       } // column loop
-      NIL_P(scheme) ? rb_yield(tuple) : rb_yield(rb_funcall(scheme, rb_intern("load"), 1, tuple));
+      NIL_P(scheme) ? rb_yield(tuple) : rb_yield(rb_funcall(scheme, fLoad, 1, tuple));
     } // row loop
   }
   CATCH_DBI_EXCEPTIONS();
@@ -282,6 +282,7 @@ void init_swift_result() {
 
   fNew         = rb_intern("new");
   fToDate      = rb_intern("to_date");
+  fLoad        = rb_intern("load");
 
   rb_define_alloc_func(cSwiftResult, result_alloc);
   rb_include_module(cSwiftResult, CONST_GET(rb_mKernel, "Enumerable"));
