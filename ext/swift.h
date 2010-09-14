@@ -30,6 +30,7 @@ extern VALUE eSwiftConnectionError;
 #include "statement.h"
 #include "request.h"
 #include "pool.h"
+#include "attribute.h"
 
 #undef SIZET2NUM
 #ifdef HAVE_LONG_LONG

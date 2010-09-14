@@ -7,10 +7,6 @@ VALUE eSwiftArgumentError;
 VALUE eSwiftRuntimeError;
 VALUE eSwiftConnectionError;
 
-VALUE rb_special_constant(VALUE self, VALUE obj) {
-  return rb_special_const_p(obj) ? Qtrue : Qfalse;
-}
-
 VALUE swift_init(VALUE self, VALUE path) {
   try { dbi::dbiInitialize(CSTRING(path)); } CATCH_DBI_EXCEPTIONS();
   return Qtrue;
@@ -54,14 +50,14 @@ extern "C" {
     eSwiftConnectionError = rb_define_class("SwiftConnectionError", eSwiftError);
 
     init_swift_adapter();
+    init_swift_attribute();
+    init_swift_pool();
+    init_swift_request();
     init_swift_result();
     init_swift_statement();
-    init_swift_request();
-    init_swift_pool();
 
     rb_define_module_function(mSwift, "init",  RUBY_METHOD_FUNC(swift_init), 1);
     rb_define_module_function(mSwift, "trace", RUBY_METHOD_FUNC(swift_trace), -1);
-    rb_define_module_function(mSwift, "special_constant?", RUBY_METHOD_FUNC(rb_special_constant), 1);
 
     // NOTE
     // Swift adapter and statement objects need to be deallocated or garbage collected in the reverse
