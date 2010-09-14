@@ -14,3 +14,5 @@ pkg/*
 memory/driver
 memory/driver.o
 dbtest.rb
+benchmarks/adapters/pg_ext/*.*o
+benchmarks/adapters/pg_ext/Makefile
