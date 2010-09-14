@@ -1,4 +1,5 @@
 require_relative 'helper'
+
 describe 'Adapter' do
   supported_by Swift::DB::Postgres, Swift::DB::Mysql, Swift::DB::DB2 do
     describe 'transactions' do
@@ -7,6 +8,7 @@ describe 'Adapter' do
         @db   = Swift.db
         @db.execute %q{drop table users} rescue nil
         @db.execute %q{create table users(name varchar(512), created_at timestamp)}
+        @db.execute %q{alter table users engine=innodb} if @db.kind_of?(Swift::DB::Mysql) # In case of MyISAM default.
         @sth = @db.prepare('select count(*) as c from users where name = ?')
       end
 
