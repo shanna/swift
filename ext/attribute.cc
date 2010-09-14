@@ -4,13 +4,13 @@ VALUE fCall;
 
 VALUE attribute_default(VALUE self) {
   VALUE value = rb_iv_get(self, "@default");
-  if (NIL_P(value))
+
+  if (NIL_P(value) || rb_special_const_p(value))
     return value;
   else if (rb_respond_to(value, fCall))
     return rb_funcall(value, fCall, 0);
-  else if (rb_special_const_p(value))
-    return value;
-  return rb_obj_dup(value);
+  else
+    return rb_obj_dup(value);
 }
 
 void init_swift_attribute() {
