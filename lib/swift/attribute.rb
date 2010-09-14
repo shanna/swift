@@ -1,15 +1,15 @@
 module Swift
+  #--
+  # NOTE: Default method is defined in the extension.
   class Attribute
     attr_reader :name, :field, :key, :serial
 
-    # NOTE default method is defined in the extension.
-
     def initialize scheme, name, options = {}
-      @name      = name
-      @default   = options.fetch(:default, nil)
-      @field     = options.fetch(:field,   name)
-      @key       = options.fetch(:key,     false)
-      @serial    = options.fetch(:serial,  false)
+      @name    = name
+      @default = options.fetch(:default, nil)
+      @field   = options.fetch(:field,   name)
+      @key     = options.fetch(:key,     false)
+      @serial  = options.fetch(:serial,  false)
       define_scheme_methods(scheme)
     end
 
