@@ -4,7 +4,7 @@ VALUE cBigDecimal;
 VALUE cStringIO;
 VALUE cSwiftResult;
 
-VALUE fNew, fToDate, fLoad;
+ID fnew, fto_date, fload;
 
 void result_mark(ResultWrapper *handle) {
   if (handle)
@@ -89,7 +89,7 @@ VALUE result_each(VALUE self) {
           rb_hash_aset(tuple, rb_ary_entry(fields, column), Qnil);
         }
       } // column loop
-      NIL_P(scheme) ? rb_yield(tuple) : rb_yield(rb_funcall(scheme, fLoad, 1, tuple));
+      NIL_P(scheme) ? rb_yield(tuple) : rb_yield(rb_funcall(scheme, fload, 1, tuple));
     } // row loop
   }
   CATCH_DBI_EXCEPTIONS();
@@ -203,33 +203,36 @@ VALUE typecast_timestamp(const char *data, uint64_t len, VALUE timezone) {
   return rb_str_new(data, len);
 }
 
-#define typecast_date(data,len,tz)   rb_funcall(typecast_timestamp(data,len,tz), fToDate, 0)
+#define typecast_date(data,len,tz)   rb_funcall(typecast_timestamp(data,len,tz), fto_date, 0)
+
+/*
+  This is my wish list below for rubycore - to be built into core ruby.
+  1. Time class represents time - time zone invariant
+  2. Date class represents a date - time zone invariant
+  3. DateTime class represents a timestamp with full zoneinfo support.
+*/
 
 VALUE typecast_field(int type, const char *data, uint64_t length, VALUE timezone) {
-  // This is my wish list below for rubycore - to be built into core ruby.
-  // 1. Time class represents time - time zone invariant
-  // 2. Date class represents a date - time zone invariant
-  // 3. DateTime class represents a timestamp with full zoneinfo support.
   switch(type) {
     case DBI_TYPE_BOOLEAN:
       return (data && (data[0] =='t' || data[0] == '1')) ? Qtrue : Qfalse;
     case DBI_TYPE_INT:
       return rb_cstr2inum(data, 10);
     case DBI_TYPE_BLOB:
-      return rb_funcall(cStringIO, fNew, 1, rb_str_new(data, length));
-    // I'm undecided on typecasting TIME only types into native ruby types due to lack
-    // of support in core.
-    case DBI_TYPE_TIME:
-    case DBI_TYPE_TEXT:
-      return rb_enc_str_new(data, length, rb_utf8_encoding());
+      return rb_funcall(cStringIO, fnew, 1, rb_str_new(data, length));
     case DBI_TYPE_TIMESTAMP:
       return typecast_timestamp(data, length, timezone);
     case DBI_TYPE_DATE:
       return typecast_date(data, length, timezone);
     case DBI_TYPE_NUMERIC:
-      return rb_funcall(cBigDecimal, fNew, 1, rb_str_new2(data));
+      return rb_funcall(cBigDecimal, fnew, 1, rb_str_new2(data));
     case DBI_TYPE_FLOAT:
       return rb_float_new(atof(data));
+
+    // DBI_TYPE_TIME
+    // DBI_TYPE_TEXT
+    default:
+      return rb_enc_str_new(data, length, rb_utf8_encoding());
   }
 }
 
@@ -280,9 +283,9 @@ void init_swift_result() {
   cStringIO    = CONST_GET(rb_mKernel, "StringIO");
   cBigDecimal  = CONST_GET(rb_mKernel, "BigDecimal");
 
-  fNew         = rb_intern("new");
-  fToDate      = rb_intern("to_date");
-  fLoad        = rb_intern("load");
+  fnew         = rb_intern("new");
+  fto_date     = rb_intern("to_date");
+  fload        = rb_intern("load");
 
   rb_define_alloc_func(cSwiftResult, result_alloc);
   rb_include_module(cSwiftResult, CONST_GET(rb_mKernel, "Enumerable"));
