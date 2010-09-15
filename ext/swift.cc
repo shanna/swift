@@ -55,6 +55,7 @@ extern "C" {
     init_swift_request();
     init_swift_result();
     init_swift_statement();
+    init_swift_query();
 
     rb_define_module_function(mSwift, "init",  RUBY_METHOD_FUNC(swift_init), 1);
     rb_define_module_function(mSwift, "trace", RUBY_METHOD_FUNC(swift_trace), -1);

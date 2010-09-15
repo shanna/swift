@@ -1,5 +1,8 @@
 #include "query.h"
 
+ID fstrftime, fto_s, fusec;
+VALUE dtformat, tzformat;
+
 VALUE query_execute(Query *query) {
   try {
     return UINT2NUM(
@@ -29,12 +32,6 @@ VALUE query_execute_statement(Query *query) {
 }
 
 void query_bind_values(Query *query, VALUE bind_values, std::string driver) {
-  VALUE fstrftime = rb_intern("strftime");
-  VALUE fto_s     = rb_intern("to_s");
-  VALUE fusec     = rb_intern("usec");
-  VALUE dtformat  = rb_str_new2("%F %T.");
-  VALUE tzformat  = rb_str_new2(" %z");
-
   for (int i = 0; i < RARRAY_LEN(bind_values); i++) {
     VALUE bind_value = rb_ary_entry(bind_values, i);
 
@@ -71,3 +68,10 @@ void query_bind_values(Query *query, VALUE bind_values, std::string driver) {
   }
 }
 
+void init_swift_query() {
+  fstrftime = rb_intern("strftime");
+  fto_s     = rb_intern("to_s");
+  fusec     = rb_intern("usec");
+  dtformat  = rb_str_new2("%F %T.");
+  tzformat  = rb_str_new2(" %z");
+}

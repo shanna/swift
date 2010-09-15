@@ -14,5 +14,6 @@ struct Query {
 VALUE query_execute(Query*);
 VALUE query_execute_statement(Query*);
 void query_bind_values(Query*, VALUE, std::string);
+void init_swift_query();
 
 #endif
