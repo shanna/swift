@@ -69,11 +69,18 @@ VALUE typecast_date(const char *data, uint64_t len) {
 }
 
 inline VALUE typecast(const char* data, uint64_t len, int pgtype) {
+  size_t bytea_len;
+  unsigned char* bytea;
+  VALUE rv;
+
   switch(pgtype) {
     case 16:
       return *data == 't' ? Qtrue : Qfalse;
     case 17:
-      return rb_funcall(cStringIO, fnew, 1, rb_str_new(data, len));
+      bytea = PQunescapeBytea(data, &bytea_len);
+      rv = rb_funcall(cStringIO, fnew, 1, rb_str_new(bytea, bytea_len));
+      PQfreemem(bytea);
+      return rv;
     case 20:
     case 21:
     case 22:
