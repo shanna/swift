@@ -1,7 +1,7 @@
 require_relative '../gems/environment'
 require 'pg'
 require 'date'
-require_relative 'pg_ext/pg_ext'
+require 'pg_typecast'
 
 class Runner
   attr_reader :tests, :driver, :runs, :rows, :adapter
