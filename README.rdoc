@@ -209,6 +209,8 @@ http://github.com/shanna/swift/tree/master/benchmarks
 
 === Benchmarks
 
+==== ORM
+
 The following bechmarks were run on a machine with 4G ram, 5200rpm sata drive,
 Intel Core2Duo P8700 2.53GHz and stock PostgreSQL 8.4.1.
 
@@ -244,6 +246,29 @@ Intel Core2Duo P8700 2.53GHz and stock PostgreSQL 8.4.1.
     swift #write    0.000000  0.080000  0.080000  0.151146  7.29m
 
 
+==== Adapter
+
+The adapter level SELECT benchmarks without using ORM.
+
+* Same dataset as above.
+* All rows are selected 5 times.
+* The pg benchmark uses pg_typecast gem to provide typecasting support
+  for pg gem and also makes the benchmarks more fair.
+
+===== PostgreSQL
+
+    benchmark       sys       user      total     real      rss
+    do #select      0.060000  1.070000  1.130000  1.370092  99.83m
+    pg #select      0.030000  0.270000  0.300000  0.584091  46.13m
+    swift #select   0.020000  0.290000  0.310000  0.571635  39.08m
+
+===== MySQL
+
+    benchmark       sys       user      total     real      rss
+    do #select      0.030000  1.070000  1.100000  1.200177  99.26m
+    mysql2 #select  0.060000  0.450000  0.510000  0.609236  76.44m
+    swift #select   0.050000  0.170000  0.220000  0.334932  33.61m
+
 == TODO
 
 * More tests.
@@ -255,4 +280,3 @@ Intel Core2Duo P8700 2.53GHz and stock PostgreSQL 8.4.1.
 
 Go nuts! There is no style guide and I do not care if you write tests or comment code. If you write something neat just
 send a pull request, tweet, email or yell it at me line by line in person.
-
