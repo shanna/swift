@@ -35,7 +35,7 @@ class Runner
   def run_selects
     Benchmark.run("mysql2 #select") do
       sql = 'select * from users'
-      runs.times {|n| adapter.query(sql).each {|r| r.values_at(*%w(id name email updated_at)) } }
+      runs.times { adapter.query(sql).each {|r| r.values_at(*%w(id name email updated_at)) } }
     end
   end
 end

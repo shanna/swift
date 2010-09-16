@@ -2,20 +2,33 @@
 #include <ruby/io.h>
 #include <stdint.h>
 #include <time.h>
+#include <libpq-fe.h>
+#include <libpq/libpq-fs.h>
 
-// Calculates local offset at a given time, including dst.
+#define CONST_GET(scope, constant) rb_funcall(scope, rb_intern("const_get"), 1, rb_str_new2(constant))
+
+/*
+    Extracted from swift gem.
+
+    1. This speeds up pg when you need typecasting and the ability to whip through results quickly.
+    2. Adds PGresult#each and mixes in enumerable.
+
+*/
+
+ID fnew;
+VALUE cStringIO, cBigDecimal;
+
 int64_t client_tzoffset(int64_t local, int isdst) {
   struct tm tm;
   gmtime_r((const time_t*)&local, &tm);
-  // TODO: This won't work in Lord Howe Island, Australia which uses half hour shift.
   return (int64_t)(local + (isdst ? 3600 : 0) - mktime(&tm));
 }
 
-VALUE typecast_timestamp(VALUE self, VALUE str) {
+VALUE typecast_timestamp(const char *data, uint64_t len) {
   struct tm tm;
   int64_t epoch, adjust, offset;
 
-  char tzsign = 0, *data = RSTRING_PTR(str);
+  char tzsign = 0;
   int tzhour  = 0, tzmin = 0;
   long double sec_fraction = 0;
 
@@ -48,20 +61,79 @@ VALUE typecast_timestamp(VALUE self, VALUE str) {
     return rb_time_new(epoch+adjust-offset, (uint64_t)(sec_fraction*1000000L));
   }
 
-  return str;
+  return rb_str_new(data, len);
 }
 
-VALUE typecast_date(VALUE self, VALUE str) {
-  return rb_funcall(typecast_timestamp(self, str), rb_intern("to_date"), 0);
+VALUE typecast_date(const char *data, uint64_t len) {
+  return rb_funcall(typecast_timestamp(data, len), rb_intern("to_date"), 0);
+}
+
+inline VALUE typecast(const char* data, uint64_t len, int pgtype) {
+  switch(pgtype) {
+    case 16:
+      return *data == 't' ? Qtrue : Qfalse;
+    case 17:
+      return rb_funcall(cStringIO, fnew, 1, rb_str_new(data, len));
+    case 20:
+    case 21:
+    case 22:
+    case 23:
+    case 26:
+      return rb_cstr2inum(data, 10);
+    case 700:
+    case 701:
+    case 790:
+      return rb_float_new(atof(data));
+    case 1700:
+      return rb_funcall(cBigDecimal, fnew, 1, rb_str_new(data, len));
+    case 1082:
+      return typecast_date(data, len);
+    case 1114:
+    case 1184:
+      return typecast_timestamp(data, len);
+    default:
+      return rb_str_new(data, len);
+  }
+}
+
+VALUE result_each(VALUE self) {
+    int r, c, rows, cols, *types;
+    PGresult *res;
+    Data_Get_Struct(self, PGresult, res);
+
+    VALUE fields = rb_ary_new();
+    rows  = PQntuples(res);
+    cols  = PQnfields(res);
+    types = (int*)malloc(sizeof(int)*cols);
+    for (c = 0; c < cols; c++) {
+        rb_ary_push(fields, ID2SYM(rb_intern(PQfname(res, c))));
+        types[c] = PQftype(res, c);
+    }
+
+    for (r = 0; r < rows; r++) {
+        VALUE tuple = rb_hash_new();
+        for (c = 0; c < cols; c++) {
+            rb_hash_aset(tuple, rb_ary_entry(fields, c),
+                PQgetisnull(res, r, c) ? Qnil : typecast(PQgetvalue(res, r, c), PQgetlength(res, r, c), types[c]));
+        }
+        rb_yield(tuple);
+    }
+
+    free(types);
+    return Qnil;
 }
 
 void Init_pg_ext() {
   rb_require("pg");
   rb_require("date");
+  rb_require("stringio");
+  rb_require("bigdecimal");
 
-  VALUE cPGconn = rb_define_class("PGconn", rb_cObject);
+  fnew        = rb_intern("new");
+  cStringIO   = CONST_GET(rb_mKernel, "StringIO");
+  cBigDecimal = CONST_GET(rb_mKernel, "BigDecimal");
 
-  rb_define_module_function(cPGconn, "typecast_date",      RUBY_METHOD_FUNC(typecast_date),      1);
-  rb_define_module_function(cPGconn, "typecast_timestamp", RUBY_METHOD_FUNC(typecast_timestamp), 1);
+  VALUE cPGresult = rb_define_class("PGresult", rb_cObject);
+  rb_include_module(cPGresult, CONST_GET(rb_mKernel, "Enumerable"));
+  rb_define_method(cPGresult, "each", RUBY_METHOD_FUNC(result_each), 0);
 }
-

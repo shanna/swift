@@ -40,7 +40,7 @@ class Runner
 
   def run_selects
     Benchmark.run("swift #select") do
-      runs.times {|n| User.all {|m| [ m.id, m.name, m.email, m.updated_at ] } }
+      runs.times { User.all {|m| [ m.id, m.name, m.email, m.updated_at ] } }
     end
   end
 

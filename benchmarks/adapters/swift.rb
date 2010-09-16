@@ -31,8 +31,9 @@ class Runner
 
   def run_selects
     Benchmark.run("swift #select") do
-      st = Swift.db.prepare('select * from users')
-      runs.times {|n| st.execute {|m| m.values_at(:id, :name, :email, :updated_at) } }
+      stmt   = Swift.db.prepare('select * from users')
+      fields = %w(id name email updated_at).map(&:to_sym)
+      runs.times { stmt.execute {|m| m.values_at(*fields) } }
     end
   end
 end

@@ -33,35 +33,11 @@ class Runner
     end
   end
 
-  def typecast type, value
-    return value if value.nil?
-    case type
-      when 16
-        value == 't'
-      when 20,21,22,23,26
-        value.to_i
-      when 700,701,790,1700
-        value.to_f
-      when 1082
-        PGconn.typecast_date(value)
-      when 1114, 1184
-        PGconn.typecast_timestamp(value)
-      else
-        value
-    end
-  end
-
   def run_selects
     Benchmark.run("pg #select") do
-      sql = 'select * from users'
-      runs.times do |n|
-        r = adapter.exec(sql)
-        ftypes = r.nfields.times.map {|col| r.ftype(col) }
-        fnames = r.nfields.times.map {|col| r.fname(col).to_sym }
-        r.ntuples.times do |row|
-          Hash[*fnames.zip(r.nfields.times.map {|col| typecast(ftypes[col], r.getvalue(row, col)) }).flatten]
-        end
-      end
+      sql    = 'select * from users'
+      fields = %w(id name email updated_at).map(&:to_sym)
+      runs.times { adapter.exec(sql).each {|r| r.values_at(*fields) } }
     end
   end
 end

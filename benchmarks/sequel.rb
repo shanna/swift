@@ -37,7 +37,7 @@ class Runner
 
   def run_selects
     Benchmark.run("sequel #select") do
-      runs.times {|n| User.each {|m| [ m.id, m.name, m.email, m.updated_at ] } }
+      runs.times { User.each {|m| [ m.id, m.name, m.email, m.updated_at ] } }
     end
   end
 
