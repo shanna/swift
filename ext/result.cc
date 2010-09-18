@@ -155,12 +155,12 @@ VALUE typecast_timestamp(const char *data, uint64_t len, const char *zone) {
   int      tzhour = 0, tzmin = 0;
 
   memset(&tm, 0, sizeof(struct tm));
+  // Based on github.com/jeremyevans/sequel_pg. atoll & pow seem to be tad faster than sscanf %Lf
+  // NOTE: Reading subsec as string means malformed subsec > 32 digits could break this.
   if (strchr(data, '.')) {
     sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d.%s%c%02d:%02d",
       &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec, subsec,
       &tzsign, &tzhour, &tzmin);
-      // Based on github.com/jeremyevans/sequel_pg
-      // atoll & pow seem to be tad faster than sscanf %Lf
       usec = atoll(subsec)*(uint64_t)pow(10, 6 - strlen(subsec));
   }
   else {
@@ -202,7 +202,7 @@ VALUE typecast_timestamp(const char *data, uint64_t len, const char *zone) {
     return rb_time_new(epoch+adjust-offset, usec);
   }
 
-  // TODO: throw a warning ?
+  printf("WARNING: Unable to parse timestamp value '%s'\n", data);
   return rb_str_new(data, len);
 }
 
