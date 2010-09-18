@@ -1,4 +1,5 @@
 #include "result.h"
+#include <math.h>
 
 VALUE cBigDecimal;
 VALUE cStringIO;
@@ -59,19 +60,20 @@ static VALUE result_dup(VALUE self) {
 
 VALUE result_each(VALUE self) {
   uint64_t length;
-  const char *data;
+  const char *data, *tzstring;
 
   dbi::AbstractResult *result = result_handle(self);
   VALUE scheme   = rb_iv_get(self, "@scheme");
   VALUE timezone = rb_iv_get(self, "@timezone");
 
+  tzstring = NIL_P(timezone) ? 0 : CSTRING(timezone);
+
   try {
-    VALUE fields                      = rb_ary_new();
     std::vector<string> result_fields = result->fields();
     std::vector<int>    result_types  = result->types();
-    for (uint32_t i = 0; i < result_fields.size(); i++) {
-      rb_ary_push(fields, ID2SYM(rb_intern(result_fields[i].c_str())));
-    }
+    std::vector<VALUE>  fields;
+    for (uint32_t i = 0; i < result_fields.size(); i++)
+      fields.push_back(ID2SYM(rb_intern(result_fields[i].c_str())));
 
     result->seek(0);
     for (uint32_t row = 0; row < result->rows(); row++) {
@@ -81,12 +83,12 @@ VALUE result_each(VALUE self) {
         if (data) {
           rb_hash_aset(
             tuple,
-            rb_ary_entry(fields, column),
-            typecast_field(result_types[column], data, length, timezone)
+            fields[column],
+            typecast_field(result_types[column], data, length, tzstring)
           );
         }
         else {
-          rb_hash_aset(tuple, rb_ary_entry(fields, column), Qnil);
+          rb_hash_aset(tuple, fields[column], Qnil);
         }
       } // column loop
       NIL_P(scheme) ? rb_yield(tuple) : rb_yield(rb_funcall(scheme, fload, 1, tuple));
@@ -145,20 +147,21 @@ int64_t server_tzoffset(struct tm* tm, const char *zone) {
   return offset;
 }
 
-VALUE typecast_timestamp(const char *data, uint64_t len, VALUE timezone) {
-  struct tm tm;
-  int64_t epoch, adjust, offset;
-
-  char tzsign = 0;
-  int tzhour  = 0, tzmin = 0;
-  long double sec_fraction = 0;
-  const char *zone  = NIL_P(timezone) ? "" : CSTRING(timezone);
+VALUE typecast_timestamp(const char *data, uint64_t len, const char *zone) {
+  struct   tm tm;
+  int64_t  epoch, adjust, offset;
+  uint64_t usec   = 0;
+  char     tzsign = 0, subsec[32];
+  int      tzhour = 0, tzmin = 0;
 
   memset(&tm, 0, sizeof(struct tm));
   if (strchr(data, '.')) {
-    sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%Lf%c%02d:%02d",
-      &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec, &sec_fraction,
+    sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d.%s%c%02d:%02d",
+      &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec, subsec,
       &tzsign, &tzhour, &tzmin);
+      // Based on github.com/jeremyevans/sequel_pg
+      // atoll & pow seem to be tad faster than sscanf %Lf
+      usec = atoll(subsec)*(uint64_t)pow(10, 6 - strlen(subsec));
   }
   else {
     sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%c%02d:%02d",
@@ -179,7 +182,7 @@ VALUE typecast_timestamp(const char *data, uint64_t len, VALUE timezone) {
         ? (time_t)tzhour *  3600 + (time_t)tzmin *  60
         : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
     }
-    else if (*zone) {
+    else if (zone) {
       if (strncasecmp(zone, "UTC", 3) == 0 || strncasecmp(zone, "GMT", 3) == 0)
         offset = 0;
       else if (strcmp(zone, "+00:00") == 0 || strcmp(zone, "+0000") == 0)
@@ -196,7 +199,7 @@ VALUE typecast_timestamp(const char *data, uint64_t len, VALUE timezone) {
         offset = server_tzoffset(&tm, zone);
     }
 
-    return rb_time_new(epoch+adjust-offset, (uint64_t)(sec_fraction*1000000L));
+    return rb_time_new(epoch+adjust-offset, usec);
   }
 
   // TODO: throw a warning ?
@@ -212,7 +215,7 @@ VALUE typecast_timestamp(const char *data, uint64_t len, VALUE timezone) {
   3. DateTime class represents a timestamp with full zoneinfo support.
 */
 
-VALUE typecast_field(int type, const char *data, uint64_t length, VALUE timezone) {
+VALUE typecast_field(int type, const char *data, uint64_t length, const char* timezone) {
   switch(type) {
     case DBI_TYPE_BOOLEAN:
       return (data && (data[0] =='t' || data[0] == '1')) ? Qtrue : Qfalse;
