@@ -21,7 +21,8 @@ describe 'Adapter' do
       end
 
       it 'query result is typecast correctly' do
-        bind = [ 1, 'jim', 32, 178.71, true, false, '2010-01-02', '2010-01-01 23:22:21.012345' ]
+        dt   = '2010-01-01 23:22:21'
+        bind = [ 1, 'jim', 32, 178.71, true, false, '2010-01-02', "#{dt}.012345+11:00" ]
         @db.execute %q{insert into users values(?, ?, ?, ?, ?, ?, ?, ?)}, *bind
 
         result = @db.prepare(%q{select * from users limit 1}).execute.first
@@ -34,6 +35,7 @@ describe 'Adapter' do
         assert_kind_of Date,       result[:created]
         assert_kind_of Time,       result[:updated]
 
+        assert_equal   dt,         result[:updated].strftime('%F %T')
         assert_equal   12345,      result[:updated].usec if @db.kind_of?(Swift::DB::Postgres)
       end
     end

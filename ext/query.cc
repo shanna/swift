@@ -48,8 +48,7 @@ void query_bind_values(Query *query, VALUE bind_values, std::string driver) {
       bind_value = rb_funcall(bind_value, rb_intern("read"), 0);
       query->bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(bind_value), RSTRING_LEN(bind_value)));
     }
-    // We're not just calling to_s on time values to make sure microsecs is passed on as well.
-    // TODO there must be a cleaner way of doing this.
+    // TODO convert timestamps to server timezone if @timezone is set in adapter.
     else if (rb_obj_is_kind_of(bind_value, rb_cTime)) {
       std::string timestamp = RSTRING_PTR(rb_funcall(bind_value, fstrftime, 1, dtformat));
 
@@ -73,5 +72,5 @@ void init_swift_query() {
   fto_s     = rb_intern("to_s");
   fusec     = rb_intern("usec");
   dtformat  = rb_str_new2("%F %T.");
-  tzformat  = rb_str_new2(" %z");
+  tzformat  = rb_str_new2("%z");
 }
