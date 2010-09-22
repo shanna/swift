@@ -1,7 +1,7 @@
 #include "query.h"
 
 ID fstrftime, fto_s, fusec;
-VALUE dtformat, tzformat;
+VALUE dtformat, tzformat, utf8;
 
 VALUE query_execute(Query *query) {
   try {
@@ -61,7 +61,7 @@ void query_bind_values(Query *query, VALUE bind_values, std::string driver) {
     else {
       bind_value = TO_S(bind_value);
       if (strcmp(rb_enc_get(bind_value)->name, "UTF-8") != 0)
-        bind_value = rb_str_encode(bind_value, rb_str_new2("UTF-8"), 0, Qnil);
+        bind_value = rb_str_encode(bind_value, utf8, 0, Qnil);
       query->bind.push_back(dbi::PARAM((unsigned char*)RSTRING_PTR(bind_value), RSTRING_LEN(bind_value)));
     }
   }
@@ -73,4 +73,9 @@ void init_swift_query() {
   fusec     = rb_intern("usec");
   dtformat  = rb_str_new2("%F %T.");
   tzformat  = rb_str_new2("%z");
+  utf8      = rb_str_new2("UTF-8");
+
+  rb_global_variable(&utf8);
+  rb_global_variable(&tzformat);
+  rb_global_variable(&dtformat);
 }
