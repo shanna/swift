@@ -5,7 +5,7 @@ ID fcall;
 VALUE attribute_default(VALUE self) {
   VALUE value = rb_iv_get(self, "@default");
 
-  if (NIL_P(value) || rb_special_const_p(value))
+  if (NIL_P(value) || rb_obj_is_kind_of(value, rb_cNumeric) || rb_special_const_p(value))
     return value;
   else if (rb_respond_to(value, fcall))
     return rb_funcall(value, fcall, 0);
