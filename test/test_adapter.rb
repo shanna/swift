@@ -115,6 +115,11 @@ describe 'Adapter' do
           data = "Sally Arthurton\tsally@local\nJonas Arthurton\tjonas@local\n"
           assert_equal 2, @db.write('users', %w{name email}, data)
         end
+
+        it 'writes with no columns specified' do
+          data = "1\tSally Arthurton\tsally@local\t2010-01-01 00:00:00\n"
+          assert_equal 1, @db.write('users', [], data)
+        end
       end
     end
   end
