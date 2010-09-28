@@ -7,7 +7,6 @@ require_relative 'swift/header'
 require_relative 'swift/scheme'
 require_relative 'swift/type'
 
-# = Swift
 # A rational rudimentary object relational mapper.
 #
 # == Synopsis
@@ -51,25 +50,26 @@ module Swift
 
     # Setup a new DB connection.
     #
-    # ==== Notes
-    # You almost certainly want to setup a :default named adapter. The :default scope will be used for unscoped
-    # calls to Swift.db.
+    # You almost certainly want to setup a <tt>:default</tt> named adapter. The <tt>:default</tt> scope will be used
+    # for unscoped calls to <tt>Swift.db</tt>.
     #
-    # ==== Example
+    # @example
     #   Swift.setup :default, Swift::DB::Postgres, db: 'db1'
     #   Swift.setup :other,   Swift::DB::Postgres, db: 'db2'
     #
-    # ==== Parameters
-    # name<Symbol>::         Adapter name.
-    # type<Swift::Adapter>:: Adapter subclass. Swift::DB::* module houses concrete adapters.
-    # options<Hash>::        Connection options (:db, :user, :password, :host, :port, :timezone)
+    # @param  [Symbol]         name    Adapter name.
+    # @param  [Swift::Adapter] type    Concrete adapter subclass. See Swift::DB
+    # @param  [Hash]           options Connection options
+    # @option options [String]  :db       Name.
+    # @option options [String]  :user     (*nix login user)
+    # @option options [String]  :password ('')
+    # @option options [String]  :host     ('localhost')
+    # @option options [Integer] :port     (DB default)
+    # @option options [String]  :timezone (*nix TZ format) See http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+    # @return [Swift::Adapter]
     #
-    # ==== Returns
-    # Swift::Adapter:: Adapter instance.
-    #
-    # ==== See
-    # * Swift::DB for list of of concrete adapters.
-    # * Swift::Adapter for connection options.
+    # @see Swift::DB
+    # @see Swift::Adapter
     def setup name, type, options = {}
       unless type.kind_of?(Class) && type < Swift::Adapter
         raise TypeError, "Expected +type+ Swift::Adapter subclass but got #{type.inspect}"
@@ -79,7 +79,7 @@ module Swift
 
     # Fetch or scope a block to a specific DB by name.
     #
-    # ==== Example
+    # @example
     #   Swift.db :other do |other|
     #     # Inside this block all these are the same:
     #     # other
@@ -90,12 +90,9 @@ module Swift
     #     other_users.execute(32)
     #   end
     #
-    # ==== Parameters
-    # name<Symbol>:: Adapter name.
-    # block<Proc>::  Scope this block to the named adapter instead of :default.
-    #
-    # ==== Returns
-    # Swift::Adapter
+    # @param  [Symbol] name   Adapter name.
+    # @param  [Proc]   &block Scope this block to the named adapter instead of <tt>:default</tt>.
+    # @return [Swift::Adapter]
     #--
     # I pilfered the logic from DM but I don't really understand what is/isn't thread safe.
     def db name = nil, &block
@@ -119,11 +116,9 @@ module Swift
 
     # List of known Swift::Schema classes.
     #
-    # ==== Notes
     # Handy if you are brewing stuff like migrations and need a list of defined schema subclasses.
     #
-    # ==== Returns
-    # Array<Swift::Schema, ...>
+    # @return [Array<Swift::Schema>]
     def schema
       @schema ||= []
     end

@@ -16,3 +16,5 @@ memory/driver.o
 dbtest.rb
 benchmarks/adapters/pg_ext/*.*o
 benchmarks/adapters/pg_ext/Makefile
+.yardoc
+doc/*

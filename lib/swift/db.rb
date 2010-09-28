@@ -36,14 +36,15 @@ module Swift
         false
       end
 
-      def drop_store name
-        exists_sql =<<-SQL
-          select count(*) as exists from syscat.tables where tabschema = CURRENT_SCHEMA and tabname = '#{name.upcase}'
-        SQL
+      def migrate!
+        keys   =  scheme.header.keys
+        fields =  scheme.header.map{|p| field_definition(p)}.join(', ')
+        fields += ", primary key (#{keys.join(', ')})" unless keys.empty?
 
-        execute(exists_sql.strip) do |r|
-          execute("drop table #{name}") if r[:exists] > 0
+        execute("select count(*) as exists from syscat.tables where tabschema = CURRENT_SCEMA and tabname = '#{name.upcase}'") do |result|
+          execute("drop table #{name}") if result[:exists] > 0
         end
+        execute("create table #{scheme.store} (#{fields})")
       end
 
       def field_type attribute

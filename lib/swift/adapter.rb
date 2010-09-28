@@ -1,22 +1,96 @@
 module Swift
+
+  # Adapter.
+  #
+  # @abstract
+  # @see      Swift::DB for concrete adapters.
+  # @todo     For the time being all adapters are SQL and DBIC++ centric. It would be super easy to abstract though I
+  #           don't know if you would be better off doing it at the Ruby or DBIC++ level (or both).
+  #--
+  # TODO: Extension methods are undocumented.
   class Adapter
     attr_reader :options
 
+    # Select by id(s).
+    #
+    # @example Single key.
+    #   Swift.db.get(User, id: 12)
+    # @example Complex primary key.
+    #   Swift.db.get(UserAddress, user_id: 12, address_id: 15)
+    #
+    # @param  [Swift::Scheme] scheme Concrete scheme subclass to load.
+    # @param  [Hash]          keys   Hash of id(s) <tt>{id_name: value}</tt>.
+    # @return [Swift::Scheme, nil]
+    # @see    Swift::Scheme.get
+    #--
+    # NOTE: Not significantly shorter than Scheme.db.first(User, 'id = ?', 12)
     def get scheme, keys
       relation = scheme.new(keys)
       prepare_get(scheme).execute(*relation.tuple.values_at(*scheme.header.keys)).first
     end
 
+    # Select one or more.
+    #
+    # @example All.
+    #   Swif.db.all(User)
+    # @example All with conditions and binds.
+    #   Swift.db.all(User, 'name = ? and age > ?', 'Apple Arthurton', 32)
+    # @example Block form iterator.
+    #   Swift.db.all(User, 'age > ?', 32) do |user|
+    #     puts user.name
+    #   end
+    #
+    # @param  [Swift::Scheme] scheme     Concrete scheme subclass to load.
+    # @param  [String]        conditions Optional SQL 'where' fragment.
+    # @param  [Object, ...]   *binds     Optional bind values that accompany conditions SQL fragment.
+    # @param  [Proc]          &block     Optional 'each' iterator block.
+    # @return [Swift::Result]
+    # @see    Swift::Scheme.all
     def all scheme, conditions = '', *binds, &block
       where = "where #{exchange_names(scheme, conditions)}" unless conditions.empty?
       prepare(scheme, "select * from #{scheme.store} #{where}").execute(*binds, &block)
     end
 
+    # Select one.
+    #
+    # @example First.
+    #   Swif.db.first(User)
+    # @example All with conditions and binds.
+    #   Swift.db.first(User, 'name = ? and age > ?', 'Apple Arthurton', 32)
+    # @example Block form iterator.
+    #   Swift.db.first(User, 'age > ?', 32) do |user|
+    #     puts user.name
+    #   end
+    #
+    # @param  [Swift::Scheme] scheme     Concrete scheme subclass to load.
+    # @param  [String]        conditions Optional SQL 'where' fragment.
+    # @param  [Object, ...]   *binds     Optional bind values that accompany conditions SQL fragment.
+    # @param  [Proc]          &block     Optional 'each' iterator block.
+    # @return [Swift::Scheme, nil]
+    # @see    Swift::Scheme.first
     def first scheme, conditions = '', *binds, &block
       where = "where #{exchange_names(scheme, conditions)}" unless conditions.empty?
       prepare(scheme, "select * from #{scheme.store} #{where} limit 1").execute(*binds, &block).first
     end
 
+    # Create one or more.
+    #
+    # @example Scheme.
+    #   user = User.new(name: 'Apply Arthurton', age: 32)
+    #   Swift.db.create(User, user)
+    # @example Coerce hash to scheme.
+    #   Swif.db.create(User, name: 'Apple Arthurton', age: 32)
+    # @example Multiple relations.
+    #   apple = User.new(name: 'Apple Arthurton', age: 32)
+    #   benny = User.new(name: 'Benny Arthurton', age: 30)
+    #   Swift.db.first(User, apple, benny)
+    # @example Coerce multiple relations.
+    #   Swift.db.first(User, {name: 'Apple Arthurton', age: 32}, {name: 'Benny Arthurton', age: 30})
+    #
+    # @param  [Swift::Scheme]       scheme     Concrete scheme subclass to load.
+    # @param  [Swift::Scheme, Hash> *relations Scheme or tuple hash. Hashes will be coerced into scheme via Swift::Scheme#new
+    # @return [Array<Swift::Scheme>]
+    # @see    Swift::Scheme.create
     def create scheme, *relations
       statement = prepare_create(scheme)
       relations.map do |relation|
@@ -28,6 +102,29 @@ module Swift
       end
     end
 
+    # Update one or more.
+    #
+    # @example Scheme.
+    #   user      = Swift.db.create(User, name: 'Apply Arthurton', age: 32)
+    #   user.name = 'Arthur Appleton'
+    #   Swift.db.update(User, user)
+    # @example Coerce hash to scheme.
+    #   user      = Swift.db.create(User, name: 'Apply Arthurton', age: 32)
+    #   user.name = 'Arthur Appleton'
+    #   Swif.db.update(User, user.tuple)
+    # @example Multiple relations.
+    #   apple = Swift.db.create(User, name: 'Apple Arthurton', age: 32)
+    #   benny = Swift.db.create(User, name: 'Benny Arthurton', age: 30)
+    #   Swift.db.update(User, apple, benny)
+    # @example Coerce multiple relations.
+    #   apple = Swift.db.create(User, name: 'Apple Arthurton', age: 32)
+    #   benny = Swift.db.create(User, name: 'Benny Arthurton', age: 30)
+    #   Swift.db.update(User, apple.tuple, benny.tuple)
+    #
+    # @param  [Swift::Scheme]       scheme     Concrete scheme subclass to load.
+    # @param  [Swift::Scheme, Hash> *relations Scheme or tuple hash. Hashes will be coerced into scheme via Swift::Scheme#new
+    # @return [Array<Swift::Scheme>]
+    # @see    Swift::Scheme#update
     def update scheme, *relations
       statement = prepare_update(scheme)
       relations.map do |relation|
@@ -37,6 +134,28 @@ module Swift
       end
     end
 
+    # Destroy one or more.
+    #
+    # @example Scheme.
+    #   user      = Swift.db.create(User, name: 'Apply Arthurton', age: 32)
+    #   user.name = 'Arthur Appleton'
+    #   Swift.db.destroy(User, user)
+    # @example Coerce hash to scheme.
+    #   user      = Swift.db.create(User, name: 'Apply Arthurton', age: 32)
+    #   user.name = 'Arthur Appleton'
+    #   Swif.db.destroy(User, user.tuple)
+    # @example Multiple relations.
+    #   apple = Swift.db.create(User, name: 'Apple Arthurton', age: 32)
+    #   benny = Swift.db.create(User, name: 'Benny Arthurton', age: 30)
+    #   Swift.db.destroy(User, apple, benny)
+    # @example Coerce multiple relations.
+    #   apple = Swift.db.create(User, name: 'Apple Arthurton', age: 32)
+    #   benny = Swift.db.create(User, name: 'Benny Arthurton', age: 30)
+    #   Swift.db.destroy(User, apple.tuple, benny.tuple)
+    #
+    # @param  [Swift::Scheme]       scheme     Concrete scheme subclass to load.
+    # @param  [Swift::Scheme, Hash] *relations Scheme or tuple hash. Hashes will be coerced into scheme via Swift::Scheme#new
+    # @see    Swift::Scheme#destroy
     def destroy scheme, *relations
       statement = prepare_destroy(scheme)
       relations.map do |relation|
@@ -53,12 +172,8 @@ module Swift
       fields =  scheme.header.map{|p| field_definition(p)}.join(', ')
       fields += ", primary key (#{keys.join(', ')})" unless keys.empty?
 
-      drop_store scheme.store
-      execute("create table #{scheme.store} (#{fields})")
-    end
-
-    def drop_store name
       execute("drop table if exists #{name}")
+      execute("create table #{scheme.store} (#{fields})")
     end
 
     protected
