@@ -3,7 +3,7 @@ module Swift
   # Adapter.
   #
   # @abstract
-  # @see      Swift::DB for concrete adapters.
+  # @see      Swift::DB See Swift::DB for concrete adapters.
   # @todo     For the time being all adapters are SQL and DBIC++ centric. It would be super easy to abstract though I
   #           don't know if you would be better off doing it at the Ruby or DBIC++ level (or both).
   #--
