@@ -34,9 +34,9 @@ module Swift
     # @example All.
     #   Swif.db.all(User)
     # @example All with conditions and binds.
-    #   Swift.db.all(User, 'name = ? and age > ?', 'Apple Arthurton', 32)
+    #   Swift.db.all(User, ':name = ? and :age > ?', 'Apple Arthurton', 32)
     # @example Block form iterator.
-    #   Swift.db.all(User, 'age > ?', 32) do |user|
+    #   Swift.db.all(User, ':age > ?', 32) do |user|
     #     puts user.name
     #   end
     #
@@ -55,10 +55,10 @@ module Swift
     #
     # @example First.
     #   Swif.db.first(User)
-    # @example All with conditions and binds.
-    #   Swift.db.first(User, 'name = ? and age > ?', 'Apple Arthurton', 32)
+    # @example First with conditions and binds.
+    #   Swift.db.first(User, ':name = ? and :age > ?', 'Apple Arthurton', 32)
     # @example Block form iterator.
-    #   Swift.db.first(User, 'age > ?', 32) do |user|
+    #   Swift.db.first(User, ':age > ?', 32) do |user|
     #     puts user.name
     #   end
     #
