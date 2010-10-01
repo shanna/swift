@@ -41,9 +41,12 @@ module Swift
         fields =  scheme.header.map{|p| field_definition(p)}.join(', ')
         fields += ", primary key (#{keys.join(', ')})" unless keys.empty?
 
-        execute("select count(*) as exists from syscat.tables where tabschema = CURRENT_SCEMA and tabname = '#{name.upcase}'") do |result|
-          execute("drop table #{name}") if result[:exists] > 0
-        end
+        sql = <<-SQL
+          select count(*) as exists from syscat.tables
+          where tabschema = CURRENT_SCEMA and tabname = '#{scheme.store.upcase}'
+        SQL
+
+        execute(sql) {|result| execute("drop table #{scheme.store}") if result[:exists] > 0 }
         execute("create table #{scheme.store} (#{fields})")
       end
 

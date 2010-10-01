@@ -172,7 +172,7 @@ module Swift
       fields =  scheme.header.map{|p| field_definition(p)}.join(', ')
       fields += ", primary key (#{keys.join(', ')})" unless keys.empty?
 
-      execute("drop table if exists #{name}")
+      execute("drop table if exists #{scheme.store}")
       execute("create table #{scheme.store} (#{fields})")
     end
 
