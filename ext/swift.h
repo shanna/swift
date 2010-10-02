@@ -21,6 +21,9 @@ extern VALUE eSwiftConnectionError;
   } \
   catch (dbi::Error &error) { \
     rb_raise(eSwiftRuntimeError, "%s", error.what()); \
+  } \
+  catch (std::bad_alloc &error) { \
+    rb_raise(rb_eNoMemError, "%s", error.what()); \
   }
 
 #include "adapter.h"
