@@ -36,14 +36,14 @@ module Swift
         false
       end
 
-      def migrate!
+      def migrate! scheme
         keys   =  scheme.header.keys
         fields =  scheme.header.map{|p| field_definition(p)}.join(', ')
         fields += ", primary key (#{keys.join(', ')})" unless keys.empty?
 
         sql = <<-SQL
           select count(*) as exists from syscat.tables
-          where tabschema = CURRENT_SCEMA and tabname = '#{scheme.store.upcase}'
+          where tabschema = CURRENT_SCHEMA and tabname = '#{scheme.store.upcase}'
         SQL
 
         execute(sql) {|result| execute("drop table #{scheme.store}") if result[:exists] > 0 }
