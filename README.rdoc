@@ -10,15 +10,7 @@ A rational rudimentary object relational mapper.
 
 * ruby   >= 1.9.1
 * dbic++ >= 0.4.0 (http://github.com/deepfryed/dbicpp)
-* mysql  >= 5.0.17 or postgresql >= 8.4 or db2 >= 9.7.2
-
-== Caveats
-
-=== DB2
-* The server needs to be running under DB2_COMPATIBILITY_VECTOR=77FF if you want to use the ORM
-  features of swift.
-* DB2 asynchronous operations are highly experimental at this point due to inherent limitations of the
-  underlying api. It is more an academic exercise and is not ready for real-world use.
+* mysql  >= 5.0.17 or postgresql >= 8.4
 
 == Features
 
@@ -175,7 +167,7 @@ Swift comes with a simple identity map. Just require it after you load swift.
 
 === Bulk inserts
 
-Swift comes with adapter level support for bulk inserts for MySQL, PostgreSQL and DB2. This
+Swift comes with adapter level support for bulk inserts for MySQL and PostgreSQL. This
 is usually very fast (~5-10x faster) than regular prepared insert statements for larger
 sets of data.
 
@@ -272,7 +264,6 @@ The adapter level SELECT benchmarks without using ORM.
 == TODO
 
 * More tests.
-* Make db2 async api more stable.
 * Assertions for dumb stuff.
 * Abstract interface for other adapters? Move dbic++ to Swift::DBI::(Adapter, Pool, Result, Statment etc.)
 
