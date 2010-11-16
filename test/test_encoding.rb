@@ -1,11 +1,11 @@
 require_relative 'helper'
 
 describe 'Adapter' do
-  supported_by Swift::DB::Postgres, Swift::DB::Mysql, Swift::DB::DB2 do
+  supported_by Swift::DB::Postgres, Swift::DB::Mysql do
     describe 'character encoding' do
       before do
         Swift.db do |db|
-          db.execute %q{drop table users} rescue nil
+          db.execute %q{drop table if exists users}
           db.execute %q{create table users(name varchar(128))}
 
           # Mysql on debian at least doesn't default to utf8.

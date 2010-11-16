@@ -53,8 +53,7 @@ void query_bind_values(Query *query, VALUE bind_values, std::string driver) {
       std::string timestamp = RSTRING_PTR(rb_funcall(bind_value, fstrftime, 1, dtformat));
 
       timestamp += RSTRING_PTR(rb_funcall(rb_funcall(bind_value, fusec, 0), fto_s, 0));
-      if (driver != "db2")
-        timestamp += RSTRING_PTR(rb_funcall(bind_value, fstrftime, 1, tzformat));
+      timestamp += RSTRING_PTR(rb_funcall(bind_value, fstrftime, 1, tzformat));
 
       query->bind.push_back(dbi::PARAM(timestamp));
     }

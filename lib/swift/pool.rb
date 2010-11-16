@@ -27,9 +27,8 @@ module Swift
     def initialize size, options
       @pool         = Swift::DB::Pool.new size, options
 
-      # TODO move driver specific options to extension.
-      @writable     = options[:driver] == 'db2'
-
+      # used to be used for db2
+      @writable     = false
       @pending      = {}
       @queue        = []
     end

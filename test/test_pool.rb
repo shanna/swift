@@ -6,7 +6,7 @@ describe 'Adapter' do
     describe 'Asynchronous connection pool' do
       before do
         Swift.db do |db|
-          db.execute %q{drop table users} rescue nil
+          db.execute %q{drop table if exists users}
           db.execute %Q{create table users(name varchar(64))}
         end
       end
