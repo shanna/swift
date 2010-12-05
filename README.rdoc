@@ -271,3 +271,7 @@ The adapter level SELECT benchmarks without using ORM.
 
 Go nuts! There is no style guide and I do not care if you write tests or comment code. If you write something neat just
 send a pull request, tweet, email or yell it at me line by line in person.
+
+== Feature suggestions and support
+
+{Suggest features and support Swift ORM on fundry.}[https://fundry.com/project/14-swift-orm]
