@@ -110,7 +110,7 @@ static VALUE adapter_initialize(VALUE self, VALUE options) {
   if (NIL_P(db))     rb_raise(eSwiftArgumentError, "Adapter#new called without :db");
   if (NIL_P(driver)) rb_raise(eSwiftArgumentError, "Adapter#new called without :driver");
 
-  user = NIL_P(user) ? rb_str_new2(getlogin()) : user;
+  user = NIL_P(user) ? CURRENT_USER() : user;
 
   try {
     DATA_PTR(self) = new dbi::Handle(

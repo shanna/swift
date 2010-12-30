@@ -5,6 +5,9 @@
 #include <ruby/ruby.h>
 #include <ruby/io.h>
 #include <stdint.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 #define CONST_GET(scope, constant) rb_funcall(scope, rb_intern("const_get"), 1, rb_str_new2(constant))
 #define TO_S(v)                    rb_funcall(v, rb_intern("to_s"), 0)
@@ -25,6 +28,13 @@ extern VALUE eSwiftConnectionError;
   catch (std::bad_alloc &error) { \
     rb_raise(rb_eNoMemError, "%s", error.what()); \
   }
+
+
+// works without a controlling tty, getlogin() will fail when process is daemonized.
+inline VALUE CURRENT_USER() {
+  struct passwd *ptr = getpwuid(getuid());
+  return ptr ? rb_str_new2(ptr->pw_name) : rb_str_new2("root");
+}
 
 #include "adapter.h"
 #include "iostream.h"
