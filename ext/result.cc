@@ -14,10 +14,7 @@ void result_mark(ResultWrapper *handle) {
 
 void result_free(ResultWrapper *handle) {
   if (handle) {
-    if (handle->free) {
-      handle->result->cleanup();
-      delete handle->result;
-    }
+    if (handle->free) delete handle->result;
     delete handle;
   }
 }
@@ -259,7 +256,6 @@ VALUE result_columns(VALUE self) {
 VALUE result_fields(VALUE self) {
   dbi::AbstractResult *result = result_handle(self);
   try {
-    printf("result: %p\n", result);
     std::vector<string> result_fields = result->fields();
     VALUE fields = rb_ary_new();
     for (int i = 0; i < result_fields.size(); i++)

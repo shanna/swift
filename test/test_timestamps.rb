@@ -44,8 +44,7 @@ describe 'Adapter' do
           end
 
           sql = sql % value.strftime('%F %T' + zone)
-          @db.execute(sql)
-          @db.results.first.fetch(:now)
+          @db.execute(sql).first.fetch(:now)
         end
 
         def assert_timestamp_like expect, given, comment

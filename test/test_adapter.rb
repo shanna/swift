@@ -61,11 +61,12 @@ describe 'Adapter' do
           insert = @db.prepare(%q{insert into users (name, created_at) values (?, current_timestamp)})
           insert.execute('Apple Arthurton')
           insert.execute('Benny Arthurton')
-          @sth = @db.prepare('select * from users').execute
+          @sth = @db.prepare('select * from users')
+          @res = @sth.execute
         end
 
         it 'enumerates' do
-          assert_kind_of Enumerable, @sth
+          assert_kind_of Enumerable, @res
         end
 
         it 'enumerates block' do
@@ -79,7 +80,7 @@ describe 'Adapter' do
         end
 
         it 'returns hash tuples for enumerable methods' do
-          assert_kind_of Hash, @sth.first
+          assert_kind_of Hash, @res.first
         end
 
         it 'returns a result set on Adapter#execute{}' do
@@ -87,12 +88,11 @@ describe 'Adapter' do
         end
 
         it 'returns a result set on Adapter#results' do
-          @db.execute('select * from users')
-          assert_kind_of Swift::Result, @db.results
+          assert_kind_of Swift::Result, @db.execute('select * from users')
         end
 
         it 'returns fields' do
-          assert_equal [ :id, :name, :email, :created_at ], @sth.fields
+          assert_equal [ :id, :name, :email, :created_at ], @res.fields
         end
       end
 

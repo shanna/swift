@@ -4,11 +4,11 @@
 #include "swift.h"
 
 struct Query {
-  char                   *sql;
-  dbi::Handle            *handle;
-  dbi::AbstractStatement *statement;
-  dbi::ResultRow         bind;
-  const char             *error;
+  char                    *sql;
+  dbi::Handle             *handle;
+  dbi::AbstractStatement  *statement;
+  std::vector<dbi::Param> bind;
+  const char              *error;
 };
 
 VALUE query_execute(Query*);

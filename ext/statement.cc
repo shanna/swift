@@ -12,10 +12,7 @@ void statement_mark(StatementWrapper *handle) {
 
 void statement_free(StatementWrapper *handle) {
   if (handle) {
-    if (handle->free) {
-      handle->statement->cleanup();
-      delete handle->statement;
-    }
+    if (handle->free) delete handle->statement;
     delete handle;
   }
 }

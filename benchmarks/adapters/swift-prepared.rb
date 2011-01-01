@@ -23,20 +23,17 @@ class Runner
   end
 
   def run_creates
-    Benchmark.run("swift #create") do
-      db = Swift.db
-      rows.times do |n|
-        values = [ "test #{n}", 'test@example.com', Time.now.to_s ]
-        db.execute("insert into users(name, email, updated_at) values('%s', '%s', '%s')" % values)
-      end
+    Benchmark.run("swift (prepared) #create") do
+      st = Swift.db.prepare('insert into users(name, email, updated_at) values(?, ?, ?)')
+      rows.times {|n| st.execute("test #{n}", "test@example.com", Time.now) }
     end
   end
 
   def run_selects
-    Benchmark.run("swift #select") do
-      db = Swift.db
+    Benchmark.run("swift (prepared) #select") do
+      stmt   = Swift.db.prepare('select * from users')
       fields = %w(id name email updated_at).map(&:to_sym)
-      runs.times { db.execute('select * from users') {|m| m.values_at(*fields) } }
+      runs.times { stmt.execute {|m| m.values_at(*fields) } }
     end
   end
 end
