@@ -55,7 +55,7 @@ static VALUE statement_execute(int argc, VALUE *argv, VALUE self) {
   try {
     Query query;
     query.statement = statement;
-    if (RARRAY_LEN(bind_values) > 0) query_bind_values(&query, bind_values, statement->driver());
+    if (RARRAY_LEN(bind_values) > 0) query_bind_values(&query, bind_values);
     if (dbi::_trace)                 dbi::logMessage(dbi::_trace_fd, dbi::formatParams(statement->command(), query.bind));
 
     if (rb_thread_blocking_region(((VALUE (*)(void*))query_execute_statement), &query, RUBY_UBF_IO, 0) == Qfalse)
@@ -63,8 +63,22 @@ static VALUE statement_execute(int argc, VALUE *argv, VALUE self) {
   }
   CATCH_DBI_EXCEPTIONS();
 
-  if (rb_block_given_p()) return result_each(self);
-  return self;
+  StatementWrapper *handle;
+  Data_Get_Struct(self, StatementWrapper, handle);
+
+  VALUE result = result_wrap_handle(cSwiftResult, handle->adapter, statement->result(), true);
+  rb_iv_set(result, "@scheme", rb_iv_get(self, "@scheme"));
+
+  return rb_block_given_p() ? result_each(result) : result;
+}
+
+VALUE statement_insert_id(VALUE self) {
+  dbi::AbstractStatement *statement = statement_handle(self);
+  try {
+    return SIZET2NUM(statement->lastInsertID());
+  }
+  CATCH_DBI_EXCEPTIONS();
+  return Qnil;
 }
 
 VALUE statement_initialize(VALUE self, VALUE adapter, VALUE sql) {
@@ -90,23 +104,9 @@ VALUE statement_initialize(VALUE self, VALUE adapter, VALUE sql) {
 void init_swift_statement() {
   VALUE mSwift = rb_define_module("Swift");
 
-  /*
-    TODO Inheritance confusion.
-
-    dbic++ has this,
-    dbi::Statement < dbi::AbstractStatement
-    dbi::AbstractStatement < dbi::AbstractResult
-
-    Swift has this,
-    Statement < Result
-
-    Not sure if this hierarchy is correct or perfect. I reckon Statement should not
-    inherit Result and just return a Result on execute() - maybe cleaner but very
-    inefficient when doing tons on non-select style queries.
-  */
-
-  cSwiftStatement = rb_define_class_under(mSwift, "Statement", cSwiftResult);
-  rb_define_method(cSwiftStatement, "execute",    RUBY_METHOD_FUNC(statement_execute),   -1);
-  rb_define_method(cSwiftStatement, "initialize", RUBY_METHOD_FUNC(statement_initialize), 2);
+  cSwiftStatement = rb_define_class_under(mSwift, "Statement", rb_cObject);
+  rb_define_method(cSwiftStatement, "execute",     RUBY_METHOD_FUNC(statement_execute),   -1);
+  rb_define_method(cSwiftStatement, "initialize",  RUBY_METHOD_FUNC(statement_initialize), 2);
+  rb_define_method(cSwiftStatement, "insert_id",   RUBY_METHOD_FUNC(statement_insert_id),  0);
   rb_define_alloc_func(cSwiftStatement, statement_alloc);
 }

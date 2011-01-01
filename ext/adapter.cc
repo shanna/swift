@@ -86,18 +86,14 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
     query.sql    = CSTRING(statement);
     query.handle = handle;
 
-    if (RARRAY_LEN(bind_values) > 0) query_bind_values(&query, bind_values, handle->driver());
+    if (RARRAY_LEN(bind_values) > 0) query_bind_values(&query, bind_values);
     if (dbi::_trace)                 dbi::logMessage(dbi::_trace_fd, dbi::formatParams(query.sql, query.bind));
 
     if ((rows = rb_thread_blocking_region(((VALUE (*)(void*))query_execute), &query, RUBY_UBF_IO, 0)) == Qfalse)
       rb_raise(eSwiftRuntimeError, "%s", query.error);
 
-    if (rb_block_given_p()) {
-      dbi::AbstractResult *result = handle->results();
-      return result_each(result_wrap_handle(cSwiftResult, self, result, false));
-    }
-    else
-      return rows;
+    VALUE result = result_wrap_handle(cSwiftResult, self, handle->conn()->result(), true);
+    return rb_block_given_p() ? result_each(result) : result;
   }
   CATCH_DBI_EXCEPTIONS();
 }
@@ -227,15 +223,6 @@ static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
   CATCH_DBI_EXCEPTIONS();
 }
 
-VALUE adapter_results(VALUE self) {
-  dbi::Handle *handle = adapter_handle(self);
-  try {
-    dbi::AbstractResult *result = handle->results();
-    return result_wrap_handle(cSwiftResult, self, result, false);
-  }
-  CATCH_DBI_EXCEPTIONS();
-}
-
 void init_swift_adapter() {
   VALUE mSwift   = rb_define_module("Swift");
   cSwiftAdapter = rb_define_class_under(mSwift, "Adapter", rb_cObject);
@@ -254,9 +241,6 @@ void init_swift_adapter() {
   rb_define_method(cSwiftAdapter, "write",       RUBY_METHOD_FUNC(adapter_write),       -1);
 
   rb_define_alloc_func(cSwiftAdapter, adapter_alloc);
-
-  // TODO Figure out how to avoid race conditions.
-  rb_define_method(cSwiftAdapter, "results",     RUBY_METHOD_FUNC(adapter_results),     0);
 }
 
 

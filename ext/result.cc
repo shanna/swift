@@ -99,14 +99,6 @@ VALUE result_each(VALUE self) {
   return Qnil;
 }
 
-static VALUE result_finish(VALUE self) {
-  dbi::AbstractResult *result = result_handle(self);
-  try {
-    result->finish();
-  }
-  CATCH_DBI_EXCEPTIONS();
-}
-
 // Calculates local offset at a given time, including dst.
 int64_t client_tzoffset(int64_t local, int isdst) {
   struct tm tm;
@@ -267,6 +259,7 @@ VALUE result_columns(VALUE self) {
 VALUE result_fields(VALUE self) {
   dbi::AbstractResult *result = result_handle(self);
   try {
+    printf("result: %p\n", result);
     std::vector<string> result_fields = result->fields();
     VALUE fields = rb_ary_new();
     for (int i = 0; i < result_fields.size(); i++)
@@ -296,7 +289,6 @@ void init_swift_result() {
   rb_define_method(cSwiftResult, "clone",      RUBY_METHOD_FUNC(result_clone),     0);
   rb_define_method(cSwiftResult, "dup",        RUBY_METHOD_FUNC(result_dup),       0);
   rb_define_method(cSwiftResult, "each",       RUBY_METHOD_FUNC(result_each),      0);
-  rb_define_method(cSwiftResult, "finish",     RUBY_METHOD_FUNC(result_finish),    0);
   rb_define_method(cSwiftResult, "insert_id",  RUBY_METHOD_FUNC(result_insert_id), 0);
   rb_define_method(cSwiftResult, "rows",       RUBY_METHOD_FUNC(result_rows),      0);
   rb_define_method(cSwiftResult, "columns",    RUBY_METHOD_FUNC(result_columns),   0);

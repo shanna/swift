@@ -39,6 +39,6 @@ Swift.db do |db|
   pp db.get(User, id: 1)
 
   puts '', '-- destroy --'
-  pp db.destroy(User, id: 1)
+  pp db.destroy(User, id: 1).map(&:rows).first
 end
 

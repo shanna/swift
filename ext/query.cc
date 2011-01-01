@@ -31,7 +31,7 @@ VALUE query_execute_statement(Query *query) {
   }
 }
 
-void query_bind_values(Query *query, VALUE bind_values, std::string driver) {
+void query_bind_values(Query *query, VALUE bind_values) {
   for (int i = 0; i < RARRAY_LEN(bind_values); i++) {
     VALUE bind_value = rb_ary_entry(bind_values, i);
 
