@@ -51,10 +51,7 @@ module Swift
 
     def execute sql, *bind, &callback
       request = @pool.execute sql, *bind, &callback
-      # TODO EM throws exceptions in C++ land which are not trapped in the extension.
-      #      This is somehow causing everything to unravel and result in a segfault which
-      #      I cannot track down. I'll buy a beer for someone who can get this fixed :)
-      #      Oh, here it throws an exception if we try to attach same fd twice.
+      # NOTE EM segfaults if we try to attach same fd twice.
       if request && !attached?(request.socket)
         EM.watch(request.socket, Handler, request, self) do |c|
           attach c
