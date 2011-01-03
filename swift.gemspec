@@ -28,8 +28,6 @@ Gem::Specification.new do |s|
      "ext/attribute.cc",
      "ext/attribute.h",
      "ext/extconf.rb",
-     "ext/iostream.cc",
-     "ext/iostream.h",
      "ext/pool.cc",
      "ext/pool.h",
      "ext/query.cc",
