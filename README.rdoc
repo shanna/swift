@@ -10,7 +10,7 @@ A rational rudimentary object relational mapper.
 
 * ruby   >= 1.9.1
 * dbic++ >= 0.4.0 (http://github.com/deepfryed/dbicpp)
-* mysql  >= 5.0.17 or postgresql >= 8.4
+* mysql  >= 5.0.17, postgresql >= 8.4 or sqlite3 >= 3.7
 
 == Features
 
@@ -18,7 +18,7 @@ A rational rudimentary object relational mapper.
 * Prepared statements.
 * Bind values.
 * Transactions and named save points.
-* EventMachine asynchronous interface.
+* EventMachine asynchronous interface (mysql and postgresql).
 * IdentityMap.
 * Migrations.
 
