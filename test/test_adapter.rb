@@ -2,12 +2,16 @@ require_relative 'helper'
 require 'stringio'
 
 describe 'Adapter' do
-  supported_by Swift::DB::Postgres, Swift::DB::Mysql do
+  supported_by Swift::DB::Postgres, Swift::DB::Mysql, Swift::DB::Sqlite3 do
     describe 'db' do
       before do
         @db = Swift.db
         @db.execute('drop table if exists users')
-        @db.execute %Q{create table users(id serial, name varchar(512), email varchar(512), created_at timestamp)}
+        serial = case @db
+          when Swift::DB::Sqlite3 then 'integer primary key'
+          else 'serial'
+        end
+        @db.execute %Q{create table users(id #{serial}, name text, email text, created_at timestamp)}
       end
 
       it 'yields db to block' do
@@ -30,7 +34,7 @@ describe 'Adapter' do
         it 'executes via Statement#new' do
           result = []
           Swift::Statement.new(@db, 'select count(*) as n from users').execute {|r| result << r[:n] }
-          assert_kind_of Integer, result[0]
+          assert_kind_of Numeric, result[0]
         end
 
         it 'executes without bind values' do
@@ -50,7 +54,7 @@ describe 'Adapter' do
         it 'has insert_id' do
           sql = case @db
             when Swift::DB::Postgres then %q{insert into users (name) values (?) returning id}
-            when Swift::DB::Mysql    then %q{insert into users (name) values (?)}
+            else %q{insert into users (name) values (?)}
           end
           assert_kind_of Numeric, @db.prepare(sql).execute('Connie Arthurton').insert_id
         end

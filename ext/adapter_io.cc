@@ -43,7 +43,7 @@ void AdapterIO::write(const char *str, uint64_t l) {
 }
 
 bool AdapterIO::readline(std::string &line) {
-  VALUE response = rb_funcall(stream, rb_intern("readline"), 0);
+  VALUE response = rb_funcall(stream, rb_intern("gets"), 0);
   if (response == Qnil) {
     return false;
   }
