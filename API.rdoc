@@ -33,6 +33,7 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
     DB
       Mysql    < Adapter # TODO: Adapter::DBI?
       Postgres < Adapter # TODO: Adapter::DBI?
+      Sqlite3  < Adapter # TODO: Adapter::DBI?
 
     # Enumerable collection of Scheme or Hash tuples.
     Result
@@ -40,9 +41,9 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
       #insert_id #=> Numeric
       #fields    #=> [Symbol, ...] # Field names identical to .first.keys if rows > 0
 
-    Statement < Result
+    Statement
       .new     #=> Statement
-      #execute #=> Statement
+      #execute #=> Result
 
     Scheme
       .all       #=> Result
