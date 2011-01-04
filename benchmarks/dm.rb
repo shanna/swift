@@ -20,14 +20,15 @@ class Runner
     %w(tests runs rows).each do |name|
       instance_variable_set("@#{name}", opts[name.to_sym])
     end
-    DataMapper.setup :default, {adapter: @driver, database: 'swift', username: Etc.getlogin}
+    db = @driver == 'sqlite3' ? ':memory:' : 'swift'
+    DataMapper.setup :default, {adapter: @driver, database: db, username: Etc.getlogin}
   end
 
   def run
     User.auto_migrate! if tests.include?(:create)
-    yield run_creates if tests.include?(:create)
-    yield run_selects if tests.include?(:select)
-    yield run_updates if tests.include?(:update)
+    yield run_creates  if tests.include?(:create)
+    yield run_selects  if tests.include?(:select)
+    yield run_updates  if tests.include?(:update)
   end
 
   def run_creates

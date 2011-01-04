@@ -17,15 +17,17 @@ end # User
 class Runner
   attr_reader :tests, :driver, :runs, :rows
   def initialize opts={}
-    @driver  = opts[:driver] =~ /postgresql/ ? Swift::DB::Postgres : Swift::DB::Mysql
+    @driver = opts[:driver] =~ /postgresql/ ? Swift::DB::Postgres : Swift::DB::Mysql
+
     %w(tests runs rows).each do |name|
       instance_variable_set("@#{name}", opts[name.to_sym])
     end
-    Swift.setup :default, @driver, db: 'swift'
+
+    Swift.setup :default, @driver, db: @driver == 'sqlite3' ? ':memory:' : 'swift'
   end
 
   def run
-    User.migrate! if tests.include?(:create)
+    User.migrate!     if tests.include?(:create)
     yield run_creates if tests.include?(:create)
     yield run_selects if tests.include?(:select)
     yield run_updates if tests.include?(:update)

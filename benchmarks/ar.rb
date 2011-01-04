@@ -14,17 +14,34 @@ class Runner
   attr_reader :tests, :driver, :runs, :rows
   def initialize opts={}
     @driver  = opts[:driver] =~ /mysql/ ? 'mysql2' : opts[:driver]
+
     %w(tests runs rows).each do |name|
       instance_variable_set("@#{name}", opts[name.to_sym])
     end
-    User.establish_connection adapter: @driver, host: '127.0.0.1', username: Etc.getlogin, database: 'swift'
+
+    db = @driver == 'sqlite3' ? ':memory:' : 'swift'
+    ActiveRecord::Base.establish_connection adapter: @driver, host: '127.0.0.1', username: Etc.getlogin, database: db
   end
 
   def run
-    User.connection.execute 'truncate users' if tests.include?(:create)
+    migrate!          if tests.include?(:create)
     yield run_creates if tests.include?(:create)
     yield run_selects if tests.include?(:select)
     yield run_updates if tests.include?(:update)
+  end
+
+  def migrate!
+    orig_stdout = $stdout
+    $stdout = open('/dev/null', 'w')
+    ActiveRecord::Schema.define do
+      execute 'drop table if exists users'
+      create_table :users do |t|
+        t.column :name,       :string
+        t.column :email,      :string
+        t.column :updated_at, :timestamp
+      end
+    end
+    $stdout = orig_stdout
   end
 
   def run_creates

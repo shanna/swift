@@ -15,15 +15,32 @@ class Runner
     else
       opts[:driver]
     end
+
     %w(tests runs rows).each do |name|
       instance_variable_set("@#{name}", opts[name.to_sym])
     end
-    Object.const_set :DB, Sequel.connect(adapter: @driver, host: '127.0.0.1', user: Etc.getlogin, database: 'swift')
-    Object.const_set :User, Sequel::Model(:users)
+
+    if @driver == 'sqlite3'
+      Object.const_set :DB, Sequel.sqlite
+    else
+      Object.const_set :DB, Sequel.connect(adapter: @driver, host: '127.0.0.1', user: Etc.getlogin, database: 'swift')
+    end
+  end
+
+  def migrate!
+    DB.execute 'drop table if exists users'
+    DB.create_table :users do
+      primary_key :id
+      String :name
+      String :email
+      Time   :updated_at
+    end
   end
 
   def run
-    User.truncate if tests.include?(:create)
+    migrate!          if tests.include?(:create)
+    Object.const_set :User, Sequel::Model(:users)
+
     yield run_creates if tests.include?(:create)
     yield run_selects if tests.include?(:select)
     yield run_updates if tests.include?(:update)
