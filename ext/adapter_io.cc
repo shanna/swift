@@ -1,10 +1,10 @@
-#include "iostream.h"
+#include "adapter_io.h"
 
-IOStream::IOStream(VALUE s) {
+AdapterIO::AdapterIO(VALUE s) {
   stream = s;
 }
 
-std::string& IOStream::read() {
+std::string& AdapterIO::read() {
   VALUE response = rb_funcall(stream, rb_intern("read"), 0);
   if (response == Qnil) {
     return empty;
@@ -17,12 +17,12 @@ std::string& IOStream::read() {
         "Write can only process string data. You need to stringify values returned in the callback."
       );
     }
-    data = string(RSTRING_PTR(response), RSTRING_LEN(response));
-    return data;
+    stringdata = std::string(RSTRING_PTR(response), RSTRING_LEN(response));
+    return stringdata;
   }
 }
 
-uint32_t IOStream::read(char *buffer, uint32_t length) {
+uint32_t AdapterIO::read(char *buffer, uint32_t length) {
   VALUE response = rb_funcall(stream, rb_intern("read"), 1, INT2NUM(length));
   if (response == Qnil) {
     return 0;
@@ -34,11 +34,29 @@ uint32_t IOStream::read(char *buffer, uint32_t length) {
   }
 }
 
-void IOStream::write(const char *str) {
+void AdapterIO::write(const char *str) {
   rb_funcall(stream, rb_intern("write"), 1, rb_str_new2(str));
 }
 
-void IOStream::write(const char *str, uint64_t l) {
+void AdapterIO::write(const char *str, uint64_t l) {
   rb_funcall(stream, rb_intern("write"), 1, rb_str_new(str, l));
 }
 
+bool AdapterIO::readline(std::string &line) {
+  VALUE response = rb_funcall(stream, rb_intern("readline"), 0);
+  if (response == Qnil) {
+    return false;
+  }
+  else {
+    line = std::string(RSTRING_PTR(response), RSTRING_LEN(response));
+    return true;
+  }
+}
+
+char* AdapterIO::readline() {
+  return readline(stringdata) ? (char*)stringdata.c_str() : 0;
+}
+
+void AdapterIO::truncate() {
+  rb_funcall(stream, rb_intern("truncate"), 0);
+}

@@ -211,11 +211,11 @@ static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
     rb_gc();
 
     if (TYPE(stream) == T_STRING) {
-      dbi::IOStream io(RSTRING_PTR(stream), RSTRING_LEN(stream));
+      dbi::StringIO io(RSTRING_PTR(stream), RSTRING_LEN(stream));
       rows = handle->write(RSTRING_PTR(table), write_fields, &io);
     }
     else {
-      IOStream io(stream);
+      AdapterIO io(stream);
       rows = handle->write(RSTRING_PTR(table), write_fields, &io);
     }
     return SIZET2NUM(rows);

@@ -37,7 +37,7 @@ inline VALUE CURRENT_USER() {
 }
 
 #include "adapter.h"
-#include "iostream.h"
+#include "adapter_io.h"
 #include "query.h"
 #include "result.h"
 #include "statement.h"
