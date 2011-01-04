@@ -34,7 +34,7 @@ describe 'Adapter' do
         it 'executes via Statement#new' do
           result = []
           Swift::Statement.new(@db, 'select count(*) as n from users').execute {|r| result << r[:n] }
-          assert_kind_of Numeric, result[0]
+          assert_kind_of Fixnum, result[0]
         end
 
         it 'executes without bind values' do
@@ -56,7 +56,7 @@ describe 'Adapter' do
             when Swift::DB::Postgres then %q{insert into users (name) values (?) returning id}
             else %q{insert into users (name) values (?)}
           end
-          assert_kind_of Numeric, @db.prepare(sql).execute('Connie Arthurton').insert_id
+          assert_kind_of Fixnum, @db.prepare(sql).execute('Connie Arthurton').insert_id
         end
       end
 
