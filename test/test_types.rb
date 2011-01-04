@@ -1,14 +1,18 @@
 require_relative 'helper'
 
 describe 'Adapter' do
-  supported_by Swift::DB::Postgres, Swift::DB::Mysql do
+  supported_by Swift::DB::Postgres, Swift::DB::Mysql, Swift::DB::Sqlite3 do
     describe 'typecasting' do
       before do
         @db = Swift.db
         @db.execute %q{drop table if exists users}
-        @db.execute %q{
+        serial = case @db
+          when Swift::DB::Sqlite3 then 'integer primary key'
+          else 'serial'
+        end
+        @db.execute %Q{
           create table users(
-            id      serial,
+            id      #{serial},
             name    text,
             age     integer,
             height  float,
