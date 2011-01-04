@@ -1,12 +1,12 @@
 require_relative 'helper'
 
 describe 'Error' do
-  supported_by Swift::DB::Postgres, Swift::DB::Mysql do
+  supported_by Swift::DB::Postgres, Swift::DB::Mysql, Swift::DB::Sqlite3 do
     describe 'prepare' do
       before do
         Swift.db do |db|
           db.execute %q{drop table if exists users}
-          db.execute %q{create table users(id serial, name text, primary key(id))}
+          db.execute %q{create table users(id integer, name text, primary key(id))}
         end
       end
 
