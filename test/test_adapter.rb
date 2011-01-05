@@ -62,7 +62,9 @@ describe 'Adapter' do
             when Swift::DB::Postgres then %q{insert into users (name) values (?) returning id}
             else %q{insert into users (name) values (?)}
           end
-          assert_kind_of Fixnum, @db.prepare(sql).execute('Connie Arthurton').insert_id
+          statement = @db.prepare(sql)
+          assert_kind_of Fixnum, statement.execute('Connie Arthurton').insert_id
+          assert 1, statement.insert_id
         end
       end
 
