@@ -95,9 +95,8 @@ module Swift
       statement = prepare_create(scheme)
       relations.map do |relation|
         relation = scheme.new(relation) unless relation.kind_of?(scheme)
-        if statement.execute(*relation.tuple.values_at(*scheme.header.insertable)) && scheme.header.serial
-          relation.tuple[scheme.header.serial] = statement.insert_id
-        end
+        result   = statement.execute(*relation.tuple.values_at(*scheme.header.insertable))
+        relation.tuple[scheme.header.serial] = result.insert_id if scheme.header.serial
         relation
       end
     end

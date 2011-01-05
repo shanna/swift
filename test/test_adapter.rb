@@ -63,8 +63,8 @@ describe 'Adapter' do
             else %q{insert into users (name) values (?)}
           end
           statement = @db.prepare(sql)
-          assert_kind_of Fixnum, statement.execute('Connie Arthurton').insert_id
-          assert 1, statement.insert_id
+          assert 1, statement.execute('Connie Arthurton').insert_id
+          assert 1, statement.insert_id # caches insert_id, just interface compatibility with dbic++
         end
       end
 
