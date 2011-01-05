@@ -83,9 +83,9 @@ module Swift
     # @example Multiple relations.
     #   apple = User.new(name: 'Apple Arthurton', age: 32)
     #   benny = User.new(name: 'Benny Arthurton', age: 30)
-    #   Swift.db.first(User, apple, benny)
+    #   Swift.db.create(User, apple, benny)
     # @example Coerce multiple relations.
-    #   Swift.db.first(User, {name: 'Apple Arthurton', age: 32}, {name: 'Benny Arthurton', age: 30})
+    #   Swift.db.create(User, {name: 'Apple Arthurton', age: 32}, {name: 'Benny Arthurton', age: 30})
     #
     # @param  [Swift::Scheme]       scheme     Concrete scheme subclass to load.
     # @param  [Swift::Scheme, Hash> *relations Scheme or tuple hash. Hashes will be coerced into scheme via Swift::Scheme#new
