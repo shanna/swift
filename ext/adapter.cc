@@ -98,6 +98,12 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
   CATCH_DBI_EXCEPTIONS();
 }
 
+static VALUE adapter_reconnect(VALUE self) {
+  dbi::Handle *handle = adapter_handle(self);
+  try { handle->reconnect(); } CATCH_DBI_EXCEPTIONS();
+  return Qtrue;
+}
+
 static VALUE adapter_initialize(VALUE self, VALUE options) {
   VALUE db       = rb_hash_aref(options, ID2SYM(rb_intern("db")));
   VALUE driver   = rb_hash_aref(options, ID2SYM(rb_intern("driver")));
@@ -228,17 +234,18 @@ void init_swift_adapter() {
   cSwiftAdapter = rb_define_class_under(mSwift, "Adapter", rb_cObject);
 
   rb_define_method(cSwiftAdapter, "begin",       RUBY_METHOD_FUNC(adapter_begin),       -1);
-  rb_define_method(cSwiftAdapter, "clone",       RUBY_METHOD_FUNC(adapter_clone),       0);
-  rb_define_method(cSwiftAdapter, "close",       RUBY_METHOD_FUNC(adapter_close),       0);
+  rb_define_method(cSwiftAdapter, "clone",       RUBY_METHOD_FUNC(adapter_clone),        0);
+  rb_define_method(cSwiftAdapter, "close",       RUBY_METHOD_FUNC(adapter_close),        0);
   rb_define_method(cSwiftAdapter, "commit",      RUBY_METHOD_FUNC(adapter_commit),      -1);
-  rb_define_method(cSwiftAdapter, "dup",         RUBY_METHOD_FUNC(adapter_dup),         0);
-  rb_define_method(cSwiftAdapter, "escape",      RUBY_METHOD_FUNC(adapter_escape),      1);
+  rb_define_method(cSwiftAdapter, "dup",         RUBY_METHOD_FUNC(adapter_dup),          0);
+  rb_define_method(cSwiftAdapter, "escape",      RUBY_METHOD_FUNC(adapter_escape),       1);
   rb_define_method(cSwiftAdapter, "execute",     RUBY_METHOD_FUNC(adapter_execute),     -1);
-  rb_define_method(cSwiftAdapter, "initialize",  RUBY_METHOD_FUNC(adapter_initialize),  1);
+  rb_define_method(cSwiftAdapter, "initialize",  RUBY_METHOD_FUNC(adapter_initialize),   1);
   rb_define_method(cSwiftAdapter, "prepare",     RUBY_METHOD_FUNC(adapter_prepare),     -1);
   rb_define_method(cSwiftAdapter, "rollback",    RUBY_METHOD_FUNC(adapter_rollback),    -1);
   rb_define_method(cSwiftAdapter, "transaction", RUBY_METHOD_FUNC(adapter_transaction), -1);
   rb_define_method(cSwiftAdapter, "write",       RUBY_METHOD_FUNC(adapter_write),       -1);
+  rb_define_method(cSwiftAdapter, "reconnect",   RUBY_METHOD_FUNC(adapter_reconnect),    0);
 
   rb_define_alloc_func(cSwiftAdapter, adapter_alloc);
 }

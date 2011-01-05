@@ -20,6 +20,12 @@ describe 'Adapter' do
         end
       end
 
+      it 'reconnects to db' do
+        Swift.trace true, open('/dev/null', 'w')
+        assert_block { @db.reconnect }
+        Swift.trace false
+      end
+
       describe 'execute' do
         it 'executes without bind values' do
           assert @db.execute %q{select count(*) from users}

@@ -25,6 +25,7 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
       #rollback
       #transaction #=> Adapter
       #update      #=> Result
+      #reconnect
 
       # TODO: DBI < Adapter
         # returning? #=> true or false
