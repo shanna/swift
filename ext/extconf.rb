@@ -55,6 +55,6 @@ exit 1 unless library_installed? 'pcrecpp', apt_install_hint('libpcre3-dev')
 exit 1 unless library_installed? 'uuid',    apt_install_hint('uuid-dev')
 exit 1 unless library_installed? 'dbic++',  apt_install_hint('dbic++-dev')
 
-assert_dbicpp_version '0.5.2'
+assert_dbicpp_version '0.5.3'
 
 create_makefile 'swift'

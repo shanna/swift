@@ -1,5 +1,16 @@
 #include "adapter.h"
 
+// extend the default dbi::FieldSet class with some ruby love.
+class Fields : public dbi::FieldSet {
+  public:
+  Fields() : dbi::FieldSet(0) {}
+
+  void operator<<(VALUE v) {
+    VALUE name = TO_S(v);
+    fields.push_back(std::string(RSTRING_PTR(name), RSTRING_LEN(name)));
+  }
+};
+
 static VALUE cSwiftAdapter;
 
 static void adapter_free(dbi::Handle *handle) {
@@ -203,11 +214,9 @@ static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
     rb_raise(eSwiftArgumentError, "Fields must be an Array.");
 
   try {
-    dbi::FieldSet write_fields;
-    for (int i = 0; i < RARRAY_LEN(fields); i++) {
-      VALUE field = TO_S(rb_ary_entry(fields, i));
-      write_fields << std::string(RSTRING_PTR(field), RSTRING_LEN(field));
-    }
+    Fields write_fields;
+    for (int i = 0; i < RARRAY_LEN(fields); i++)
+      write_fields << rb_ary_entry(fields, i);
 
     /*
       TODO: Adapter specific code is balls.
