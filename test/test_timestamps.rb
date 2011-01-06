@@ -3,7 +3,7 @@ require 'date'
 
 describe 'Adapter' do
   supported_by Swift::DB::Postgres do
-    %w(Australia/Melboure America/Chicago).each do |timezone|
+    %w(America/Chicago Australia/Melbourne).each do |timezone|
       describe 'time parsing in %s' % timezone do
         before do
           @db = Swift.db

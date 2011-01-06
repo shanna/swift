@@ -138,24 +138,27 @@ int64_t server_tzoffset(struct tm* tm, const char *zone) {
 
 VALUE typecast_timestamp(const char *data, uint64_t len, const char *zone) {
   struct   tm tm;
-  int64_t  epoch, adjust, offset;
   uint64_t usec   = 0;
+  int64_t  epoch, adjust, offset;
   char     tzsign = 0, subsec[32];
-  int      tzhour = 0, tzmin = 0;
+  int      tzhour = 0, tzmin = 0, lastmatch = -1;
 
   memset(&tm, 0, sizeof(struct tm));
-  // Based on github.com/jeremyevans/sequel_pg. atoll & pow seem to be tad faster than sscanf %Lf
-  // NOTE: Reading subsec as string means malformed subsec > 32 digits could break this.
-  if (strchr(data, '.')) {
-    sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d.%s%c%02d:%02d",
-      &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec, subsec,
-      &tzsign, &tzhour, &tzmin);
-      usec = atoll(subsec)*(uint64_t)pow(10, 6 - strlen(subsec));
-  }
-  else {
-    sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%c%02d:%02d",
-      &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec,
-      &tzsign, &tzhour, &tzmin);
+  sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%n",
+      &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec, &lastmatch);
+
+  // parse millisecs if any
+  if (lastmatch > 0 && lastmatch < len && *(data+lastmatch) == '.') {
+      lastmatch++;
+      int idx = 0;
+      const char *ptr = data + lastmatch;
+      while (*ptr && *ptr >= '0' && *ptr <= '9' && idx < 31) {
+        subsec[idx++] = *ptr;
+        ptr++;
+        lastmatch++;
+      }
+      subsec[idx] = 0;
+      usec        = atoll(subsec);
   }
 
   tm.tm_year  -= 1900;
@@ -165,6 +168,22 @@ VALUE typecast_timestamp(const char *data, uint64_t len, const char *zone) {
     epoch  = mktime(&tm);
     adjust = client_tzoffset(epoch, tm.tm_isdst);
     offset = adjust;
+
+    // parse timezone offsets if any - matches +HH:MM +HH MM +HHMM
+    if (lastmatch > 0 && lastmatch < len) {
+      const char *ptr = data + lastmatch;
+      while(*ptr && *ptr != '+' && *ptr != '-') ptr++;
+      tzsign = *ptr++;
+      if (*ptr && *ptr >= '0' && *ptr <= '9') {
+        tzhour = *ptr++ - '0';
+        if (*ptr && *ptr >= '0' && *ptr <= '9') tzhour = tzhour*10 + *ptr++ - '0';
+        while(*ptr && (*ptr < '0' || *ptr > '9')) ptr++;
+        if (*ptr && *ptr >= '0' && *ptr <= '9') {
+          tzmin = *ptr++ - '0';
+          if (*ptr && *ptr >= '0' && *ptr <= '9') tzmin = tzmin*10 + *ptr++ - '0';
+        }
+      }
+    }
 
     if (tzsign) {
       offset = tzsign == '+'

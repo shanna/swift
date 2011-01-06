@@ -40,7 +40,7 @@ describe 'Adapter' do
         assert_kind_of Time,       result[:updated]
 
         assert_equal   dt,         result[:updated].strftime('%F %T')
-        assert_equal   12345,      result[:updated].usec if @db.kind_of?(Swift::DB::Postgres)
+        assert_equal   12345,      result[:updated].usec unless @db.kind_of?(Swift::DB::Mysql)
       end
     end
   end

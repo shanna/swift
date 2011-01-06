@@ -124,8 +124,12 @@ describe 'Adapter' do
         end
 
         it 'writes with no columns specified' do
-          data = "1\tSally Arthurton\tsally@local\t2010-01-01 00:00:00\n"
-          assert_equal 1, @db.write('users', [], data)
+          ts   = DateTime.parse('2010-01-01 00:00:00').to_time
+          data = "1\tSally Arthurton\tsally@local\t#{ts}\n"
+          row  = {id: 1, name: 'Sally Arthurton', email: 'sally@local', created_at: ts}
+
+          assert_equal 1,   @db.write('users', [], data)
+          assert_equal row, @db.execute('select * from users limit 1').first
         end
       end
     end
