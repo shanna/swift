@@ -217,25 +217,25 @@ Intel Core2Duo P8700 2.53GHz and stock PostgreSQL 8.4.1.
 
     ./simple.rb -n1 -r10000 -s ar -s dm -s sequel -s swift
 
-    benchmark       sys       user      total    real       rss
-    ar #create      0.790000  8.290000  9.08000  11.679886  405.07m
-    ar #select      0.040000  0.310000  0.35000   0.383573  40.56m
-    ar #update      0.720000  9.890000  10.6100  13.765735  503.48m
+    benchmark       sys     user    total  real     rss
+    ar #create      1.01    7.91    8.92   11.426   406.22m
+    ar #select      0.02    0.31    0.33    0.378    40.69m
+    ar #update      0.88    9.64   10.52   13.908   504.93m
 
-    dm #create      0.310000  3.300000  3.61000   4.593075  211.01m
-    dm #select      0.040000  1.720000  1.76000   1.776852  114.51m
-    dm #update      0.450000  7.600000  8.05000   9.610320  531.26m
+    dm #create      0.23    3.52    3.75    5.405   211.00m
+    dm #select      0.11    1.67    1.78    1.912   114.57m
+    dm #update      0.54    7.34    7.88    9.453   531.30m
 
-    sequel #create  0.670000  4.670000  5.34000   7.991811  235.39m
-    sequel #select  0.000000  0.130000  0.13000   0.178447  12.76m
-    sequel #update  0.790000  4.540000  5.33000   7.854936  229.70m
+    sequel #create  0.77    4.61    5.38    8.194   235.50m
+    sequel #select  0.01    0.13    0.14    0.180    12.73m
+    sequel #update  0.64    4.76    5.40    7.790   229.69m
 
-    swift #create   0.100000  0.710000  0.81000   1.562289  85.84m
-    swift #select   0.000000  0.120000  0.12000   0.145567  8.96m
-    swift #update   0.190000  0.690000  0.88000   1.628918  59.50m
+    swift #create   0.13    0.66    0.79    1.463    85.77m
+    swift #select   0.01    0.10    0.11    0.135     8.92m
+    swift #update   0.14    0.75    0.89    1.585    59.56m
 
     -- bulk insert api --
-    swift #write    0.010000  0.100000  0.11000  0.180514   14.80m
+    swift #write    0.00    0.10    0.10    0.180    14.79m
 
 
 ==== Adapter
