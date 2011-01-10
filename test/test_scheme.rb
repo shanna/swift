@@ -50,4 +50,52 @@ describe 'scheme' do
       assert_equal 'cary@local', user.email
     end
   end
+
+  supported_by Swift::DB::Sqlite3 do
+    describe 'adapter operations' do
+      before do
+        Swift.db.migrate! @user
+      end
+
+      it 'adapter should destroy valid instance' do
+        user = @user.create.first
+        assert_equal 1, user.id
+
+        assert Swift.db.destroy @user, user
+        assert_nil @user.get(id: 1)
+      end
+
+      it 'adapter should barf when trying to destroy invalid instance' do
+        assert_raises(ArgumentError) { Swift.db.destroy @user, {id: nil, name: 'foo'} }
+      end
+
+      it 'adapter should delete all rows given scheme' do
+        user = @user.create.first
+        assert_equal 1, user.id
+
+        Swift.db.delete @user
+        assert_nil @user.get(id: 1)
+      end
+
+      it 'adapter should delete only relevant rows given condition & scheme' do
+        Swift.db.create(@user, {name: 'dave'}, {name: 'mike'})
+        assert_equal 2, @user.all.rows
+
+        Swift.db.delete @user, ':name = ?', 'dave'
+        assert_nil @user.first ':name = ?', 'dave'
+        assert @user.first ':name = ?', 'mike'
+      end
+
+      it 'should not update without valid keys' do
+        user = @user.new
+        assert_raises(ArgumentError) { user.update(name: 'dave') }
+      end
+
+      it 'should update with valid keys' do
+        user = @user.create.first
+        assert user.update(name: 'dave')
+        assert_equal 'dave', @user.first.name
+      end
+    end
+  end
 end

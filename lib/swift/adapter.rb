@@ -128,7 +128,9 @@ module Swift
       statement = prepare_update(scheme)
       relations.map do |relation|
         relation = scheme.new(relation) unless relation.kind_of?(scheme)
-        statement.execute(*relation.tuple.values_at(*scheme.header.updatable, *scheme.header.keys))
+        keys     = relation.tuple.values_at(*scheme.header.keys)
+        raise ArgumentError, "relation has incomplete key : #{relation.inspect}" unless keys.select(&:nil?).empty?
+        statement.execute(*relation.tuple.values_at(*scheme.header.updatable, *keys))
         relation
       end
     end
@@ -159,11 +161,31 @@ module Swift
       statement = prepare_destroy(scheme)
       relations.map do |relation|
         relation = scheme.new(relation) unless relation.kind_of?(scheme)
-        if result = statement.execute(*relation.tuple.values_at(*scheme.header.keys))
+        keys     = relation.tuple.values_at(*scheme.header.keys)
+        raise ArgumentError, "relation has incomplete key : #{relation.inspect}" unless keys.select(&:nil?).empty?
+        if result = statement.execute(*keys)
           relation.freeze
         end
         result
       end
+    end
+
+
+    # Delete one or more rows
+    #
+    # @example All.
+    #   Swift.db.delete(User)
+    # @example All with conditions and binds.
+    #   Swift.db.delete(User, ':name = ? and :age > ?', 'Apple Arthurton', 32)
+    #
+    # @param  [Swift::Scheme] scheme     Concrete scheme subclass
+    # @param  [String]        conditions Optional SQL 'where' fragment.
+    # @param  [Object, ...]   *binds     Optional bind values that accompany conditions SQL fragment.
+    # @return [Swift::Result]
+    def delete scheme, conditions = '', *binds
+      sql =  "delete from #{scheme.store}"
+      sql += " where #{exchange_names(scheme, conditions)}" unless conditions.empty?
+      execute(sql, *binds)
     end
 
     def migrate! scheme
