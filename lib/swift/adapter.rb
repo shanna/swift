@@ -130,7 +130,7 @@ module Swift
         relation = scheme.new(relation) unless relation.kind_of?(scheme)
         keys     = relation.tuple.values_at(*scheme.header.keys)
         raise ArgumentError, "relation has incomplete key : #{relation.inspect}" unless keys.select(&:nil?).empty?
-        statement.execute(*relation.tuple.values_at(*scheme.header.updatable, *keys))
+        statement.execute(*relation.tuple.values_at(*scheme.header.updatable), *keys)
         relation
       end
     end
