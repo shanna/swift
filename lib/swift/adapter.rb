@@ -25,8 +25,8 @@ module Swift
     #--
     # NOTE: Not significantly shorter than Scheme.db.first(User, 'id = ?', 12)
     def get scheme, keys
-      relation = scheme.new(keys)
-      prepare_get(scheme).execute(*relation.tuple.values_at(*scheme.header.keys)).first
+      resource = scheme.new(keys)
+      prepare_get(scheme).execute(*resource.tuple.values_at(*scheme.header.keys)).first
     end
 
     # Select one or more.
@@ -73,105 +73,9 @@ module Swift
       prepare(scheme, "select * from #{scheme.store} #{where} limit 1").execute(*binds, &block).first
     end
 
-    # Create one or more.
+    # Delete one or more.
     #
-    # @example Scheme.
-    #   user = User.new(name: 'Apply Arthurton', age: 32)
-    #   Swift.db.create(User, user)
-    # @example Coerce hash to scheme.
-    #   Swif.db.create(User, name: 'Apple Arthurton', age: 32)
-    # @example Multiple relations.
-    #   apple = User.new(name: 'Apple Arthurton', age: 32)
-    #   benny = User.new(name: 'Benny Arthurton', age: 30)
-    #   Swift.db.create(User, apple, benny)
-    # @example Coerce multiple relations.
-    #   Swift.db.create(User, {name: 'Apple Arthurton', age: 32}, {name: 'Benny Arthurton', age: 30})
-    #
-    # @param  [Swift::Scheme]       scheme     Concrete scheme subclass to load.
-    # @param  [Swift::Scheme, Hash> *relations Scheme or tuple hash. Hashes will be coerced into scheme via Swift::Scheme#new
-    # @return [Array<Swift::Scheme>]
-    # @see    Swift::Scheme.create
-    def create scheme, *relations
-      statement = prepare_create(scheme)
-      relations.map do |relation|
-        relation = scheme.new(relation) unless relation.kind_of?(scheme)
-        result   = statement.execute(*relation.tuple.values_at(*scheme.header.insertable))
-        relation.tuple[scheme.header.serial] = result.insert_id if scheme.header.serial
-        relation
-      end
-    end
-
-    # Update one or more.
-    #
-    # @example Scheme.
-    #   user      = Swift.db.create(User, name: 'Apply Arthurton', age: 32)
-    #   user.name = 'Arthur Appleton'
-    #   Swift.db.update(User, user)
-    # @example Coerce hash to scheme.
-    #   user      = Swift.db.create(User, name: 'Apply Arthurton', age: 32)
-    #   user.name = 'Arthur Appleton'
-    #   Swif.db.update(User, user.tuple)
-    # @example Multiple relations.
-    #   apple = Swift.db.create(User, name: 'Apple Arthurton', age: 32)
-    #   benny = Swift.db.create(User, name: 'Benny Arthurton', age: 30)
-    #   Swift.db.update(User, apple, benny)
-    # @example Coerce multiple relations.
-    #   apple = Swift.db.create(User, name: 'Apple Arthurton', age: 32)
-    #   benny = Swift.db.create(User, name: 'Benny Arthurton', age: 30)
-    #   Swift.db.update(User, apple.tuple, benny.tuple)
-    #
-    # @param  [Swift::Scheme]       scheme     Concrete scheme subclass to load.
-    # @param  [Swift::Scheme, Hash> *relations Scheme or tuple hash. Hashes will be coerced into scheme via Swift::Scheme#new
-    # @return [Array<Swift::Scheme>]
-    # @see    Swift::Scheme#update
-    def update scheme, *relations
-      statement = prepare_update(scheme)
-      relations.map do |relation|
-        relation = scheme.new(relation) unless relation.kind_of?(scheme)
-        keys     = relation.tuple.values_at(*scheme.header.keys)
-        raise ArgumentError, "relation has incomplete key : #{relation.inspect}" unless keys.select(&:nil?).empty?
-        statement.execute(*relation.tuple.values_at(*scheme.header.updatable), *keys)
-        relation
-      end
-    end
-
-    # Destroy one or more.
-    #
-    # @example Scheme.
-    #   user      = Swift.db.create(User, name: 'Apply Arthurton', age: 32)
-    #   user.name = 'Arthur Appleton'
-    #   Swift.db.destroy(User, user)
-    # @example Coerce hash to scheme.
-    #   user      = Swift.db.create(User, name: 'Apply Arthurton', age: 32)
-    #   user.name = 'Arthur Appleton'
-    #   Swif.db.destroy(User, user.tuple)
-    # @example Multiple relations.
-    #   apple = Swift.db.create(User, name: 'Apple Arthurton', age: 32)
-    #   benny = Swift.db.create(User, name: 'Benny Arthurton', age: 30)
-    #   Swift.db.destroy(User, apple, benny)
-    # @example Coerce multiple relations.
-    #   apple = Swift.db.create(User, name: 'Apple Arthurton', age: 32)
-    #   benny = Swift.db.create(User, name: 'Benny Arthurton', age: 30)
-    #   Swift.db.destroy(User, apple.tuple, benny.tuple)
-    #
-    # @param  [Swift::Scheme]       scheme     Concrete scheme subclass to load.
-    # @param  [Swift::Scheme, Hash] *relations Scheme or tuple hash. Hashes will be coerced into scheme via Swift::Scheme#new
-    # @see    Swift::Scheme#destroy
-    def destroy scheme, *relations
-      statement = prepare_destroy(scheme)
-      relations.map do |relation|
-        relation = scheme.new(relation) unless relation.kind_of?(scheme)
-        keys     = relation.tuple.values_at(*scheme.header.keys)
-        raise ArgumentError, "relation has incomplete key : #{relation.inspect}" unless keys.select(&:nil?).empty?
-        if result = statement.execute(*keys)
-          relation.freeze
-        end
-        result
-      end
-    end
-
-
-    # Delete one or more rows
+    # The SQL condition form of Swift::Adapter.destroy.
     #
     # @example All.
     #   Swift.db.delete(User)
@@ -187,6 +91,130 @@ module Swift
       sql += " where #{exchange_names(scheme, conditions)}" unless conditions.empty?
       execute(sql, *binds)
     end
+
+    # Create one or more.
+    #
+    # @example Scheme.
+    #   user = User.new(name: 'Apply Arthurton', age: 32)
+    #   Swift.db.create(User, user)
+    #   #=> Swift::Scheme
+    # @example Coerce hash to scheme.
+    #   Swif.db.create(User, name: 'Apple Arthurton', age: 32)
+    #   #=> Swift::Scheme
+    # @example Multiple resources.
+    #   apple = User.new(name: 'Apple Arthurton', age: 32)
+    #   benny = User.new(name: 'Benny Arthurton', age: 30)
+    #   Swift.db.create(User, [apple, benny])
+    #   #=> Array<Swift::Scheme>
+    # @example Coerce multiple resources.
+    #   Swift.db.create(User, [{name: 'Apple Arthurton', age: 32}, {name: 'Benny Arthurton', age: 30}])
+    #   #=> Array<Swift::Scheme>
+    #
+    # @param  [Swift::Scheme]                                   scheme    Concrete scheme subclass to load.
+    # @param  [Swift::Scheme, Hash, Array<Swift::Scheme, Hash>] resources The resources to be saved.
+    # @return [Swift::Scheme, Array<Swift::Scheme>]
+    # @note   Hashes will be coerced into a Swift::Scheme resource via Swift::Scheme#new
+    # @note   Passing a scalar will result in a scalar.
+    # @see    Swift::Scheme.create
+    def create scheme, resources
+      statement = prepare_create(scheme)
+      result    = [resources].flatten.map do |resource|
+        resource = scheme.new(resource) unless resource.kind_of?(scheme)
+        result   = statement.execute(*resource.tuple.values_at(*scheme.header.insertable))
+        resource.tuple[scheme.header.serial] = result.insert_id if scheme.header.serial
+        resource
+      end
+      resources.kind_of?(Enumerable) ? result : result.first
+    end
+
+    # Update one or more.
+    #
+    # @example Scheme.
+    #   user      = Swift.db.create(User, name: 'Apply Arthurton', age: 32)
+    #   user.name = 'Arthur Appleton'
+    #   Swift.db.update(User, user)
+    #   #=> Swift::Scheme
+    # @example Coerce hash to scheme.
+    #   user      = Swift.db.create(User, name: 'Apply Arthurton', age: 32)
+    #   user.name = 'Arthur Appleton'
+    #   Swif.db.update(User, user.tuple)
+    #   #=> Swift::Scheme
+    # @example Multiple resources.
+    #   apple = Swift.db.create(User, name: 'Apple Arthurton', age: 32)
+    #   benny = Swift.db.create(User, name: 'Benny Arthurton', age: 30)
+    #   Swift.db.update(User, [apple, benny])
+    #   #=> Array<Swift::Scheme>
+    # @example Coerce multiple resources.
+    #   apple = Swift.db.create(User, name: 'Apple Arthurton', age: 32)
+    #   benny = Swift.db.create(User, name: 'Benny Arthurton', age: 30)
+    #   Swift.db.update(User, [apple.tuple, benny.tuple])
+    #   #=> Array<Swift::Scheme>
+    #
+    # @param  [Swift::Scheme]                                   scheme    Concrete scheme subclass to load.
+    # @param  [Swift::Scheme, Hash, Array<Swift::Scheme, Hash>] resources The resources to be updated.
+    # @return [Swift::Scheme, Swift::Result<Swift::Scheme>]
+    # @note   Hashes will be coerced into a Swift::Scheme resource via Swift::Scheme#new
+    # @note   Passing a scalar will result in a scalar.
+    # @see    Swift::Scheme#update
+    def update scheme, resources
+      statement = prepare_update(scheme)
+      result    = [resources].flatten.map do |resource|
+        resource = scheme.new(resource) unless resource.kind_of?(scheme)
+        keys     = resource.tuple.values_at(*scheme.header.keys)
+
+        # TODO: Name the key field(s) missing.
+        raise ArgumentError, "#{scheme} resource has incomplete key: #{resource.inspect}" \
+          unless keys.select(&:nil?).empty?
+
+        statement.execute(*resource.tuple.values_at(*scheme.header.updatable), *keys)
+        resource
+      end
+      resources.kind_of?(Enumerable) ? result : result.first
+    end
+
+    # Destroy one or more.
+    #
+    # @example Scheme.
+    #   user      = Swift.db.create(User, name: 'Apply Arthurton', age: 32)
+    #   user.name = 'Arthur Appleton'
+    #   Swift.db.destroy(User, user)
+    # @example Coerce hash to scheme.
+    #   user      = Swift.db.create(User, name: 'Apply Arthurton', age: 32)
+    #   user.name = 'Arthur Appleton'
+    #   Swif.db.destroy(User, user.tuple)
+    # @example Multiple resources.
+    #   apple = Swift.db.create(User, name: 'Apple Arthurton', age: 32)
+    #   benny = Swift.db.create(User, name: 'Benny Arthurton', age: 30)
+    #   Swift.db.destroy(User, [apple, benny])
+    # @example Coerce multiple resources.
+    #   apple = Swift.db.create(User, name: 'Apple Arthurton', age: 32)
+    #   benny = Swift.db.create(User, name: 'Benny Arthurton', age: 30)
+    #   Swift.db.destroy(User, [apple.tuple, benny.tuple])
+    #
+    # @param  [Swift::Scheme]                                   scheme    Concrete scheme subclass to load.
+    # @param  [Swift::Scheme, Hash, Array<Swift::Scheme, Hash>] resources The resources to be destroyed.
+    # @return [Swift::Scheme, Array<Swift::Scheme>]
+    # @note   Hashes will be coerced into a Swift::Scheme resource via Swift::Scheme#new
+    # @note   Passing a scalar will result in a scalar.
+    # @see    Swift::Scheme#destroy
+    def destroy scheme, resources
+      statement = prepare_destroy(scheme)
+      result    = [resources].flatten.map do |resource|
+        resource = scheme.new(resource) unless resource.kind_of?(scheme)
+        keys     = resource.tuple.values_at(*scheme.header.keys)
+
+        # TODO: Name the key field(s) missing.
+        raise ArgumentError, "#{scheme} resource has incomplete key: #{resource.inspect}" \
+          unless keys.select(&:nil?).empty?
+
+        if result = statement.execute(*keys)
+          resource.freeze
+        end
+        result
+      end
+      resources.kind_of?(Enumerable) ? result : result.first
+    end
+
 
     def migrate! scheme
       keys   =  scheme.header.keys

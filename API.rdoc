@@ -16,15 +16,15 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
       #all         #=> Result
       #begin       #=> Adapter
       #commit
-      #create      #=> Scheme
-      #destroy     #=> Result
+      #create      #=> Scheme or Result
+      #destroy     #=> Scheme or Result
       #execute     #=> Result
       #first       #=> Scheme
       #get         #=> Scheme
       #prepare     #=> Statement
       #rollback
       #transaction #=> Adapter
-      #update      #=> Result
+      #update      #=> Scheme or Result
       #reconnect
       #delete      #=> Result
 
@@ -50,7 +50,7 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
     Scheme
       .all       #=> Result
       .attribute #=> Type
-      .create    #=> Scheme
+      .create    #=> Scheme or Result
       .first     #=> Scheme
       .get       #=> Scheme
       .header    #=> Header
@@ -58,9 +58,9 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
       .new       #=> Scheme
       .scheme    #=> Alias for self.class
       .store     #=> Symbol
-      #destroy   #=> Result
+      #destroy   #=> Scheme or Result
       #tuple     #=> Hash
-      #update    #=> Result
+      #update    #=> Scheme or Result
 
     # Enumerable collection of Types for Scheme
     Header

@@ -1,6 +1,6 @@
 module Swift
 
-  # A relation (instance) definition.
+  # A resource (instance) definition.
   #
   # @example A user scheme.
   #   class User < Swift::Scheme
@@ -10,8 +10,6 @@ module Swift
   #     attribute :email,      Swift::Type::String
   #     attribute :updated_at, Swift::Type::Time
   #   end # User
-  #
-  # @todo Tuple should be renamed tuples (plural?)
   class Scheme
     attr_accessor :tuple
     alias_method :scheme, :class
@@ -49,8 +47,8 @@ module Swift
     #     updated_at: Time.now
     #   )
     #   apple.destroy
-    def destroy
-      Swift.db.destroy(scheme, self)
+    def destroy resources = self
+      Swift.db.destroy(scheme, resources)
     end
 
     class << self
@@ -96,9 +94,9 @@ module Swift
       #     updated_at: Time.now
       #   )
       #
-      # @param [Hash] options Create with attributes. <tt>{name: value}</tt>
-      def create options = {}
-        Swift.db.create(self, options)
+      # @param [Hash, Array<Hash>] options Create with attributes. <tt>{name: value}</tt>
+      def create resources = {}
+        Swift.db.create(self, resources)
       end
 
       # Select by id(s).
