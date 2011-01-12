@@ -78,7 +78,7 @@ describe 'scheme' do
       end
 
       it 'adapter should delete only relevant rows given condition & scheme' do
-        Swift.db.create(@user, {name: 'dave'}, {name: 'mike'})
+        Swift.db.create(@user, [{name: 'dave'}, {name: 'mike'}])
         assert_equal 2, @user.all.rows
 
         Swift.db.delete @user, ':name = ?', 'dave'
