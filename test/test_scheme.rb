@@ -51,7 +51,7 @@ describe 'scheme' do
     end
   end
 
-  supported_by Swift::DB::Sqlite3 do
+  supported_by Swift::DB::Postgres, Swift::DB::Mysql, Swift::DB::Sqlite3 do
     describe 'adapter operations' do
       before do
         Swift.db.migrate! @user
