@@ -60,6 +60,7 @@ module Swift
       def inherited klass
         klass.header = Header.new
         klass.header.push(*header) if header
+        klass.store store          if store
         Swift.schema.push(klass)   if klass.name
       end
 
