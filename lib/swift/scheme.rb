@@ -20,7 +20,7 @@ module Swift
     #     email:      'apple@arthurton.local',
     #     updated_at: Time.now
     #   )
-    # @param [Hash] options Create relation and set attributes. <tt>{name: value}</tt>
+    # @param [Hash] options Create resource and set attributes. <tt>{name: value}</tt>
     def initialize options = {}
       @tuple = scheme.header.new_tuple
       options.each{|k, v| send(:"#{k}=", v)}
