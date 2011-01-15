@@ -8,6 +8,16 @@ module Swift
       def returning?
         false
       end
+
+      # TODO Swift::Type::Bignum ?
+      # serial is an alias for bigint in mysql, we want integer type to be migrated as integer
+      # type in the database (not bigint or smallint or shortint or whatever).
+      def field_type attribute
+        case attribute
+          when Type::Integer then attribute.serial ? 'integer auto_increment' : 'integer'
+          else super
+        end
+      end
     end # Mysql
 
     class Sqlite3 < Adapter
