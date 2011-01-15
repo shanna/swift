@@ -12,7 +12,7 @@ VALUE query_execute(Query *query) {
     );
   }
   catch (dbi::Error &e) {
-    query->error = e.what();
+    snprintf(query->error, 8192, "%s", e.what());
     return Qfalse;
   }
 }
@@ -26,7 +26,7 @@ VALUE query_execute_statement(Query *query) {
     );
   }
   catch (dbi::Error &e) {
-    query->error = e.what();
+    snprintf(query->error, 8192, "%s", e.what());
     return Qfalse;
   }
 }
