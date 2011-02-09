@@ -158,7 +158,7 @@ VALUE typecast_timestamp(const char *data, uint64_t len, const char *zone) {
         lastmatch++;
       }
       subsec[idx] = 0;
-      usec        = atoll(subsec);
+      usec        = round(atoll(subsec) * (1000000 / pow(10, idx)));
   }
 
   tm.tm_year  -= 1900;
