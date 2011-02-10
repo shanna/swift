@@ -58,7 +58,7 @@ describe 'scheme' do
       end
 
       it 'adapter should destroy valid instance' do
-        user = @user.create.first
+        user = @user.create
         assert_equal 1, user.id
 
         assert Swift.db.destroy @user, user
@@ -70,7 +70,7 @@ describe 'scheme' do
       end
 
       it 'adapter should delete all rows given scheme' do
-        user = @user.create.first
+        user = @user.create
         assert_equal 1, user.id
 
         Swift.db.delete @user
@@ -92,7 +92,7 @@ describe 'scheme' do
       end
 
       it 'should update with valid keys' do
-        user = @user.create.first
+        user = @user.create
         assert user.update(name: 'dave')
         assert_equal 'dave', @user.first.name
       end

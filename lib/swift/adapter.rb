@@ -124,7 +124,7 @@ module Swift
         resource.tuple[scheme.header.serial] = result.insert_id if scheme.header.serial
         resource
       end
-      resources.kind_of?(Enumerable) ? result : result.first
+      resources.kind_of?(Array) ? result : result.first
     end
 
     # Update one or more.
@@ -169,7 +169,7 @@ module Swift
         statement.execute(*resource.tuple.values_at(*scheme.header.updatable), *keys)
         resource
       end
-      resources.kind_of?(Enumerable) ? result : result.first
+      resources.kind_of?(Array) ? result : result.first
     end
 
     # Destroy one or more.
@@ -212,7 +212,7 @@ module Swift
         end
         result
       end
-      resources.kind_of?(Enumerable) ? result : result.first
+      resources.kind_of?(Array) ? result : result.first
     end
 
 
