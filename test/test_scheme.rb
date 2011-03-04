@@ -57,6 +57,11 @@ describe 'scheme' do
         Swift.db.migrate! @user
       end
 
+      it 'should return scheme instance when given scheme in #execute' do
+        user = @user.create
+        assert_equal 1, Swift.db.execute(@user, 'select * from users').first.id
+      end
+
       it 'adapter should destroy valid instance' do
         user = @user.create
         assert_equal 1, user.id

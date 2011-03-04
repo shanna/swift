@@ -87,10 +87,15 @@ static VALUE adapter_escape(VALUE self, VALUE value) {
 
 // TODO: Change bind_values to an array in the interface? Avoid array -> splat -> array.
 static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
-  VALUE statement, bind_values, block, rows;
+  VALUE statement, bind_values, block, rows, scheme = Qnil;
 
   dbi::Handle *handle = adapter_handle(self);
   rb_scan_args(argc, argv, "1*&", &statement, &bind_values, &block);
+
+  if (TYPE(statement) == T_CLASS) {
+    scheme    = statement;
+    statement = rb_ary_shift(bind_values);
+  }
 
   try {
     Query query;
@@ -104,6 +109,8 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
       rb_raise(eSwiftRuntimeError, "%s", query.error);
 
     VALUE result = result_wrap_handle(cSwiftResult, self, handle->conn()->result(), true);
+    if (!NIL_P(scheme))
+      rb_iv_set(result, "@scheme", scheme);
     return rb_block_given_p() ? result_each(result) : result;
   }
   CATCH_DBI_EXCEPTIONS();
