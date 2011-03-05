@@ -25,6 +25,10 @@ describe 'Adapter' do
         end
       end
 
+      it 'should return result from block' do
+        assert_equal :foobar, @db.transaction {|db| foobar = 1; foobar = :foobar }
+      end
+
       describe 'commits work' do
         before do
           @db.execute('delete from users')

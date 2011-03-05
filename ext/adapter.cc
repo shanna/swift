@@ -184,7 +184,7 @@ static VALUE adapter_rollback(int argc, VALUE *argv, VALUE self) {
 
 static VALUE adapter_transaction(int argc, VALUE *argv, VALUE self) {
   int status;
-  VALUE sp, block;
+  VALUE sp, block, block_result = Qnil;
 
   dbi::Handle *handle = adapter_handle(self);
 
@@ -195,7 +195,7 @@ static VALUE adapter_transaction(int argc, VALUE *argv, VALUE self) {
 
   try {
     handle->begin(save_point);
-    rb_protect(rb_yield, self, &status);
+    block_result = rb_protect(rb_yield, self, &status);
     if (!status && handle->transactions().size() > 0) {
       handle->commit(save_point);
     }
@@ -206,7 +206,7 @@ static VALUE adapter_transaction(int argc, VALUE *argv, VALUE self) {
   }
   CATCH_DBI_EXCEPTIONS();
 
-  return Qtrue;
+  return block_result;
 }
 
 static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
