@@ -1,7 +1,9 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'test'))
 
 require 'minitest/spec'
 require 'minitest/unit'
+require 'minitest_teardown_hack'
 require 'swift'
 require 'etc'
 
@@ -20,6 +22,9 @@ class MiniTest::Spec
       describe("Adapter #{adapter.name}") do
         before do
           Swift.setup :default, adapter, connection_defaults.merge(adapter_defaults.fetch(adapter, {}))
+        end
+        after do
+          Swift.db.close
         end
         block.call(adapter)
       end

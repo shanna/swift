@@ -15,7 +15,7 @@ VALUE swift_init(VALUE self, VALUE path) {
 VALUE swift_trace(int argc, VALUE *argv, VALUE self) {
     VALUE flag, io;
     rb_io_t *fptr;
-    int fd = 2; // defaults to stderr
+    int status, fd = 2; // defaults to stderr
 
     rb_scan_args(argc, argv, "11", &flag, &io);
 
@@ -27,8 +27,25 @@ VALUE swift_trace(int argc, VALUE *argv, VALUE self) {
         fd = fptr->fd;
     }
 
-    dbi::trace(flag == Qtrue ? true : false, fd);
-    return flag;
+    // block form trace
+    if (rb_block_given_p()) {
+      // orig values
+      bool orig_trace    = dbi::_trace;
+      int  orig_trace_fd = dbi::_trace_fd;
+
+      dbi::trace(flag == Qtrue ? true : false, fd);
+      VALUE block_result = rb_protect(rb_yield, Qnil, &status);
+      dbi::trace(orig_trace, orig_trace_fd);
+
+      if (status)
+        rb_jump_tag(status);
+      else
+        return block_result;
+    }
+    else {
+      dbi::trace(flag == Qtrue ? true : false, fd);
+      return flag;
+    }
 }
 
 VALUE atexit_gc(...) {
