@@ -1,4 +1,6 @@
-require_relative '../gems/environment'
+require 'bundler'
+Bundler.setup(:default)
+
 require 'mysql2'
 
 class Runner

@@ -8,6 +8,7 @@ ext/swift/*
 !ext/swift/*.rb
 benchmarks/gems/ruby/1.9.1/*
 !benchmarks/gems/ruby/1.9.1/cache
+benchmarks/vendor/*
 benchmarks/gems/environment.rb
 benchmarks/bin
 pkg/*
@@ -18,3 +19,4 @@ benchmarks/adapters/pg_ext/*.*o
 benchmarks/adapters/pg_ext/Makefile
 .yardoc
 doc/*
+benchmarks/.bundle/*

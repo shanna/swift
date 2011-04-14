@@ -1,8 +1,11 @@
-require_relative 'gems/environment'
+require 'bundler'
+Bundler.setup(:default)
+
 require 'etc'
 require 'pg'
 require 'mysql2'
 require 'i18n'
+require 'stringio'
 require 'active_support'
 require 'active_record'
 
@@ -31,8 +34,9 @@ class Runner
   end
 
   def migrate!
-    orig_stdout = $stdout
-    $stdout = open('/dev/null', 'w')
+    ActiveRecord::Base.connection.execute("set client_min_messages=WARNING")
+
+    orig_stdout, $stdout = $stdout, StringIO.new
     ActiveRecord::Schema.define do
       execute 'drop table if exists users'
       create_table :users do |t|
@@ -41,7 +45,9 @@ class Runner
         t.column :updated_at, :timestamp
       end
     end
-    $stdout = orig_stdout
+
+    ensure
+      $stdout = orig_stdout
   end
 
   def run_creates

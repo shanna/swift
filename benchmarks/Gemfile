@@ -1,8 +1,4 @@
-# vim: syntax=ruby
-# bundler08
-bundle_path 'gems'
-disable_rubygems
-disable_system_gems
+source 'http://rubygems.org'
 
 gem 'addressable', '2.2.4'
 

@@ -1,4 +1,6 @@
-require_relative '../gems/environment'
+require 'bundler'
+Bundler.setup(:default)
+
 require 'pg'
 require 'date'
 require 'pg_typecast'

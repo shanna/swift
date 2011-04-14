@@ -1,6 +1,6 @@
-#!/usr/bin/ruby
+require 'bundler'
+Bundler.setup(:default)
 
-require_relative 'gems/environment'
 require 'etc'
 require 'sequel'
 

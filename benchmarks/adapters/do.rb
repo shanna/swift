@@ -1,4 +1,6 @@
-require_relative '../gems/environment'
+require 'bundler'
+Bundler.setup(:default)
+
 require 'data_objects'
 require 'do_mysql'
 require 'do_postgres'
