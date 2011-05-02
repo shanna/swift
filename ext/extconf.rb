@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 require 'mkmf'
 
 Config::CONFIG['CC']  = 'g++'
