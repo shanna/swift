@@ -1,6 +1,8 @@
+require 'swift/adapter/sql'
+
 module Swift
   module DB
-    class Mysql < Adapter
+    class Mysql < Adapter::Sql
       def initialize options = {}
         super options.update(driver: 'mysql')
       end
@@ -20,7 +22,7 @@ module Swift
       end
     end # Mysql
 
-    class Sqlite3 < Adapter
+    class Sqlite3 < Adapter::Sql
       def initialize options = {}
         super options.update(driver: 'sqlite3')
       end
@@ -54,7 +56,7 @@ module Swift
       end
     end # Sqlite3
 
-    class Postgres < Adapter
+    class Postgres < Adapter::Sql
       def initialize options = {}
         super options.update(driver: 'postgresql')
       end

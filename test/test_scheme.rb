@@ -86,9 +86,9 @@ describe 'scheme' do
         Swift.db.create(@user, [{name: 'dave'}, {name: 'mike'}])
         assert_equal 2, @user.all.rows
 
-        Swift.db.delete @user, ':name = ?', 'dave'
-        assert_nil @user.first ':name = ?', 'dave'
-        assert @user.first ':name = ?', 'mike'
+        Swift.db.delete @user, "delete from #{@user.store} where #{@user.name} = ?", 'dave'
+        assert_nil @user.first "select * from #{@user.store} where #{@user.name} = ?", 'dave'
+        assert @user.first "select * from #{@user.store} where #{@user.name} = ?", 'mike'
       end
 
       it 'should not update without valid keys' do

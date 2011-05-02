@@ -23,7 +23,7 @@ module Swift
     # @param [Hash] options Create resource and set attributes. <tt>{name: value}</tt>
     def initialize options = {}
       @tuple = scheme.header.new_tuple
-      options.each{|k, v| send(:"#{k}=", v)}
+      options.each{|k, v| public_send(:"#{k}=", v)}
     end
 
     # @example
@@ -36,7 +36,7 @@ module Swift
     #
     # @param [Hash] options Update attributes. <tt>{name: value}</tt>
     def update options = {}
-      options.each{|k, v| send(:"#{k}=", v)}
+      options.each{|k, v| public_send(:"#{k}=", v)}
       Swift.db.update(scheme, self)
     end
 
@@ -124,15 +124,21 @@ module Swift
       #     puts user.name
       #   end
       #
-      # @param  [String]        conditions Optional SQL 'where' fragment.
-      # @param  [Object, ...]   *binds     Optional bind values that accompany conditions SQL fragment.
-      # @param  [Proc]          &block     Optional 'each' iterator block.
+      # @param  [String]        statement Optional select statement.
+      # @param  [Object, ...]   *binds    Optional bind values that accompany the statement.
+      # @param  [Proc]          &block    Optional 'each' iterator block.
       # @return [Swift::Result]
-      def all conditions = '', *binds, &block
-        Swift.db.all(self, conditions, *binds, &block)
+      #--
+      # TODO: select/find_all ala Enumerable?
+      # TODO: Binds must be an Array to stop the splat -> array -> splat stuff.
+      def all statement = '', *binds, &block
+        Swift.db.all(self, statement, *binds, &block)
       end
 
       # Select one.
+      #
+      # Sugar to shift the first result from a result set. Does not limit the size of the set so remember to do that
+      # yourself.
       #
       # @example First.
       #   User.first
@@ -143,12 +149,15 @@ module Swift
       #     puts user.name
       #   end
       #
-      # @param  [String]        conditions Optional SQL 'where' fragment.
-      # @param  [Object, ...]   *binds     Optional bind values that accompany conditions SQL fragment.
-      # @param  [Proc]          &block     Optional 'each' iterator block.
+      # @param  [String]        statement Optional select statement.
+      # @param  [Object, ...]   *binds    Optional bind values that accompany conditions SQL fragment.
+      # @param  [Proc]          &block    Optional 'each' iterator block.
       # @return [Swift::Scheme, nil]
-      def first conditions = '', *binds, &block
-        Swift.db.first(self, conditions, *binds, &block)
+      #--
+      # TODO: find/detect ala Enumerable?
+      # TODO: Binds must be an Array to stop the splat -> array -> splat stuff.
+      def first statement = '', *binds, &block
+        Swift.db.first(self, statement, *binds, &block)
       end
     end
   end # Scheme
