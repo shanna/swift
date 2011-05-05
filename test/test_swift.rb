@@ -26,9 +26,8 @@ describe 'Swift' do
         sql1 = 'create table users (id integer, name text)'
         sql2 = 'drop table users'
 
-        Swift.trace(true, @file) do
-          Swift.db.execute(sql1)
-        end
+        res = Swift.trace(true, @file) { Swift.db.execute(sql1) && 'foobar' }
+        assert_equal 'foobar', res
 
         Swift.db.execute(sql2)
 
