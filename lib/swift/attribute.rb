@@ -29,6 +29,9 @@ module Swift
       define_scheme_methods(scheme)
     end
 
+    # The attributes field.
+    #
+    # @return [String]
     def to_s
       field.to_s
     end
