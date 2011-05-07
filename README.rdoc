@@ -139,7 +139,7 @@ attribute to field name typecasting.
   # Convert :name and :age to fields.
   # select * from users where eman like '%Arthurton' and ega > 20
   users = User.execute(
-    %Q{select * from #{User.store} where #{User.name} like ? and #{User.age} > ?},
+    %Q{select * from #{User} where #{User.name} like ? and #{User.age} > ?},
     '%Arthurton', 20
   )
 
@@ -165,7 +165,7 @@ Swift comes with a simple identity map. Just require it after you load swift.
   # Create
   User.create name: 'James Arthurton', email: 'james@arthurton.local' # => User
 
-  find_user = User.prepare(%Q{select * from #{user.store} where #{User.name = ?})
+  find_user = User.prepare(%Q{select * from #{User} where #{User.name = ?})
   find_user.execute('James Arthurton')
   find_user.execute('James Arthurton') # Gets same object reference
 

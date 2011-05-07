@@ -61,6 +61,7 @@ module Swift
         klass.header = Header.new
         klass.header.push(*header) if header
         klass.store store          if store
+        # (class << klass; self end).send(:define_method, :to_s, lambda{ store.to_s })
         Swift.schema.push(klass)   if klass.name
       end
 
@@ -84,6 +85,13 @@ module Swift
       # @return [Symbol]
       def store name = nil
         name ? @store = name : @store
+      end
+
+      # Store (table) name.
+      #
+      # @return [String]
+      def to_s
+        store.to_s
       end
 
       # Create (insert).
