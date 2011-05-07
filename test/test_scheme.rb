@@ -84,11 +84,11 @@ describe 'scheme' do
 
       it 'adapter should delete only relevant rows given condition & scheme' do
         Swift.db.create(@user, [{name: 'dave'}, {name: 'mike'}])
-        assert_equal 2, @user.all.rows
+        assert_equal 2, @user.execute("select * from #{@user.store}").rows
 
         Swift.db.delete @user, "delete from #{@user.store} where #{@user.name} = ?", 'dave'
-        assert_nil @user.first "select * from #{@user.store} where #{@user.name} = ?", 'dave'
-        assert @user.first "select * from #{@user.store} where #{@user.name} = ?", 'mike'
+        assert_nil @user.execute("select * from #{@user.store} where #{@user.name} = ?", 'dave').first
+        assert @user.execute("select * from #{@user.store} where #{@user.name} = ?", 'mike').first
       end
 
       it 'should not update without valid keys' do
@@ -99,7 +99,7 @@ describe 'scheme' do
       it 'should update with valid keys' do
         user = @user.create
         assert user.update(name: 'dave')
-        assert_equal 'dave', @user.first.name
+        assert_equal 'dave', @user.execute("select * from #{@user.store}").first.name
       end
     end
   end

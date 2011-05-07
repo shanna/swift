@@ -13,13 +13,11 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
     # Abstract.
     Adapter
       .new         #=> Adapter
-      #all         #=> Result
       #begin       #=> Adapter
       #commit
       #create      #=> Scheme or Result
-      #destroy     #=> Scheme or Result
+      #delete      #=> Scheme or Result
       #execute     #=> Result
-      #first       #=> Scheme
       #get         #=> Scheme
       #prepare     #=> Statement
       #rollback
@@ -48,21 +46,21 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
       #execute #=> Result
 
     Scheme
-      .all       #=> Result
       .attribute #=> Type
       .create    #=> Scheme or Result
-      .first     #=> Scheme
       .get       #=> Scheme
       .header    #=> Header
       .load      #=> Scheme
       .new       #=> Scheme
-      .scheme    #=> Alias for self.class
       .store     #=> Symbol
-      #destroy   #=> Scheme or Result
+      #execute   #=> Result
+      #prepare   #=> Statement
+      #scheme    #=> Alias for self.class
       #tuple     #=> Hash
       #update    #=> Scheme or Result
 
-    # Enumerable collection of Types for Scheme
+
+    # Enumerable collection of Types for Scheme.
     Header
       .new        #=> Header
       #all        #=> [Type, ...]
@@ -83,7 +81,7 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
       #default               #=> Object
       #define_scheme_methods
 
-    # Concrete
+    # Concrete.
     Type
       BigDecimal < Attribute
       Boolean    < Attribute

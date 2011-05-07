@@ -46,8 +46,8 @@ module Swift
     #     email:      'apple@arthurton.local',
     #     updated_at: Time.now
     #   )
-    #   apple.destroy
-    def destroy resources = self
+    #   apple.delete
+    def delete resources = self
       Swift.db.destroy(scheme, resources)
     end
 
@@ -113,51 +113,16 @@ module Swift
         Swift.db.get(self, keys)
       end
 
-      # Select one or more.
-      #
-      # @example All.
-      #   User.all
-      # @example All with conditions and binds.
-      #   User.all(':name = ? and :age > ?', 'Apple Arthurton', 32)
-      # @example Block form iterator.
-      #   User.all(':age > ?', 32) do |user|
-      #     puts user.name
-      #   end
-      #
-      # @param  [String]        statement Optional select statement.
-      # @param  [Object, ...]   *binds    Optional bind values that accompany the statement.
-      # @param  [Proc]          &block    Optional 'each' iterator block.
-      # @return [Swift::Result]
       #--
-      # TODO: select/find_all ala Enumerable?
-      # TODO: Binds must be an Array to stop the splat -> array -> splat stuff.
-      def all statement = '', *binds, &block
-        Swift.db.all(self, statement, *binds, &block)
+      # TODO: Document.
+      def prepare statement = ''
+        Swift.db.prepare(self, statement)
       end
 
-      # Select one.
-      #
-      # Sugar to shift the first result from a result set. Does not limit the size of the set so remember to do that
-      # yourself.
-      #
-      # @example First.
-      #   User.first
-      # @example First with conditions and binds.
-      #   User.first(':name = ? and :age > ?', 'Apple Arthurton', 32)
-      # @example Block form iterator.
-      #   User.first(User, 'age > ?', 32) do |user|
-      #     puts user.name
-      #   end
-      #
-      # @param  [String]        statement Optional select statement.
-      # @param  [Object, ...]   *binds    Optional bind values that accompany conditions SQL fragment.
-      # @param  [Proc]          &block    Optional 'each' iterator block.
-      # @return [Swift::Scheme, nil]
       #--
-      # TODO: find/detect ala Enumerable?
-      # TODO: Binds must be an Array to stop the splat -> array -> splat stuff.
-      def first statement = '', *binds, &block
-        Swift.db.first(self, statement, *binds, &block)
+      # TODO: Document.
+      def execute statement = '', *binds, &block
+        Swift.db.execute(self, statement, *binds, &block)
       end
     end
   end # Scheme
