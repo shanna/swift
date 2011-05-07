@@ -27,9 +27,10 @@ User.migrate!
   puts '', "-- run #{r} --", ''
   puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)
 
+  users = User.prepare("select * from #{User.store}")
   rows.times{|n| User.create(name: "test #{n}", email: "test@example.com", updated_at: Time.now) }
-  iter.times{|n| User.all.each{|m| [ m.id, m.name, m.email, m.updated_at ] } }
-  iter.times{|n| User.all.each{|m| m.update(name: "foo", email: "foo@example.com", updated_at: Time.now) } }
+  iter.times{|n| users.execute.each{|m| [ m.id, m.name, m.email, m.updated_at ] } }
+  iter.times{|n| users.execute.each{|m| m.update(name: "foo", email: "foo@example.com", updated_at: Time.now) } }
 
   Swift.db.execute 'truncate users'
   rows.times{|n| Swift.db.write('users', %w{name email updated_at}, "test #{n}\ttest@example.com\t#{Time.now}\n") }

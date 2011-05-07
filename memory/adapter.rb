@@ -1,7 +1,9 @@
 #!/usr/bin/env ruby
 
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+
 require 'etc'
-require_relative '../lib/swift'
+require 'swift'
 
 adapter = ARGV.first =~ /mysql/i ? Swift::DB::Mysql : Swift::DB::Postgres
 db = Swift.setup :default, adapter, user: Etc.getlogin, db: 'swift'
