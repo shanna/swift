@@ -75,7 +75,7 @@ module Swift
       # @see Swift::Attribute#new
       def attribute name, type, options = {}
         header.push(attribute = type.new(self, name, options))
-        (class << self; self end).send(:define_method, name, lambda{ attribute })
+        define_singleton_method(name, lambda{ attribute })
       end
 
       # Define the store (table).
