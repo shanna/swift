@@ -125,8 +125,8 @@ Scheme/relation level helpers.
 
 === Conditions SQL syntax.
 
-SQL is easy and most people know it so Swift ORM provides a simple symbol like syntax to convert resource
-names to field names.
+SQL is easy and most people know it so Swift ORM provides simple #to_s
+attribute to field name typecasting.
 
   class User < Swift::Scheme
     store     :users
@@ -138,7 +138,10 @@ names to field names.
 
   # Convert :name and :age to fields.
   # select * from users where eman like '%Arthurton' and ega > 20
-  users = User.all(':name like ? and :age > ?', '%Arthurton', 20)
+  users = User.execute(
+    %Q{select * from #{User.store} where #{User.name} like ? and #{User.age} > ?},
+    '%Arthurton', 20
+  )
 
 === Identity Map
 
@@ -162,8 +165,9 @@ Swift comes with a simple identity map. Just require it after you load swift.
   # Create
   User.create name: 'James Arthurton', email: 'james@arthurton.local' # => User
 
-  User.first(':name = ?', 'James Arthurton')
-  User.first(':name = ?', 'James Arthurton') # Gets same object reference
+  find_user = User.prepare(%Q{select * from #{user.store} where #{User.name = ?})
+  find_user.execute('James Arthurton')
+  find_user.execute('James Arthurton') # Gets same object reference
 
 === Bulk inserts
 
@@ -265,7 +269,6 @@ The adapter level SELECT benchmarks without using ORM.
 
 * More tests.
 * Assertions for dumb stuff.
-* Abstract interface for other adapters? Move dbic++ to Swift::DBI::(Adapter, Pool, Result, Statment etc.)
 
 == Contributing
 
