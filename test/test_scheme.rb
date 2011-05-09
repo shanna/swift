@@ -62,33 +62,16 @@ describe 'scheme' do
         assert_equal 1, Swift.db.execute(@user, 'select * from users').first.id
       end
 
-      it 'adapter should destroy valid instance' do
+      it 'adapter should delete valid instance' do
         user = @user.create
         assert_equal 1, user.id
 
-        assert Swift.db.destroy @user, user
+        assert Swift.db.delete @user, user
         assert_nil @user.get(id: 1)
       end
 
-      it 'adapter should barf when trying to destroy invalid instance' do
-        assert_raises(ArgumentError) { Swift.db.destroy @user, {id: nil, name: 'foo'} }
-      end
-
-      it 'adapter should delete all rows given scheme' do
-        user = @user.create
-        assert_equal 1, user.id
-
-        Swift.db.delete @user
-        assert_nil @user.get(id: 1)
-      end
-
-      it 'adapter should delete only relevant rows given condition & scheme' do
-        Swift.db.create(@user, [{name: 'dave'}, {name: 'mike'}])
-        assert_equal 2, @user.execute("select * from #{@user.store}").rows
-
-        Swift.db.delete @user, "delete from #{@user} where #{@user.name} = ?", 'dave'
-        assert_nil @user.execute("select * from #{@user} where #{@user.name} = ?", 'dave').first
-        assert @user.execute("select * from #{@user} where #{@user.name} = ?", 'mike').first
+      it 'adapter should barf when trying to delete an invalid instance' do
+        assert_raises(ArgumentError) { Swift.db.delete @user, {id: nil, name: 'foo'} }
       end
 
       it 'should not update without valid keys' do

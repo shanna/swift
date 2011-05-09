@@ -28,28 +28,11 @@ module Swift
           @prepared[scheme][name] ||= prepare(scheme, yield)
         end
 
-        #--
-        # TODO: Complain if parts of the primary key are missing.
         def prepare_get scheme
           prepare_cached(scheme, :get) do
             where = scheme.header.keys.map{|key| "#{key} = ?"}.join(' and ')
             "select * from #{scheme.store} where #{where} limit 1"
           end
-        end
-
-        def prepare_all scheme, statement = ''
-          statement = "select * from #{scheme.store}" if statement.empty?
-          prepare(scheme, statement)
-        end
-
-        def prepare_first scheme, statement = ''
-          statement = "select * from #{scheme.store} limit 1" if statement.empty?
-          prepare(scheme, statement)
-        end
-
-        def prepare_delete scheme, statement = ''
-          statement = "delete from #{scheme.store}" if statement.empty?
-          prepare(scheme, statement)
         end
 
         def prepare_create scheme
@@ -68,8 +51,8 @@ module Swift
           end
         end
 
-        def prepare_destroy scheme
-          prepare_cached(scheme, :destroy) do
+        def prepare_delete scheme
+          prepare_cached(scheme, :delete) do
             where = scheme.header.keys.map{|key| "#{key} = ?"}.join(' and ')
             "delete from #{scheme.store} where #{where}"
           end
