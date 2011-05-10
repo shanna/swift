@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-  s.date = %q{2011-04-04}
+  s.date = %q{2011-05-10}
   s.description = %q{A rational rudimentary database abstraction.}
   s.email = ["shane.hanna@gmail.com", "deepfryed@gmail.com"]
   s.extensions = ["ext/extconf.rb"]
@@ -44,6 +44,7 @@ Gem::Specification.new do |s|
     "ext/swift.h",
     "lib/swift.rb",
     "lib/swift/adapter.rb",
+    "lib/swift/adapter/sql.rb",
     "lib/swift/attribute.rb",
     "lib/swift/db.rb",
     "lib/swift/header.rb",
@@ -56,6 +57,7 @@ Gem::Specification.new do |s|
     "swift.gemspec",
     "test/helper.rb",
     "test/house-explode.jpg",
+    "test/minitest_teardown_hack.rb",
     "test/test_adapter.rb",
     "test/test_encoding.rb",
     "test/test_error.rb",
@@ -63,6 +65,7 @@ Gem::Specification.new do |s|
     "test/test_io.rb",
     "test/test_pool.rb",
     "test/test_scheme.rb",
+    "test/test_swift.rb",
     "test/test_timestamps.rb",
     "test/test_transactions.rb",
     "test/test_types.rb",
@@ -73,10 +76,8 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.7}
   s.summary = %q{A rational rudimentary database abstraction.}
   s.test_files = [
-    "examples/async.rb",
-    "examples/db.rb",
-    "examples/scheme.rb",
     "test/helper.rb",
+    "test/minitest_teardown_hack.rb",
     "test/test_adapter.rb",
     "test/test_encoding.rb",
     "test/test_error.rb",
@@ -84,6 +85,7 @@ Gem::Specification.new do |s|
     "test/test_io.rb",
     "test/test_pool.rb",
     "test/test_scheme.rb",
+    "test/test_swift.rb",
     "test/test_timestamps.rb",
     "test/test_transactions.rb",
     "test/test_types.rb",
