@@ -27,9 +27,9 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
 
     # Concrete.
     DB
-      Mysql    < Adapter # TODO: Adapter::DBI?
-      Postgres < Adapter # TODO: Adapter::DBI?
-      Sqlite3  < Adapter # TODO: Adapter::DBI?
+      Mysql    < Adapter::Sql
+      Postgres < Adapter::Sql
+      Sqlite3  < Adapter::Sql
 
     # Enumerable collection of Scheme or Hash tuples.
     Result
