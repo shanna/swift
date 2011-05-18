@@ -120,14 +120,30 @@ module Swift
         Swift.db.get(self, keys)
       end
 
-      #--
-      # TODO: Document.
+      # Prepare a statement for on or more executions.
+      #
+      # @example
+      #   sth = User.prepare("select * from #{User} where #{User.name} = ?")
+      #   sth.execute('apple') #=> Result
+      #   sth.execute('benny') #=> Result
+      #
+      # @param  [String] statement Query statement.
+      # @return [Swift::Statement]
       def prepare statement = ''
         Swift.db.prepare(self, statement)
       end
 
-      #--
-      # TODO: Document.
+      # Prepare a statement for on or more executions.
+      #
+      # @example
+      #   sth = User.prepare("select * from #{User} where #{User.name} = ?")
+      #   sth.execute('apple') #=> Result
+      #   sth.execute('benny') #=> Result
+      #
+      # @param  [String]  statement Query statement.
+      # @param  [*Object] binds     Bind values.
+      # @yield  [Swift::Result]
+      # @return [Swift::Result]
       def execute statement = '', *binds, &block
         Swift.db.execute(self, statement, *binds, &block)
       end
