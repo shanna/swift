@@ -17,7 +17,10 @@ VALUE swift_trace(int argc, VALUE *argv, VALUE self) {
     rb_io_t *fptr;
     int status, fd = 2; // defaults to stderr
 
-    rb_scan_args(argc, argv, "11", &flag, &io);
+    rb_scan_args(argc, argv, "02", &flag, &io);
+
+    if (NIL_P(flag))
+      flag = Qtrue;
 
     if (TYPE(flag) != T_TRUE && TYPE(flag) != T_FALSE)
         rb_raise(eSwiftArgumentError, "Swift#trace expects a boolean flag, got %s", CSTRING(flag));
