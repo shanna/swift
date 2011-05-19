@@ -1,7 +1,7 @@
 module Swift
   class Scheme
     def self.migrations &migrations
-      (class << self; self end).send :define_method, :migrate!, lambda{|db = Swift.db| migrations.call(db) }
+      define_singleton_method(:migrate!, lambda{|db = Swift.db| migrations.call(db)})
     end
 
     def self.migrate! db = Swift.db

@@ -39,28 +39,32 @@ class Runner
   end
 
   def run_creates
-    Benchmark.run("swift #create") do
-      rows.times {|n| User.create(name: "test #{n}", email: "test@example.com", updated_at: Time.now) }
+    Benchmark.run('swift #create') do
+      rows.times{|n| User.create(name: "test #{n}", email: "test@example.com", updated_at: Time.now)}
     end
   end
 
   def run_selects
-    Benchmark.run("swift #select") do
-      runs.times { User.all {|m| [ m.id, m.name, m.email, m.updated_at ] } }
+    Benchmark.run('swift #select') do
+      runs.times{ User.execute("select * from #{User}"){|m| [m.id, m.name, m.email, m.updated_at]}}
     end
   end
 
   def run_updates
-    Benchmark.run("swift #update") do
-      runs.times {|n| User.all {|m| m.update(name: "foo", email: "foo@example.com", updated_at: Time.now) } }
+    Benchmark.run('swift #update') do
+      runs.times do |n|
+        User.execute("select * from #{User}") do |m|
+          m.update(name: 'foo', email: 'foo@example.com', updated_at: Time.now)
+        end
+      end
     end
   end
 
   def run_writes
     Swift.db.execute('truncate users')
-    Benchmark.run("swift #write") do
+    Benchmark.run('swift #write') do
       stream = StringIO.new rows.times.map {|n| "test #{n}\ttest@example.com\t#{Time.now}\n" }.join('')
-      Swift.db.write("users", %w{name email updated_at}, stream)
+      Swift.db.write(User, %w{name email updated_at}, stream)
     end
   end
 end

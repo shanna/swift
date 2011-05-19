@@ -1,7 +1,11 @@
 #!/usr/bin/env ruby
 
+# TODO: make this a test.
+
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+
 require 'etc'
-require_relative '../lib/swift'
+require 'swift'
 
 adapter = ARGV.first =~ /mysql/i ? Swift::DB::Mysql : Swift::DB::Postgres
 db = Swift.setup :default, adapter, user: Etc.getlogin, db: 'swift'
@@ -20,7 +24,6 @@ db.execute 'create table users(id serial, name text, email text, updated_at time
 
   insert = db.prepare 'insert into users(name, email, updated_at) values (?, ?, ?)'
   rows.times{|n| insert.execute("test #{n}", "test@example.com", Time.now) }
-  insert.finish
 
   select = db.prepare 'select * from users'
   iter.times{|n| select.execute{|m| [ m[:id], m[:name], m[:email], m[:updated_at ] ] } }
@@ -29,10 +32,6 @@ db.execute 'create table users(id serial, name text, email text, updated_at time
   iter.times{|n| select.execute{|m| update.execute("foo", "foo@example.com", Time.now, m[:id]) } }
 
   puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)
-
-  insert.finish
-  select.finish
-  update.finish
 
   GC.start
   puts 'virt: %skB res: %skB' % `ps -o "vsize= rss=" -p #{$$}`.strip.split(/\s+/)

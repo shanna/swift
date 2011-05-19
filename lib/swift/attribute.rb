@@ -29,6 +29,13 @@ module Swift
       define_scheme_methods(scheme)
     end
 
+    # The attributes field.
+    #
+    # @return [String]
+    def to_s
+      field.to_s
+    end
+
     # Evals attribute accessors for this attribute into the scheme.
     def define_scheme_methods scheme
       scheme.class_eval <<-RUBY, __FILE__, __LINE__ + 1

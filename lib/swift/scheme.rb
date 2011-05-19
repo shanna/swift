@@ -23,7 +23,7 @@ module Swift
     # @param [Hash] options Create resource and set attributes. <tt>{name: value}</tt>
     def initialize options = {}
       @tuple = scheme.header.new_tuple
-      options.each{|k, v| send(:"#{k}=", v)}
+      options.each{|k, v| public_send(:"#{k}=", v)}
     end
 
     # @example
@@ -36,7 +36,7 @@ module Swift
     #
     # @param [Hash] options Update attributes. <tt>{name: value}</tt>
     def update options = {}
-      options.each{|k, v| send(:"#{k}=", v)}
+      options.each{|k, v| public_send(:"#{k}=", v)}
       Swift.db.update(scheme, self)
     end
 
@@ -46,8 +46,8 @@ module Swift
     #     email:      'apple@arthurton.local',
     #     updated_at: Time.now
     #   )
-    #   apple.destroy
-    def destroy resources = self
+    #   apple.delete
+    def delete resources = self
       Swift.db.destroy(scheme, resources)
     end
 
@@ -75,7 +75,7 @@ module Swift
       # @see Swift::Attribute#new
       def attribute name, type, options = {}
         header.push(attribute = type.new(self, name, options))
-        (class << self; self end).send(:define_method, name, lambda{ attribute })
+        define_singleton_method(name, lambda{ attribute })
       end
 
       # Define the store (table).
@@ -84,6 +84,13 @@ module Swift
       # @return [Symbol]
       def store name = nil
         name ? @store = name : @store
+      end
+
+      # Store (table) name.
+      #
+      # @return [String]
+      def to_s
+        store.to_s
       end
 
       # Create (insert).
@@ -113,42 +120,32 @@ module Swift
         Swift.db.get(self, keys)
       end
 
-      # Select one or more.
+      # Prepare a statement for on or more executions.
       #
-      # @example All.
-      #   User.all
-      # @example All with conditions and binds.
-      #   User.all(':name = ? and :age > ?', 'Apple Arthurton', 32)
-      # @example Block form iterator.
-      #   User.all(':age > ?', 32) do |user|
-      #     puts user.name
-      #   end
+      # @example
+      #   sth = User.prepare("select * from #{User} where #{User.name} = ?")
+      #   sth.execute('apple') #=> Result
+      #   sth.execute('benny') #=> Result
       #
-      # @param  [String]        conditions Optional SQL 'where' fragment.
-      # @param  [Object, ...]   *binds     Optional bind values that accompany conditions SQL fragment.
-      # @param  [Proc]          &block     Optional 'each' iterator block.
-      # @return [Swift::Result]
-      def all conditions = '', *binds, &block
-        Swift.db.all(self, conditions, *binds, &block)
+      # @param  [String] statement Query statement.
+      # @return [Swift::Statement]
+      def prepare statement = ''
+        Swift.db.prepare(self, statement)
       end
 
-      # Select one.
+      # Prepare a statement for on or more executions.
       #
-      # @example First.
-      #   User.first
-      # @example First with conditions and binds.
-      #   User.first(':name = ? and :age > ?', 'Apple Arthurton', 32)
-      # @example Block form iterator.
-      #   User.first(User, 'age > ?', 32) do |user|
-      #     puts user.name
-      #   end
+      # @example
+      #   sth = User.prepare("select * from #{User} where #{User.name} = ?")
+      #   sth.execute('apple') #=> Result
+      #   sth.execute('benny') #=> Result
       #
-      # @param  [String]        conditions Optional SQL 'where' fragment.
-      # @param  [Object, ...]   *binds     Optional bind values that accompany conditions SQL fragment.
-      # @param  [Proc]          &block     Optional 'each' iterator block.
-      # @return [Swift::Scheme, nil]
-      def first conditions = '', *binds, &block
-        Swift.db.first(self, conditions, *binds, &block)
+      # @param  [String]  statement Query statement.
+      # @param  [*Object] binds     Bind values.
+      # @yield  [Swift::Result]
+      # @return [Swift::Result]
+      def execute statement = '', *binds, &block
+        Swift.db.execute(self, statement, *binds, &block)
       end
     end
   end # Scheme

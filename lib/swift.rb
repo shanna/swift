@@ -1,6 +1,7 @@
 # Extension.
 require_relative '../ext/swift'
 require_relative 'swift/adapter'
+require_relative 'swift/adapter/sql'
 require_relative 'swift/attribute'
 require_relative 'swift/db'
 require_relative 'swift/header'
