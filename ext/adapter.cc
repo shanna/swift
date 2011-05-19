@@ -128,12 +128,38 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
   CATCH_DBI_EXCEPTIONS();
 }
 
+/*
+  Reestablish a connection.
+*/
 static VALUE adapter_reconnect(VALUE self) {
   dbi::Handle *handle = adapter_handle(self);
   try { handle->reconnect(); } CATCH_DBI_EXCEPTIONS();
   return Qtrue;
 }
 
+/*
+  Setup a new DB connection.
+
+  You almost certainly want to setup a <tt>:default</tt> named adapter. The <tt>:default</tt> scope will be used
+  for unscoped calls to <tt>Swift.db</tt>.
+
+  @example
+    Swift.setup :default, Swift::DB::Postgres, db: 'db1'
+    Swift.setup :other,   Swift::DB::Postgres, db: 'db2'
+
+  @overload new(options = {})
+    @param  [Hash]           options Connection options
+    @option options [String]  :db       Name.
+    @option options [String]  :user     (*nix login user)
+    @option options [String]  :password ('')
+    @option options [String]  :host     ('localhost')
+    @option options [Integer] :port     (DB default)
+    @option options [String]  :timezone (*nix TZ format) See http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+    @return [Swift::Adapter]
+
+  @see Swift::DB
+  @see Swift::Adapter
+*/
 static VALUE adapter_initialize(VALUE self, VALUE options) {
   VALUE db       = rb_hash_aref(options, ID2SYM(rb_intern("db")));
   VALUE driver   = rb_hash_aref(options, ID2SYM(rb_intern("driver")));
@@ -174,6 +200,18 @@ static VALUE adapter_initialize(VALUE self, VALUE options) {
   return Qnil;
 }
 
+/*
+  Prepare a statement for on or more executions.
+
+  @example
+    sth = User.prepare("select * from #{User} where #{User.name} = ?")
+    sth.execute('apple') #=> Result
+    sth.execute('benny') #=> Result
+
+  @overload prepare(statement, &block)
+    @param  [String] statement Query statement.
+    @return [Swift::Statement]
+*/
 static VALUE adapter_prepare(int argc, VALUE *argv, VALUE self) {
   VALUE sql, scheme, prepared;
   dbi::AbstractStatement *statement;
@@ -195,6 +233,11 @@ static VALUE adapter_prepare(int argc, VALUE *argv, VALUE self) {
   CATCH_DBI_EXCEPTIONS();
 }
 
+/*
+  Rollback the current transaction.
+
+  @overload rollback
+*/
 static VALUE adapter_rollback(int argc, VALUE *argv, VALUE self) {
   VALUE save_point;
   dbi::Handle *handle = adapter_handle(self);
@@ -207,6 +250,12 @@ static VALUE adapter_rollback(int argc, VALUE *argv, VALUE self) {
   return Qtrue;
 }
 
+/*
+  Block form transaction sugar.
+
+  @overload transaction(name = nil, &block)
+    @param [Symbol] name Optional transaction name.
+*/
 static VALUE adapter_transaction(int argc, VALUE *argv, VALUE self) {
   int status;
   VALUE sp, block, block_result = Qnil;
@@ -234,6 +283,16 @@ static VALUE adapter_transaction(int argc, VALUE *argv, VALUE self) {
   return block_result;
 }
 
+/*
+  Bulk insert resources.
+
+  @overload write(store, fields, stream)
+    @param [Swift::Scheme, String]           store  Write to store.
+    @param [Array<Swift::Attribute, String>] fields Write to fields in store.
+    @param [IO]                              stream IO to read from.
+
+  @notes The format of the stream and bulk write performance are entirely down to each adapter.
+*/
 static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
   uint64_t rows = 0;
   VALUE stream, table, fields;
