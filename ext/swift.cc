@@ -33,8 +33,8 @@ VALUE swift_init(VALUE self, VALUE path) {
       Swift.db.execute 'select * from users'
     end
 
-  @overload trace(show, output = $stderr)
-    @param [true, false] show   Trace or not.
+  @overload trace(show = true, output = $stderr)
+    @param [true, false] show   Optional trace toggle boolean.
     @param [IO]          output Optional output. Defaults to stderr.
 */
 VALUE swift_trace(int argc, VALUE *argv, VALUE self) {
