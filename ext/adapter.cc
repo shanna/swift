@@ -13,6 +13,18 @@ class Fields : public dbi::FieldSet {
 
 static VALUE cSwiftAdapter;
 
+void build_extra_options_string(VALUE key, VALUE value, VALUE ptr) {
+  std::string *optstring = (std::string *)ptr;
+  *optstring += CSTRING(key) + std::string("=") + CSTRING(value) + std::string(";");
+}
+
+std::string parse_extra_options(VALUE options) {
+  std::string optstring = "";
+  if (!NIL_P(options))
+    rb_hash_foreach(options, RUBY_STATIC_FUNC(build_extra_options_string), (VALUE)&optstring);
+  return optstring;
+}
+
 static void adapter_free(dbi::Handle *handle) {
     if (handle) {
       handle->conn()->cleanup();
@@ -130,7 +142,18 @@ static VALUE adapter_initialize(VALUE self, VALUE options) {
   if (NIL_P(db))     rb_raise(eSwiftArgumentError, "Adapter#new called without :db");
   if (NIL_P(driver)) rb_raise(eSwiftArgumentError, "Adapter#new called without :driver");
 
-  user = NIL_P(user) ? CURRENT_USER() : user;
+  user           = NIL_P(user) ? CURRENT_USER() : user;
+  VALUE extra    = rb_hash_dup(options);
+
+  rb_hash_delete(extra, ID2SYM(rb_intern("db")));
+  rb_hash_delete(extra, ID2SYM(rb_intern("driver")));
+  rb_hash_delete(extra, ID2SYM(rb_intern("user")));
+  rb_hash_delete(extra, ID2SYM(rb_intern("password")));
+  rb_hash_delete(extra, ID2SYM(rb_intern("host")));
+  rb_hash_delete(extra, ID2SYM(rb_intern("port")));
+  rb_hash_delete(extra, ID2SYM(rb_intern("timezone")));
+
+  std::string extra_options_string = parse_extra_options(extra);
 
   try {
     DATA_PTR(self) = new dbi::Handle(
@@ -139,13 +162,15 @@ static VALUE adapter_initialize(VALUE self, VALUE options) {
       CSTRING(rb_hash_aref(options, ID2SYM(rb_intern("password")))),
       CSTRING(db),
       CSTRING(rb_hash_aref(options, ID2SYM(rb_intern("host")))),
-      CSTRING(rb_hash_aref(options, ID2SYM(rb_intern("port"))))
+      CSTRING(rb_hash_aref(options, ID2SYM(rb_intern("port")))),
+      extra_options_string.size() > 0 ? (char*)extra_options_string.c_str() : 0
     );
   }
   CATCH_DBI_EXCEPTIONS();
 
-  rb_iv_set(self, "@timezone", rb_hash_aref(options, ID2SYM(rb_intern("timezone"))));
   rb_iv_set(self, "@options",  options);
+  rb_iv_set(self, "@timezone", rb_hash_aref(options, ID2SYM(rb_intern("timezone"))));
+
   return Qnil;
 }
 
