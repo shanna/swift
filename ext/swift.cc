@@ -7,11 +7,34 @@ VALUE eSwiftArgumentError;
 VALUE eSwiftRuntimeError;
 VALUE eSwiftConnectionError;
 
+/*
+  Initialize Swift with a non standard dbic++ path.
+
+  @note
+    By default Swift looks in '/usr/lib/dbic++/'. Not normally required unless you install dbic++ somewhere funny.
+
+  @param [path] path Non standard dbic++ path.
+*/
 VALUE swift_init(VALUE self, VALUE path) {
   try { dbi::dbiInitialize(CSTRING(path)); } CATCH_DBI_EXCEPTIONS();
   return Qtrue;
 }
 
+/*
+  Trace statement execution.
+
+  @example Toggle tracing.
+    Swift.trace true
+    Swift.db.execute 'select * from users'
+    Swift.trace false
+  @example Block form.
+    Swift.trace do
+      Swift.db.execute 'select * from users'
+    end
+
+  @param [true, false] show   Trace or not.
+  @param [IO]          output Output. Defaults to stderr.
+*/
 VALUE swift_trace(int argc, VALUE *argv, VALUE self) {
     VALUE flag, io;
     rb_io_t *fptr;

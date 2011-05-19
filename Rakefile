@@ -32,6 +32,6 @@ task :default => :test
 
 require 'yard'
 YARD::Rake::YardocTask.new do |yard|
-  yard.files   = ['lib/**/*.rb']
+  yard.files   = ['lib/**/*.rb', 'ext/*.cc']
 end
 
