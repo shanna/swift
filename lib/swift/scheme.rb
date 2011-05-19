@@ -133,7 +133,7 @@ module Swift
         Swift.db.prepare(self, statement)
       end
 
-      # Prepare a statement for on or more executions.
+      # Execute a single statement.
       #
       # @example
       #   sth = User.prepare("select * from #{User} where #{User.name} = ?")
