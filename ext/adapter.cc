@@ -142,7 +142,7 @@ static VALUE adapter_initialize(VALUE self, VALUE options) {
   if (NIL_P(db))     rb_raise(eSwiftArgumentError, "Adapter#new called without :db");
   if (NIL_P(driver)) rb_raise(eSwiftArgumentError, "Adapter#new called without :driver");
 
-  user           = NIL_P(user) ? CURRENT_USER() : user;
+  user           = NIL_P(user) ? current_user() : user;
   VALUE extra    = rb_hash_dup(options);
 
   rb_hash_delete(extra, ID2SYM(rb_intern("db")));

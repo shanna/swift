@@ -26,7 +26,7 @@ VALUE pool_init(VALUE self, VALUE n, VALUE options) {
   if (NIL_P(db))     rb_raise(eSwiftArgumentError, "Pool#new called without :db");
   if (NIL_P(driver)) rb_raise(eSwiftArgumentError, "#new called without :driver");
 
-  user = NIL_P(user) ? CURRENT_USER() : user;
+  user = NIL_P(user) ? current_user() : user;
   if (NUM2INT(n) < 1) rb_raise(eSwiftArgumentError, "Pool#new called with invalid pool size.");
 
   try {

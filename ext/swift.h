@@ -32,7 +32,7 @@ extern VALUE eSwiftConnectionError;
 
 
 // works without a controlling tty, getlogin() will fail when process is daemonized.
-inline VALUE CURRENT_USER() {
+inline VALUE current_user() {
   struct passwd *ptr = getpwuid(getuid());
   return ptr ? rb_str_new2(ptr->pw_name) : rb_str_new2("root");
 }
