@@ -13,7 +13,8 @@ VALUE eSwiftConnectionError;
   @note
     By default Swift looks in '/usr/lib/dbic++/'. Not normally required unless you install dbic++ somewhere funny.
 
-  @param [path] path Non standard dbic++ path.
+  @overload init(path)
+    @param [path] path Non standard dbic++ path.
 */
 VALUE swift_init(VALUE self, VALUE path) {
   try { dbi::dbiInitialize(CSTRING(path)); } CATCH_DBI_EXCEPTIONS();
@@ -28,12 +29,13 @@ VALUE swift_init(VALUE self, VALUE path) {
     Swift.db.execute 'select * from users'
     Swift.trace false
   @example Block form.
-    Swift.trace do
+    Swift.trace true do
       Swift.db.execute 'select * from users'
     end
 
-  @param [true, false] show   Trace or not.
-  @param [IO]          output Output. Defaults to stderr.
+  @overload trace(show, output = $stderr)
+    @param [true, false] show   Trace or not.
+    @param [IO]          output Optional output. Defaults to stderr.
 */
 VALUE swift_trace(int argc, VALUE *argv, VALUE self) {
     VALUE flag, io;
