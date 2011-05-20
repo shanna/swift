@@ -45,12 +45,12 @@ dbi::AbstractResult* result_handle(VALUE self) {
   return handle->result;
 }
 
-// TODO:
+// NOTE clone and dup cannot be allowed since the underlying c++ object needs to be cloned, which
+//      frankly is too much work :)
 static VALUE result_clone(VALUE self) {
   rb_raise(eSwiftRuntimeError, "clone is not allowed.");
 }
 
-// TODO:
 static VALUE result_dup(VALUE self) {
   rb_raise(eSwiftRuntimeError, "dup is not allowed.");
 }
