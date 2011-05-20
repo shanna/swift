@@ -122,8 +122,8 @@ static VALUE adapter_dup(VALUE self) {
     @return [String]
 */
 static VALUE adapter_escape(VALUE self, VALUE value) {
-  // TODO: Attempt TO_S() before escaping?
-  if (TYPE(value) != T_STRING) rb_raise(eSwiftArgumentError, "Cannot escape non-string value.");
+  if (TYPE(value) != T_STRING)
+    value = TO_S(value);
 
   dbi::Handle *handle = adapter_handle(self);
   try {
