@@ -11,6 +11,12 @@ describe 'scheme' do
       attribute :email,      Swift::Type::String
       attribute :verified,   Swift::Type::Boolean,  default: false
       attribute :created_at, Swift::Type::Time,     default: proc { Time.now }
+
+      migrations do |db|
+        db.execute %q{
+          create users(id serial, name text, age int, height real, email text, verified bool, created_at timestamp)
+        }
+      end
     end
   end
 
