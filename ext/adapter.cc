@@ -1,14 +1,14 @@
 #include "adapter.h"
 
-// extend the default dbi::FieldSet class with some ruby love.
+// Extend the default dbi::FieldSet class with some ruby love.
 class Fields : public dbi::FieldSet {
   public:
-  Fields() : dbi::FieldSet(0) {}
+    Fields() : dbi::FieldSet(0) {}
 
-  void operator<<(VALUE v) {
-    VALUE name = TO_S(v);
-    fields.push_back(std::string(RSTRING_PTR(name), RSTRING_LEN(name)));
-  }
+    void operator<<(VALUE v) {
+      VALUE name = TO_S(v);
+      fields.push_back(std::string(RSTRING_PTR(name), RSTRING_LEN(name)));
+    }
 };
 
 static VALUE cSwiftAdapter;
@@ -26,15 +26,15 @@ std::string parse_extra_options(VALUE options) {
 }
 
 static void adapter_free(dbi::Handle *handle) {
-    if (handle) {
-      handle->conn()->cleanup();
-      delete handle;
-    }
+  if (handle) {
+    handle->conn()->cleanup();
+    delete handle;
+  }
 }
 
 VALUE adapter_alloc(VALUE klass) {
-    dbi::Handle *handle = 0;
-    return Data_Wrap_Struct(klass, 0, adapter_free, handle);
+  dbi::Handle *handle = 0;
+  return Data_Wrap_Struct(klass, 0, adapter_free, handle);
 }
 
 dbi::Handle* adapter_handle(VALUE self) {
@@ -45,6 +45,14 @@ dbi::Handle* adapter_handle(VALUE self) {
   return handle;
 }
 
+/*
+  Begin a transaction (unit of work).
+
+  @overload commit(name = nil)
+    @param [Symbol, String] name Optional transaction name.
+
+  @see Swift::Adapter#transaction
+*/
 static VALUE adapter_begin(int argc, VALUE *argv, VALUE self) {
   VALUE save_point;
   rb_scan_args(argc, argv, "01", &save_point);
@@ -57,17 +65,31 @@ static VALUE adapter_begin(int argc, VALUE *argv, VALUE self) {
   return Qtrue;
 }
 
+/*
+  Close the connection.
+*/
 static VALUE adapter_close(VALUE self) {
   dbi::Handle *handle = adapter_handle(self);
   try { handle->close(); } CATCH_DBI_EXCEPTIONS();
   return Qtrue;
 }
 
-// TODO:
+/*
+  Shallow copy of adapter.
+
+  @note Currently not allowed.
+  @see  Object.clone
+*/
 static VALUE adapter_clone(VALUE self) {
   rb_raise(eSwiftRuntimeError, "clone is not allowed.");
 }
 
+/*
+  Commit a transaction (unit of work).
+
+  @overload commit(name = nil)
+    @param [Symbol, String] name Optional transaction name.
+*/
 static VALUE adapter_commit(int argc, VALUE *argv, VALUE self) {
   VALUE save_point;
   rb_scan_args(argc, argv, "01", &save_point);
@@ -80,13 +102,27 @@ static VALUE adapter_commit(int argc, VALUE *argv, VALUE self) {
   return Qtrue;
 }
 
-// TODO:
+/*
+  Shallow copy of adapter.
+
+  @note Currently not allowed.
+  @see  Object.dup
+*/
 static VALUE adapter_dup(VALUE self) {
   rb_raise(eSwiftRuntimeError, "dup is not allowed.");
 }
 
-// TODO: Attempt TO_S() before escaping?
+/*
+  Escape a string.
+
+  @note Bind values do not need to be escaped.
+
+  @overload escape(value)
+    @param  [String] value String to be escaped.
+    @return [String]
+*/
 static VALUE adapter_escape(VALUE self, VALUE value) {
+  // TODO: Attempt TO_S() before escaping?
   if (TYPE(value) != T_STRING) rb_raise(eSwiftArgumentError, "Cannot escape non-string value.");
 
   dbi::Handle *handle = adapter_handle(self);
@@ -97,7 +133,19 @@ static VALUE adapter_escape(VALUE self, VALUE value) {
   CATCH_DBI_EXCEPTIONS();
 }
 
-// TODO: Change bind_values to an array in the interface? Avoid array -> splat -> array.
+/*
+  Execute a single statement.
+
+  @example
+    result = User.execute("select * from #{User} where #{User.name} = ?", 'apple')
+    result.first # User object.
+
+  @overload execute(statement = '', *binds, &block)
+    @param  [String]  statement Query statement.
+    @param  [*Object] binds     Bind values.
+    @yield  [Swift::Result]
+    @return [Swift::Result]
+*/
 static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
   VALUE statement, bind_values, block, rows, scheme = Qnil;
 
@@ -236,7 +284,8 @@ static VALUE adapter_prepare(int argc, VALUE *argv, VALUE self) {
 /*
   Rollback the current transaction.
 
-  @overload rollback
+  @overload rollback(name = nil)
+    @param [Symbol, String] name Optional transaction name.
 */
 static VALUE adapter_rollback(int argc, VALUE *argv, VALUE self) {
   VALUE save_point;
@@ -259,9 +308,7 @@ static VALUE adapter_rollback(int argc, VALUE *argv, VALUE self) {
 static VALUE adapter_transaction(int argc, VALUE *argv, VALUE self) {
   int status;
   VALUE sp, block, block_result = Qnil;
-
   dbi::Handle *handle = adapter_handle(self);
-
   rb_scan_args(argc, argv, "01&", &sp, &block);
 
   if (NIL_P(block)) rb_raise(eSwiftArgumentError, "Transaction called without a block.");
@@ -291,7 +338,7 @@ static VALUE adapter_transaction(int argc, VALUE *argv, VALUE self) {
     @param [Array<Swift::Attribute, String>] fields Write to fields in store.
     @param [IO]                              stream IO to read from.
 
-  @notes The format of the stream and bulk write performance are entirely down to each adapter.
+  @note The format of the stream and bulk write performance are entirely down to each adapter.
 */
 static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
   uint64_t rows = 0;
@@ -349,5 +396,4 @@ void init_swift_adapter() {
 
   rb_define_alloc_func(cSwiftAdapter, adapter_alloc);
 }
-
 

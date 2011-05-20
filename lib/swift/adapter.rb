@@ -85,7 +85,7 @@ module Swift
     #
     # @param  [Swift::Scheme]                                   scheme    Concrete scheme subclass to load.
     # @param  [Swift::Scheme, Hash, Array<Swift::Scheme, Hash>] resources The resources to be updated.
-    # @return [Swift::Scheme, Swift::Result<Swift::Scheme>]
+    # @return [Swift::Scheme, Swift::Result]
     # @note   Hashes will be coerced into a Swift::Scheme resource via Swift::Scheme#new
     # @note   Passing a scalar will result in a scalar.
     # @see    Swift::Scheme#update

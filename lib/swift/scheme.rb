@@ -136,9 +136,8 @@ module Swift
       # Execute a single statement.
       #
       # @example
-      #   sth = User.prepare("select * from #{User} where #{User.name} = ?")
-      #   sth.execute('apple') #=> Result
-      #   sth.execute('benny') #=> Result
+      #   result = User.execute("select * from #{User} where #{User.name} = ?", 'apple')
+      #   sth.first # User object.
       #
       # @param  [String]  statement Query statement.
       # @param  [*Object] binds     Bind values.
