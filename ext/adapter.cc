@@ -303,7 +303,7 @@ static VALUE adapter_rollback(int argc, VALUE *argv, VALUE self) {
   Block form transaction sugar.
 
   @overload transaction(name = nil, &block)
-    @param [Symbol] name Optional transaction name.
+    @param [Symbol, String] name Optional transaction name.
 */
 static VALUE adapter_transaction(int argc, VALUE *argv, VALUE self) {
   int status;
