@@ -43,7 +43,7 @@ dbi::AbstractStatement* statement_handle(VALUE self) {
   return handle->statement;
 }
 
-// TODO: Change bind_values to an array in the interface? Avoid array -> splat -> array.
+// array -> splat -> array is an overhead, but it reads nicer.
 static VALUE statement_execute(int argc, VALUE *argv, VALUE self) {
   VALUE bind_values, block;
   rb_scan_args(argc, argv, "0*&", &bind_values, &block);
