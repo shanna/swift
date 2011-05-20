@@ -7,17 +7,6 @@ module Swift
     #
     # @abstract
     class Sql < Adapter
-      #--
-      # TODO: If we could mixin migrations that'd be swell.
-      def migrate! scheme
-        keys   =  scheme.header.keys
-        fields =  scheme.header.map{|p| field_definition(p)}.join(', ')
-        fields += ", primary key (#{keys.join(', ')})" unless keys.empty?
-
-        execute("drop table if exists #{scheme.store} cascade")
-        execute("create table #{scheme.store} (#{fields})")
-      end
-
       protected
         def returning?
           raise NotImplementedError

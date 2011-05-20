@@ -5,6 +5,7 @@ require 'minitest/spec'
 require 'minitest/unit'
 require 'minitest_teardown_hack'
 require 'swift'
+require 'swift/migrations'
 require 'etc'
 
 class MiniTest::Spec
