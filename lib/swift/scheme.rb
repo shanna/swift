@@ -48,7 +48,7 @@ module Swift
     #   )
     #   apple.delete
     def delete resources = self
-      Swift.db.destroy(scheme, resources)
+      Swift.db.delete(scheme, resources)
     end
 
     class << self

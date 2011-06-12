@@ -41,7 +41,7 @@ require_relative 'swift/type'
 #   user.update
 #
 #   # Destroy
-#   user.destroy
+#   user.delete
 #
 # == See
 # * README.rdoc has more usage examples.

@@ -121,7 +121,7 @@ Scheme/relation level helpers.
   user.update
 
   # Destroy
-  user.destroy
+  user.delete
 
 === Conditions SQL syntax.
 

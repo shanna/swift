@@ -90,6 +90,12 @@ describe 'scheme' do
         assert user.update(name: 'dave')
         assert_equal 'dave', @user.execute("select * from #{@user}").first.name
       end
+
+      it 'should destroy' do
+        user = @user.create
+        assert user.update(name: 'dave')
+        assert user.delete
+      end
     end
   end
 end
