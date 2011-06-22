@@ -4,14 +4,14 @@ require 'mkmf'
 Config::CONFIG['CC']  = 'g++'
 Config::CONFIG['CPP'] = 'g++'
 
-$CFLAGS  = '-fPIC -Os'
+$CFLAGS  = '-fPIC -Os -I/usr/include -I/opt/local/include -I/usr/local/include'
 
 def apt_install_hint pkg
   "sudo apt-get install #{pkg}"
 end
 
 def library_installed? name, hint
-  if have_library(name)
+  if find_library(name, 'main', *%w(/usr/lib /usr/local/lib /opt/lib /opt/local/lib /sw/lib))
     true
   else
     $stderr.puts <<-ERROR
