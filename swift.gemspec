@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = [%q{Shane Hanna}, %q{Bharanee 'Barney' Rathna}]
-  s.date = %q{2011-05-26}
+  s.date = %q{2011-09-30}
   s.description = %q{A rational rudimentary database abstraction.}
   s.email = [%q{shane.hanna@gmail.com}, %q{deepfryed@gmail.com}]
   s.extensions = [%q{ext/extconf.rb}]
@@ -73,7 +73,7 @@ Gem::Specification.new do |s|
   ]
   s.homepage = %q{http://github.com/shanna/swift}
   s.require_paths = [%q{lib}]
-  s.rubygems_version = %q{1.8.4}
+  s.rubygems_version = %q{1.8.5}
   s.summary = %q{A rational rudimentary database abstraction.}
 
   if s.respond_to? :specification_version then
