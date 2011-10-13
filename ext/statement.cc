@@ -98,6 +98,10 @@ VALUE statement_initialize(VALUE self, VALUE adapter, VALUE sql) {
   return Qnil;
 }
 
+VALUE statement_command(VALUE self) {
+  return rb_iv_get(self, "@sql");
+}
+
 void init_swift_statement() {
   VALUE mSwift = rb_define_module("Swift");
 
@@ -105,5 +109,8 @@ void init_swift_statement() {
   rb_define_method(cSwiftStatement, "execute",     RUBY_METHOD_FUNC(statement_execute),   -1);
   rb_define_method(cSwiftStatement, "initialize",  RUBY_METHOD_FUNC(statement_initialize), 2);
   rb_define_method(cSwiftStatement, "insert_id",   RUBY_METHOD_FUNC(statement_insert_id),  0);
+  rb_define_method(cSwiftStatement, "command",     RUBY_METHOD_FUNC(statement_command),    0);
+
+  rb_define_alias(cSwiftStatement, "to_s", "command");
   rb_define_alloc_func(cSwiftStatement, statement_alloc);
 }

@@ -276,6 +276,7 @@ static VALUE adapter_prepare(int argc, VALUE *argv, VALUE self) {
     statement = handle->conn()->prepare(CSTRING(sql));
     prepared  = statement_wrap_handle(cSwiftStatement, self, statement);
     rb_iv_set(prepared, "@scheme",  scheme);
+    rb_iv_set(prepared, "@sql",     sql);
     return prepared;
   }
   CATCH_DBI_EXCEPTIONS();

@@ -40,6 +40,7 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
     Statement
       .new     #=> Statement
       #execute #=> Result
+      #command #=> String # The SQL command executed or to be executed
 
     Scheme
       .attribute #=> Type

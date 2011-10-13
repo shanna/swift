@@ -47,6 +47,12 @@ describe 'Adapter' do
           assert @db.prepare(%q{insert into users (name) values ('Apple Arthurton')}).execute
         end
 
+        it 'returns the command' do
+          sql = 'select * from users where id = ?'
+          assert_equal sql, @db.prepare(sql).command
+          assert_equal sql, @db.prepare(sql).to_s
+        end
+
         it 'executes with bind values' do
           assert @db.prepare(%q{insert into users (name) values (?)}).execute('Apple Arthurton')
         end
