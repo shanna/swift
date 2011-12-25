@@ -56,7 +56,7 @@ static VALUE statement_execute(int argc, VALUE *argv, VALUE self) {
     if (dbi::_trace)                 dbi::logMessage(dbi::_trace_fd, dbi::formatParams(statement->command(), query.bind));
 
     if (rb_thread_blocking_region(((VALUE (*)(void*))query_execute_statement), &query, RUBY_UBF_IO, 0) == Qfalse)
-      rb_raise(eSwiftRuntimeError, "%s", query.error);
+      rb_raise(query.error_klass, "%s", query.error_message);
   }
   CATCH_DBI_EXCEPTIONS();
 

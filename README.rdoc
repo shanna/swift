@@ -9,7 +9,7 @@ A rational rudimentary object relational mapper.
 == Dependencies
 
 * ruby   >= 1.9.1
-* dbic++ >= 0.5.9 (http://github.com/deepfryed/dbicpp)
+* dbic++ >= 0.5.10 (http://github.com/deepfryed/dbicpp)
 * mysql  >= 5.0.17, postgresql >= 8.4 or sqlite3 >= 3.7
 
 == Features

@@ -23,4 +23,19 @@ describe 'Error' do
       end
     end
   end
+
+  supported_by Swift::DB::Postgres do
+    describe 'execute' do
+      before do
+        Swift.db do |db|
+          db.execute %q{drop table if exists users}
+          db.execute %q{create table users(id integer, name text, primary key(id))}
+        end
+      end
+      it 'throws connection error on connection failures' do
+        Swift.db.close
+        assert_raises(SwiftConnectionError) { Swift.db.execute("select * from users") }
+      end
+    end
+  end
 end

@@ -166,7 +166,7 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
     if (dbi::_trace)                 dbi::logMessage(dbi::_trace_fd, dbi::formatParams(query.sql, query.bind));
 
     if ((rows = rb_thread_blocking_region(((VALUE (*)(void*))query_execute), &query, RUBY_UBF_IO, 0)) == Qfalse)
-      rb_raise(eSwiftRuntimeError, "%s", query.error);
+      rb_raise(query.error_klass, "%s", query.error_message);
 
     VALUE result = result_wrap_handle(cSwiftResult, self, handle->conn()->result(), true);
     if (!NIL_P(scheme))

@@ -11,10 +11,24 @@ VALUE query_execute(Query *query) {
         : query->handle->conn()->execute(query->sql, query->bind)
     );
   }
-  catch (dbi::Error &e) {
-    snprintf(query->error, 8192, "%s", e.what());
-    return Qfalse;
+  catch (dbi::ConnectionError &e) {
+    query->error_klass = eSwiftConnectionError;
+    snprintf(query->error_message, 8192, "%s", e.what());
   }
+  catch (dbi::Error &e) {
+    query->error_klass = eSwiftRuntimeError;
+    snprintf(query->error_message, 8192, "%s", e.what());
+  }
+  catch (std::bad_alloc &e) {
+    query->error_klass = rb_eNoMemError;
+    snprintf(query->error_message, 8192, "%s", e.what());
+  }
+  catch (std::exception &e) {
+    query->error_klass = rb_eRuntimeError;
+    snprintf(query->error_message, 8192, "%s", e.what());
+  }
+
+  return Qfalse;
 }
 
 VALUE query_execute_statement(Query *query) {
@@ -25,10 +39,24 @@ VALUE query_execute_statement(Query *query) {
         : query->statement->execute(query->bind)
     );
   }
-  catch (dbi::Error &e) {
-    snprintf(query->error, 8192, "%s", e.what());
-    return Qfalse;
+  catch (dbi::ConnectionError &e) {
+    query->error_klass = eSwiftConnectionError;
+    snprintf(query->error_message, 8192, "%s", e.what());
   }
+  catch (dbi::Error &e) {
+    query->error_klass = eSwiftRuntimeError;
+    snprintf(query->error_message, 8192, "%s", e.what());
+  }
+  catch (std::bad_alloc &e) {
+    query->error_klass = rb_eNoMemError;
+    snprintf(query->error_message, 8192, "%s", e.what());
+  }
+  catch (std::exception &e) {
+    query->error_klass = rb_eRuntimeError;
+    snprintf(query->error_message, 8192, "%s", e.what());
+  }
+
+  return Qfalse;
 }
 
 void query_bind_values(Query *query, VALUE bind_values) {

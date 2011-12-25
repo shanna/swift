@@ -20,3 +20,4 @@ benchmarks/adapters/pg_ext/Makefile
 .yardoc
 doc/*
 benchmarks/.bundle/*
+benchmarks/gems/*

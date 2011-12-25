@@ -28,6 +28,9 @@ extern VALUE eSwiftConnectionError;
   } \
   catch (std::bad_alloc &error) { \
     rb_raise(rb_eNoMemError, "%s", error.what()); \
+  } \
+  catch (std::exception &error) { \
+    rb_raise(rb_eRuntimeError, "%s", error.what()); \
   }
 
 

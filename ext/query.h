@@ -8,7 +8,8 @@ struct Query {
   dbi::Handle             *handle;
   dbi::AbstractStatement  *statement;
   std::vector<dbi::Param> bind;
-  char                    error[8192];
+  char                    error_message[8192];
+  VALUE                   error_klass;
 };
 
 VALUE query_execute(Query*);
