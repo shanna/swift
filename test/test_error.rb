@@ -32,9 +32,17 @@ describe 'Error' do
           db.execute %q{create table users(id integer, name text, primary key(id))}
         end
       end
+
       it 'throws connection error on connection failures' do
+        select1 = Swift.db.prepare("select * from users")
+        select2 = Swift.db.prepare("select * from users where id > ?")
+
         Swift.db.close
+
+        assert_raises(SwiftConnectionError) { select1.execute }
+        assert_raises(SwiftConnectionError) { select2.execute(1) }
         assert_raises(SwiftConnectionError) { Swift.db.execute("select * from users") }
+        assert_raises(SwiftConnectionError) { Swift.db.execute("select * from users where id > ?", 1) }
       end
     end
   end
