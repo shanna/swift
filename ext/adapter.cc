@@ -71,8 +71,20 @@ static VALUE adapter_begin(int argc, VALUE *argv, VALUE self) {
 static VALUE adapter_close(VALUE self) {
   dbi::Handle *handle = adapter_handle(self);
   try { handle->close(); } CATCH_DBI_EXCEPTIONS();
+  rb_iv_set(self, "@closed", true);
   return Qtrue;
 }
+
+
+/*
+  Check if connection is closed.
+*/
+static VALUE adapter_closed(VALUE self) {
+  return rb_iv_get(self, "@closed");
+}
+
+
+
 
 /*
   Shallow copy of adapter.
@@ -181,7 +193,11 @@ static VALUE adapter_execute(int argc, VALUE *argv, VALUE self) {
 */
 static VALUE adapter_reconnect(VALUE self) {
   dbi::Handle *handle = adapter_handle(self);
-  try { handle->reconnect(); } CATCH_DBI_EXCEPTIONS();
+  try {
+    handle->reconnect();
+    rb_iv_set(self, "@closed", false);
+  }
+  CATCH_DBI_EXCEPTIONS();
   return Qtrue;
 }
 
@@ -384,6 +400,7 @@ void init_swift_adapter() {
   rb_define_method(cSwiftAdapter, "begin",       RUBY_METHOD_FUNC(adapter_begin),       -1);
   rb_define_method(cSwiftAdapter, "clone",       RUBY_METHOD_FUNC(adapter_clone),        0);
   rb_define_method(cSwiftAdapter, "close",       RUBY_METHOD_FUNC(adapter_close),        0);
+  rb_define_method(cSwiftAdapter, "closed?",     RUBY_METHOD_FUNC(adapter_closed),       0);
   rb_define_method(cSwiftAdapter, "commit",      RUBY_METHOD_FUNC(adapter_commit),      -1);
   rb_define_method(cSwiftAdapter, "dup",         RUBY_METHOD_FUNC(adapter_dup),          0);
   rb_define_method(cSwiftAdapter, "escape",      RUBY_METHOD_FUNC(adapter_escape),       1);

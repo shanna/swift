@@ -26,6 +26,12 @@ describe 'Adapter' do
         Swift.trace false
       end
 
+      it 'records closed state' do
+        assert !Swift.db.closed?
+        Swift.db.close
+        assert Swift.db.closed?
+      end
+
       describe 'execute' do
         it 'executes without bind values' do
           assert @db.execute %q{select count(*) from users}
