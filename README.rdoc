@@ -22,6 +22,12 @@ A rational rudimentary object relational mapper.
 * IdentityMap.
 * Migrations.
 
+== Performance issues with rubies < 1.9.3
+
+* The current version creates DateTime objects for timestamp fields and this is roughly 80% slower on
+  rubies older than 1.9.3.
+* On 1.9.3 it is almost twice as fast than swift 0.13.0.
+
 == Synopsis
 
 === DB

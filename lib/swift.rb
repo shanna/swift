@@ -66,7 +66,6 @@ module Swift
     # @option options [String]  :password ('')
     # @option options [String]  :host     ('localhost')
     # @option options [Integer] :port     (DB default)
-    # @option options [String]  :timezone (*nix TZ format) See http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
     # @return [Swift::Adapter]
     #
     # @see Swift::DB

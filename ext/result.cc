@@ -1,11 +1,8 @@
 #include "result.h"
 #include <math.h>
 
-VALUE cBigDecimal;
-VALUE cStringIO;
-VALUE cSwiftResult;
-
-ID fnew, fto_date, fload;
+VALUE cBigDecimal, cStringIO, cSwiftResult, cDateTime;
+ID fnew, fto_date, fload, fcivil;
 
 void result_mark(ResultWrapper *handle) {
   if (handle)
@@ -57,13 +54,10 @@ static VALUE result_dup(VALUE self) {
 
 VALUE result_each(VALUE self) {
   uint64_t length;
-  const char *data, *tzstring;
+  const char *data;
 
   dbi::AbstractResult *result = result_handle(self);
   VALUE scheme   = rb_iv_get(self, "@scheme");
-  VALUE timezone = rb_iv_get(self, "@timezone");
-
-  tzstring = NIL_P(timezone) ? 0 : CSTRING(timezone);
 
   try {
     std::vector<string> result_fields = result->fields();
@@ -81,7 +75,7 @@ VALUE result_each(VALUE self) {
           rb_hash_aset(
             tuple,
             fields[column],
-            typecast_field(result_types[column], data, length, tzstring)
+            typecast_field(result_types[column], data, length)
           );
         }
         else {
@@ -136,94 +130,70 @@ int64_t server_tzoffset(struct tm* tm, const char *zone) {
   return offset;
 }
 
-VALUE typecast_timestamp(const char *data, uint64_t len, const char *zone) {
-  struct   tm tm;
-  uint64_t usec   = 0;
-  int64_t  epoch, adjust, offset;
-  char     tzsign = 0, subsec[32];
-  int      tzhour = 0, tzmin = 0, lastmatch = -1;
+VALUE typecast_timestamp(const char *data, uint64_t size) {
+  struct tm tm;
+  double secs;
+  char   tzsign = 0, subsec[32];
+  const char *ptr;
+  int    tzhour = 0, tzmin = 0, lastmatch = -1, offset = 0, idx;
 
   memset(&tm, 0, sizeof(struct tm));
   sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%n",
       &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec, &lastmatch);
 
+  if (tm.tm_mday == 0) {
+    rb_warn("unable to parse %s as timestamp", data);
+    return rb_str_new(data, size);
+  }
+
+  secs = tm.tm_sec;
+
   // parse millisecs if any
-  if (lastmatch > 0 && lastmatch < len && *(data+lastmatch) == '.') {
+  if (lastmatch > 0 && lastmatch < size && *(data+lastmatch) == '.') {
       lastmatch++;
-      int idx = 0;
-      const char *ptr = data + lastmatch;
+      idx = 0;
+      ptr = data + lastmatch;
       while (*ptr && *ptr >= '0' && *ptr <= '9' && idx < 31) {
         subsec[idx++] = *ptr;
         ptr++;
         lastmatch++;
       }
       subsec[idx] = 0;
-      usec        = round(atoll(subsec) * (1000000 / pow(10, idx)));
+      secs       += (double)atoll(subsec) / pow(10, idx);
   }
 
-  tm.tm_year  -= 1900;
-  tm.tm_mon   -= 1;
-  tm.tm_isdst = -1;
-  if (tm.tm_mday > 0) {
-    epoch  = mktime(&tm);
-    adjust = client_tzoffset(epoch, tm.tm_isdst);
-    offset = adjust;
-
-    // parse timezone offsets if any - matches +HH:MM +HH MM +HHMM
-    if (lastmatch > 0 && lastmatch < len) {
-      const char *ptr = data + lastmatch;
-      while(*ptr && *ptr != '+' && *ptr != '-') ptr++;
-      tzsign = *ptr++;
+  // parse timezone offsets if any - matches +HH:MM +HH MM +HHMM
+  if (lastmatch > 0 && lastmatch < size) {
+    const char *ptr = data + lastmatch;
+    while(*ptr && *ptr != '+' && *ptr != '-') ptr++;
+    tzsign = *ptr++;
+    if (*ptr && *ptr >= '0' && *ptr <= '9') {
+      tzhour = *ptr++ - '0';
+      if (*ptr && *ptr >= '0' && *ptr <= '9') tzhour = tzhour*10 + *ptr++ - '0';
+      while(*ptr && (*ptr < '0' || *ptr > '9')) ptr++;
       if (*ptr && *ptr >= '0' && *ptr <= '9') {
-        tzhour = *ptr++ - '0';
-        if (*ptr && *ptr >= '0' && *ptr <= '9') tzhour = tzhour*10 + *ptr++ - '0';
-        while(*ptr && (*ptr < '0' || *ptr > '9')) ptr++;
-        if (*ptr && *ptr >= '0' && *ptr <= '9') {
-          tzmin = *ptr++ - '0';
-          if (*ptr && *ptr >= '0' && *ptr <= '9') tzmin = tzmin*10 + *ptr++ - '0';
-        }
+        tzmin = *ptr++ - '0';
+        if (*ptr && *ptr >= '0' && *ptr <= '9') tzmin = tzmin*10 + *ptr++ - '0';
       }
     }
-
-    if (tzsign) {
-      offset = tzsign == '+'
-        ? (time_t)tzhour *  3600 + (time_t)tzmin *  60
-        : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
-    }
-    else if (zone) {
-      if (strncasecmp(zone, "UTC", 3) == 0 || strncasecmp(zone, "GMT", 3) == 0)
-        offset = 0;
-      else if (strcmp(zone, "+00:00") == 0 || strcmp(zone, "+0000") == 0)
-        offset = 0;
-      else if (sscanf(zone, "%c%02d%02d",  &tzsign, &tzhour, &tzmin) == 3)
-        offset = tzsign == '+'
-          ? (time_t)tzhour *  3600 + (time_t)tzmin *  60
-          : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
-      else if (sscanf(zone, "%c%02d:%02d", &tzsign, &tzhour, &tzmin) >= 2)
-        offset = tzsign == '+'
-          ? (time_t)tzhour *  3600 + (time_t)tzmin *  60
-          : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
-      else
-        offset = server_tzoffset(&tm, zone);
-    }
-
-    return rb_time_new(epoch+adjust-offset, usec);
   }
 
-  printf("WARNING: Unable to parse timestamp value '%s'\n", data);
-  return rb_str_new(data, len);
+  if (tzsign) {
+    offset = tzsign == '+'
+      ? (time_t)tzhour *  3600 + (time_t)tzmin *  60
+      : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
+  }
+
+  return rb_funcall(cDateTime, fcivil, 7,
+    INT2FIX(tm.tm_year), INT2FIX(tm.tm_mon), INT2FIX(tm.tm_mday),
+    INT2FIX(tm.tm_hour), INT2FIX(tm.tm_min), DBL2NUM(secs),
+    offset == 0 ? INT2FIX(0) : DBL2NUM((double)offset / 86400.0)
+  );
 }
 
-#define typecast_date(data,len,tz)   rb_funcall(typecast_timestamp(data,len,tz), fto_date, 0)
+#define typecast_date(data,len) rb_funcall(typecast_timestamp(data, len), fto_date, 0)
 
-/*
-  This is my wish list below for rubycore - to be built into core ruby.
-  1. Time class represents time - time zone invariant
-  2. Date class represents a date - time zone invariant
-  3. DateTime class represents a timestamp with full zoneinfo support.
-*/
-
-VALUE typecast_field(int type, const char *data, uint64_t length, const char* timezone) {
+VALUE typecast_field(int type, const char *data, uint64_t length) {
   switch(type) {
     case DBI_TYPE_BOOLEAN:
       return (data && (data[0] =='t' || data[0] == '1')) ? Qtrue : Qfalse;
@@ -232,9 +202,9 @@ VALUE typecast_field(int type, const char *data, uint64_t length, const char* ti
     case DBI_TYPE_BLOB:
       return rb_funcall(cStringIO, fnew, 1, rb_str_new(data, length));
     case DBI_TYPE_TIMESTAMP:
-      return typecast_timestamp(data, length, timezone);
+      return typecast_timestamp(data, length);
     case DBI_TYPE_DATE:
-      return typecast_date(data, length, timezone);
+      return typecast_date(data, length);
     case DBI_TYPE_NUMERIC:
       return rb_funcall(cBigDecimal, fnew, 1, rb_str_new2(data));
     case DBI_TYPE_FLOAT:
@@ -293,10 +263,12 @@ void init_swift_result() {
   cSwiftResult = rb_define_class_under(mSwift, "Result", rb_cObject);
   cStringIO    = CONST_GET(rb_mKernel, "StringIO");
   cBigDecimal  = CONST_GET(rb_mKernel, "BigDecimal");
+  cDateTime    = CONST_GET(rb_mKernel, "DateTime");
 
   fnew         = rb_intern("new");
   fto_date     = rb_intern("to_date");
   fload        = rb_intern("load");
+  fcivil       = rb_intern("civil");
 
   rb_define_alloc_func(cSwiftResult, result_alloc);
   rb_include_module(cSwiftResult, CONST_GET(rb_mKernel, "Enumerable"));

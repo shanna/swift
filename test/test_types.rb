@@ -37,10 +37,10 @@ describe 'Adapter' do
         assert_kind_of TrueClass,  result[:hacker]
         assert_kind_of FalseClass, result[:slacker]
         assert_kind_of Date,       result[:created]
-        assert_kind_of Time,       result[:updated]
+        assert_kind_of DateTime,   result[:updated]
 
         assert_equal   dt,         result[:updated].strftime('%F %T')
-        assert_equal   65000,      result[:updated].usec unless @db.kind_of?(Swift::DB::Mysql)
+        assert_equal   65000,      result[:updated].to_time.usec unless @db.kind_of?(Swift::DB::Mysql)
       end
     end
   end
