@@ -48,6 +48,7 @@ inline VALUE current_user() {
 #include "request.h"
 #include "pool.h"
 #include "attribute.h"
+#include "datetime.h"
 
 #undef SIZET2NUM
 #ifdef HAVE_LONG_LONG

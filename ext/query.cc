@@ -1,7 +1,9 @@
 #include "query.h"
+#include <math.h>
 
-ID fstrftime, fto_s, fusec;
+ID fstrftime, fusec, fto_s, fto_f, fto_time;
 VALUE dtformat, tzformat, utf8;
+VALUE cDateTime;
 
 VALUE query_execute(Query *query) {
   try {
@@ -76,11 +78,18 @@ void query_bind_values(Query *query, VALUE bind_values) {
       bind_value = rb_funcall(bind_value, rb_intern("read"), 0);
       query->bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(bind_value), RSTRING_LEN(bind_value)));
     }
-    // TODO convert timestamps to server timezone if @timezone is set in adapter.
-    else if (rb_obj_is_kind_of(bind_value, rb_cTime)) {
+    else if (rb_obj_is_kind_of(bind_value, rb_cTime) || rb_obj_is_kind_of(bind_value, cDateTime)) {
+      // calling DateTime#to_time is faster than mucking around with DateTime#second_fraction
+      if (rb_obj_is_kind_of(bind_value, cDateTime))
+        bind_value = rb_funcall(bind_value, fto_time, 0);
+
       std::string timestamp = RSTRING_PTR(rb_funcall(bind_value, fstrftime, 1, dtformat));
 
-      timestamp += RSTRING_PTR(rb_funcall(rb_funcall(bind_value, fusec, 0), fto_s, 0));
+      char buffer[32];
+      double integral, fraction = modf(NUM2DBL(rb_funcall(bind_value, fto_f, 0)), &integral);
+      sprintf(buffer, "%.8lf", fraction);
+
+      timestamp += (buffer + 2);
       timestamp += RSTRING_PTR(rb_funcall(bind_value, fstrftime, 1, tzformat));
 
       query->bind.push_back(dbi::PARAM(timestamp));
@@ -95,12 +104,17 @@ void query_bind_values(Query *query, VALUE bind_values) {
 }
 
 void init_swift_query() {
+  rb_require("date");
+
   fstrftime = rb_intern("strftime");
   fto_s     = rb_intern("to_s");
+  fto_f     = rb_intern("to_f");
+  fto_time  = rb_intern("to_time");
   fusec     = rb_intern("usec");
   dtformat  = rb_str_new2("%F %T.");
   tzformat  = rb_str_new2("%z");
   utf8      = rb_str_new2("UTF-8");
+  cDateTime = CONST_GET(rb_mKernel, "DateTime");
 
   rb_global_variable(&utf8);
   rb_global_variable(&tzformat);

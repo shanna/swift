@@ -10,7 +10,7 @@ describe 'scheme' do
       attribute :height,     Swift::Type::Float,    default: 172.25
       attribute :email,      Swift::Type::String
       attribute :verified,   Swift::Type::Boolean,  default: false
-      attribute :created_at, Swift::Type::Time,     default: proc { Time.now }
+      attribute :created_at, Swift::Type::DateTime, default: proc { Time.now }
 
       migrations do |db|
         db.execute %q{

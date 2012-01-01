@@ -1,8 +1,10 @@
 #!/usr/bin/env ruby
 require 'mkmf'
 
-Config::CONFIG['CC']  = 'g++'
-Config::CONFIG['CPP'] = 'g++'
+ConfigClass = defined?(RbConfig) ? RbConfig : Config
+
+ConfigClass::CONFIG['CC']  = 'g++'
+ConfigClass::CONFIG['CPP'] = 'g++'
 
 $CFLAGS  = '-fPIC -Os -I/usr/include -I/opt/local/include -I/usr/local/include'
 

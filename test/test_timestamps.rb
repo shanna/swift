@@ -5,8 +5,13 @@ describe 'Adapter' do
     %w(America/Chicago Australia/Melbourne).each do |timezone|
       describe 'time parsing in %s' % timezone do
         before do
-          @db = Swift.db
           ENV['TZ'] = ":#{timezone}"
+          @db = Swift.db
+          @db.execute 'create table datetime_test(id serial, ts timestamp with time zone)'
+        end
+
+        after do
+          @db.execute 'drop table datetime_test'
         end
 
         it 'should parse timestamps and do conversion accordingly' do
@@ -22,6 +27,19 @@ describe 'Adapter' do
         it 'should parse correctly when DST is off' do
           time  = DateTime.parse('2010-04-04 20:31:00+04:30')
           assert_timestamp_like time, fetch_timestamp_at(time), 'DST off'
+        end
+
+        it 'should store fractional seconds' do
+          time     = Time.now
+          datetime = time.to_datetime
+
+          @db.execute 'insert into datetime_test(ts) values (?), (?)', time, datetime
+          values = @db.execute('select ts from datetime_test').map(&:values).flatten
+
+          assert_equal 2, values.size
+
+          # postgres resolution is microsecond.
+          values.each {|value| assert_in_delta time.to_f, value.to_time.to_f, 0.0000005 }
         end
 
         def fetch_timestamp_at value, zone='%z'

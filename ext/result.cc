@@ -1,8 +1,11 @@
 #include "result.h"
+#include "datetime.h"
 #include <math.h>
 
-VALUE cBigDecimal, cStringIO, cSwiftResult, cDateTime;
-ID fnew, fto_date, fload, fcivil;
+#define date_parse(klass, data,len) rb_funcall(datetime_parse(klass, data, len), fto_date, 0)
+
+VALUE cBigDecimal, cStringIO, cSwiftResult;
+ID fnew, fload, fto_date;
 
 void result_mark(ResultWrapper *handle) {
   if (handle)
@@ -90,109 +93,6 @@ VALUE result_each(VALUE self) {
   return Qnil;
 }
 
-// Calculates local offset at a given time, including dst.
-int64_t client_tzoffset(int64_t local, int isdst) {
-  struct tm tm;
-  gmtime_r((const time_t*)&local, &tm);
-  // TODO: This won't work in Lord Howe Island, Australia which uses half hour shift.
-  return (int64_t)(local + (isdst ? 3600 : 0) - mktime(&tm));
-}
-
-// Calculates server offset at a given time, including dst.
-int64_t server_tzoffset(struct tm* tm, const char *zone) {
-  uint64_t local;
-  int64_t  offset;
-  char buffer[512];
-  char *old, saved[512];
-  struct tm tm_copy;
-
-  // save current zone setting.
-  if ((old = getenv("TZ"))) {
-    strncpy(saved, old, 512);
-    saved[511] = 0;
-  }
-
-  // setup.
-  snprintf(buffer, 512, ":%s", zone);
-  setenv("TZ", buffer, 1);
-  tzset();
-
-  // pretend we're on server timezone and calculate offset.
-  memcpy(&tm_copy, tm, sizeof(struct tm));
-  tm_copy.tm_isdst = -1;
-  local  = mktime(&tm_copy);
-  offset = client_tzoffset(local, tm_copy.tm_isdst);
-
-  // reset timezone to what it was before.
-  old ? setenv("TZ", saved, 1) : unsetenv("TZ");
-  tzset();
-
-  return offset;
-}
-
-VALUE typecast_timestamp(const char *data, uint64_t size) {
-  struct tm tm;
-  double secs;
-  char   tzsign = 0, subsec[32];
-  const char *ptr;
-  int    tzhour = 0, tzmin = 0, lastmatch = -1, offset = 0, idx;
-
-  memset(&tm, 0, sizeof(struct tm));
-  sscanf(data, "%04d-%02d-%02d %02d:%02d:%02d%n",
-      &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec, &lastmatch);
-
-  if (tm.tm_mday == 0) {
-    rb_warn("unable to parse %s as timestamp", data);
-    return rb_str_new(data, size);
-  }
-
-  secs = tm.tm_sec;
-
-  // parse millisecs if any
-  if (lastmatch > 0 && lastmatch < size && *(data+lastmatch) == '.') {
-      lastmatch++;
-      idx = 0;
-      ptr = data + lastmatch;
-      while (*ptr && *ptr >= '0' && *ptr <= '9' && idx < 31) {
-        subsec[idx++] = *ptr;
-        ptr++;
-        lastmatch++;
-      }
-      subsec[idx] = 0;
-      secs       += (double)atoll(subsec) / pow(10, idx);
-  }
-
-  // parse timezone offsets if any - matches +HH:MM +HH MM +HHMM
-  if (lastmatch > 0 && lastmatch < size) {
-    const char *ptr = data + lastmatch;
-    while(*ptr && *ptr != '+' && *ptr != '-') ptr++;
-    tzsign = *ptr++;
-    if (*ptr && *ptr >= '0' && *ptr <= '9') {
-      tzhour = *ptr++ - '0';
-      if (*ptr && *ptr >= '0' && *ptr <= '9') tzhour = tzhour*10 + *ptr++ - '0';
-      while(*ptr && (*ptr < '0' || *ptr > '9')) ptr++;
-      if (*ptr && *ptr >= '0' && *ptr <= '9') {
-        tzmin = *ptr++ - '0';
-        if (*ptr && *ptr >= '0' && *ptr <= '9') tzmin = tzmin*10 + *ptr++ - '0';
-      }
-    }
-  }
-
-  if (tzsign) {
-    offset = tzsign == '+'
-      ? (time_t)tzhour *  3600 + (time_t)tzmin *  60
-      : (time_t)tzhour * -3600 + (time_t)tzmin * -60;
-  }
-
-  return rb_funcall(cDateTime, fcivil, 7,
-    INT2FIX(tm.tm_year), INT2FIX(tm.tm_mon), INT2FIX(tm.tm_mday),
-    INT2FIX(tm.tm_hour), INT2FIX(tm.tm_min), DBL2NUM(secs),
-    offset == 0 ? INT2FIX(0) : DBL2NUM((double)offset / 86400.0)
-  );
-}
-
-#define typecast_date(data,len) rb_funcall(typecast_timestamp(data, len), fto_date, 0)
-
 VALUE typecast_field(int type, const char *data, uint64_t length) {
   switch(type) {
     case DBI_TYPE_BOOLEAN:
@@ -202,9 +102,9 @@ VALUE typecast_field(int type, const char *data, uint64_t length) {
     case DBI_TYPE_BLOB:
       return rb_funcall(cStringIO, fnew, 1, rb_str_new(data, length));
     case DBI_TYPE_TIMESTAMP:
-      return typecast_timestamp(data, length);
+      return datetime_parse(cSwiftDateTime, data, length);
     case DBI_TYPE_DATE:
-      return typecast_date(data, length);
+      return date_parse(cSwiftDateTime, data, length);
     case DBI_TYPE_NUMERIC:
       return rb_funcall(cBigDecimal, fnew, 1, rb_str_new2(data));
     case DBI_TYPE_FLOAT:
@@ -257,18 +157,15 @@ VALUE result_fields(VALUE self) {
 void init_swift_result() {
   rb_require("bigdecimal");
   rb_require("stringio");
-  rb_require("date");
 
   VALUE mSwift = rb_define_module("Swift");
   cSwiftResult = rb_define_class_under(mSwift, "Result", rb_cObject);
   cStringIO    = CONST_GET(rb_mKernel, "StringIO");
   cBigDecimal  = CONST_GET(rb_mKernel, "BigDecimal");
-  cDateTime    = CONST_GET(rb_mKernel, "DateTime");
 
-  fnew         = rb_intern("new");
   fto_date     = rb_intern("to_date");
+  fnew         = rb_intern("new");
   fload        = rb_intern("load");
-  fcivil       = rb_intern("civil");
 
   rb_define_alloc_func(cSwiftResult, result_alloc);
   rb_include_module(cSwiftResult, CONST_GET(rb_mKernel, "Enumerable"));
