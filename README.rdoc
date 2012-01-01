@@ -26,7 +26,7 @@ A rational rudimentary object relational mapper.
 
 * The current version creates DateTime objects for timestamp fields and this is roughly 80% slower on
   rubies older than 1.9.3.
-* On 1.9.3 it is almost twice as fast than swift 0.13.0.
+* On 1.9.3 it is 2x faster.
 
 == Synopsis
 
@@ -75,7 +75,7 @@ primitive Ruby type conversion.
     attribute :id,         Swift::Type::Integer, serial: true, key: true
     attribute :name,       Swift::Type::String
     attribute :email,      Swift::Type::String
-    attribute :updated_at, Swift::Type::Time
+    attribute :updated_at, Swift::Type::DateTime
   end # User
 
   Swift.db do |db|
