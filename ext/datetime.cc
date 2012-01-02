@@ -6,7 +6,7 @@ ID fcivil, fparse;
 // NOTE: only parses '%F %T %z' format and falls back to the built-in DateTime#parse
 VALUE datetime_parse(VALUE klass, const char *data, uint64_t size) {
   struct tm tm;
-  size_t seconds_n, seconds_d = 1, precision;
+  double seconds;
   const char *ptr;
   char tzsign = 0, fraction[32];
   int  tzhour = 0, tzmin = 0, lastmatch = -1, offset = 0, idx;
@@ -19,7 +19,7 @@ VALUE datetime_parse(VALUE klass, const char *data, uint64_t size) {
   if (tm.tm_mday == 0)
     return Qnil;
 
-  seconds_n = tm.tm_sec;
+  seconds = tm.tm_sec;
 
   // parse millisecs if any -- tad faster than using %lf in sscanf above.
   if (lastmatch > 0 && lastmatch < size && *(data + lastmatch) == '.') {
@@ -31,10 +31,7 @@ VALUE datetime_parse(VALUE klass, const char *data, uint64_t size) {
       }
 
       fraction[idx] = 0;
-
-      precision = pow(10, idx);
-      seconds_d = precision > 1000000 ? precision : 1000000;
-      seconds_n = seconds_n * seconds_d + (seconds_d * (double)atoll(fraction)) / (double)precision;
+      seconds += (double)atoll(fraction) / pow(10, idx);
   }
 
   // parse timezone offsets if any - matches +HH:MM +HH MM +HHMM
@@ -61,8 +58,8 @@ VALUE datetime_parse(VALUE klass, const char *data, uint64_t size) {
 
   return rb_funcall(klass, fcivil, 7,
     INT2FIX(tm.tm_year), INT2FIX(tm.tm_mon), INT2FIX(tm.tm_mday),
-    INT2FIX(tm.tm_hour), INT2FIX(tm.tm_min), rb_rational_new(SIZET2NUM(seconds_n), SIZET2NUM(seconds_d)),
-    offset == 0 ? INT2FIX(0) : rb_rational_new(INT2FIX(offset), INT2FIX(86400))
+    INT2FIX(tm.tm_hour), INT2FIX(tm.tm_min), DBL2NUM(seconds),
+    offset == 0 ? INT2FIX(0) : DBL2NUM((double) offset / 86400.0)
   );
 }
 
