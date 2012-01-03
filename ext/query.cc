@@ -1,8 +1,8 @@
 #include "query.h"
 #include <math.h>
 
-ID fstrftime, fusec, fto_s, fto_f, fto_time;
-VALUE dtformat, tzformat, utf8;
+ID fstrftime;
+VALUE dtformat, utf8;
 VALUE cDateTime;
 
 VALUE query_execute(Query *query) {
@@ -94,13 +94,9 @@ void query_bind_values(Query *query, VALUE bind_values) {
 void init_swift_query() {
   rb_require("date");
 
-  fstrftime = rb_intern("strftime");
-  fto_s     = rb_intern("to_s");
-  fto_f     = rb_intern("to_f");
-  fto_time  = rb_intern("to_time");
-  fusec     = rb_intern("usec");
-  dtformat  = rb_str_new2("%F %T.%N %z");
   utf8      = rb_str_new2("UTF-8");
+  fstrftime = rb_intern("strftime");
+  dtformat  = rb_str_new2("%F %T.%N %z");
   cDateTime = CONST_GET(rb_mKernel, "DateTime");
 
   rb_global_variable(&utf8);
