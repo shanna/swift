@@ -1,9 +1,15 @@
 #include "datetime.h"
 
-VALUE cSwiftDateTime;
-ID fcivil, fparse;
+extern VALUE dtformat;
 
-// NOTE: only parses '%F %T %z' format and falls back to the built-in DateTime#parse
+VALUE cSwiftDateTime;
+ID fcivil, fparse, fstrptime;
+
+// NOTE: only parses '%F %T.%N %z' format and falls back to the built-in DateTime#parse
+//       and is almost 2x faster than doing:
+//
+//       rb_funcall(klass, fstrptime, 2, rb_str_new(data, size), dtformat);
+//
 VALUE datetime_parse(VALUE klass, const char *data, uint64_t size) {
   struct tm tm;
   double seconds;
@@ -82,6 +88,7 @@ void init_swift_datetime() {
   cSwiftDateTime  = rb_define_class_under(mSwift, "DateTime", cDateTime);
   fcivil          = rb_intern("civil");
   fparse          = rb_intern("parse");
+  fstrptime       = rb_intern("strptime");
 
   rb_define_singleton_method(cSwiftDateTime, "parse", RUBY_METHOD_FUNC(rb_datetime_parse), 1);
 }

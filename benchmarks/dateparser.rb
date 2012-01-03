@@ -5,11 +5,9 @@ require 'benchmark'
 
 values = DATA.read.split(/\n+/) * 2000
 
-
-# DateTime#strptime will be 3x faster than DateTime#parse - but cannot handle second fractions.
 Benchmark.bm(30) do |bm|
-  bm.report("datetime - native") { 10.times { values.each(&DateTime.method(:parse)) }}
-  bm.report("datetime - swift")  { 10.times { values.each(&Swift::DateTimeParser.method(:parse)) }}
+  bm.report("datetime - native") { 10.times { values.each {|text| DateTime.strptime(text, "%F %T.%N %z")} }}
+  bm.report("datetime - swift")  { 10.times { values.each {|text| Swift::DateTime.parse(text)} }}
 end
 
 __END__

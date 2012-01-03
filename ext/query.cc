@@ -79,19 +79,7 @@ void query_bind_values(Query *query, VALUE bind_values) {
       query->bind.push_back(dbi::PARAM_BINARY((unsigned char*)RSTRING_PTR(bind_value), RSTRING_LEN(bind_value)));
     }
     else if (rb_obj_is_kind_of(bind_value, rb_cTime) || rb_obj_is_kind_of(bind_value, cDateTime)) {
-      // calling DateTime#to_time is faster than mucking around with DateTime#second_fraction
-      if (rb_obj_is_kind_of(bind_value, cDateTime))
-        bind_value = rb_funcall(bind_value, fto_time, 0);
-
       std::string timestamp = RSTRING_PTR(rb_funcall(bind_value, fstrftime, 1, dtformat));
-
-      char buffer[32];
-      double integral, fraction = modf(NUM2DBL(rb_funcall(bind_value, fto_f, 0)), &integral);
-      sprintf(buffer, "%.8lf", fraction);
-
-      timestamp += (buffer + 2);
-      timestamp += RSTRING_PTR(rb_funcall(bind_value, fstrftime, 1, tzformat));
-
       query->bind.push_back(dbi::PARAM(timestamp));
     }
     else {
@@ -111,12 +99,10 @@ void init_swift_query() {
   fto_f     = rb_intern("to_f");
   fto_time  = rb_intern("to_time");
   fusec     = rb_intern("usec");
-  dtformat  = rb_str_new2("%F %T.");
-  tzformat  = rb_str_new2("%z");
+  dtformat  = rb_str_new2("%F %T.%N %z");
   utf8      = rb_str_new2("UTF-8");
   cDateTime = CONST_GET(rb_mKernel, "DateTime");
 
   rb_global_variable(&utf8);
-  rb_global_variable(&tzformat);
   rb_global_variable(&dtformat);
 }
