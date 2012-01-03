@@ -8,6 +8,7 @@ describe 'Adapter' do
           ENV['TZ'] = ":#{timezone}"
           @db = Swift.db
           @db.execute 'create table datetime_test(id serial, ts timestamp with time zone)'
+          @db.execute "set time zone '#{timezone}'"
         end
 
         after do
@@ -39,7 +40,10 @@ describe 'Adapter' do
           assert_equal 2, values.size
 
           # postgres resolution is microsecond.
-          values.each {|value| assert_in_delta time.to_f, value.to_time.to_f, 0.0000005 }
+          values.each do |value|
+            assert_equal datetime.strftime('%F %T %z'), value.strftime('%F %T %z')
+            assert_in_delta datetime.second_fraction.to_f, value.second_fraction.to_f, 0.0000005
+          end
         end
 
         def fetch_timestamp_at value, zone='%z'
