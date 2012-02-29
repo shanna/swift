@@ -7,6 +7,9 @@ module Swift
     #
     # @abstract
     class Sql < Adapter
+      def tables
+        raise NotImplementedError
+      end
       protected
         def returning?
           raise NotImplementedError

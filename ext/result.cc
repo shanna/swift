@@ -96,6 +96,46 @@ VALUE result_each(VALUE self) {
   return Qnil;
 }
 
+
+VALUE result_field_types(VALUE self) {
+  dbi::AbstractResult *result   = result_handle(self);
+  std::vector<int> result_types = result->types();
+
+  VALUE types = rb_ary_new();
+  for (std::vector<int>::iterator it = result_types.begin(); it != result_types.end(); it++) {
+    switch(*it) {
+      case DBI_TYPE_BOOLEAN:
+        rb_ary_push(types, rb_str_new2("boolean"));
+        break;
+      case DBI_TYPE_INT:
+        rb_ary_push(types, rb_str_new2("integer"));
+        break;
+      case DBI_TYPE_BLOB:
+        rb_ary_push(types, rb_str_new2("blob"));
+        break;
+      case DBI_TYPE_TIMESTAMP:
+        rb_ary_push(types, rb_str_new2("timestamp"));
+        break;
+      case DBI_TYPE_DATE:
+        rb_ary_push(types, rb_str_new2("date"));
+        break;
+      case DBI_TYPE_NUMERIC:
+        rb_ary_push(types, rb_str_new2("numeric"));
+        break;
+      case DBI_TYPE_FLOAT:
+        rb_ary_push(types, rb_str_new2("float"));
+        break;
+      case DBI_TYPE_TIME:
+        rb_ary_push(types, rb_str_new2("time"));
+        break;
+      default:
+        rb_ary_push(types, rb_str_new2("text"));
+    }
+  }
+
+  return types;
+}
+
 // Calculates local offset at a given time, including dst.
 int64_t client_tzoffset(int64_t local, int isdst) {
   struct tm tm;
@@ -301,12 +341,13 @@ void init_swift_result() {
   rb_define_alloc_func(cSwiftResult, result_alloc);
   rb_include_module(cSwiftResult, CONST_GET(rb_mKernel, "Enumerable"));
 
-  rb_define_method(cSwiftResult, "clone",      RUBY_METHOD_FUNC(result_clone),     0);
-  rb_define_method(cSwiftResult, "dup",        RUBY_METHOD_FUNC(result_dup),       0);
-  rb_define_method(cSwiftResult, "each",       RUBY_METHOD_FUNC(result_each),      0);
-  rb_define_method(cSwiftResult, "insert_id",  RUBY_METHOD_FUNC(result_insert_id), 0);
-  rb_define_method(cSwiftResult, "rows",       RUBY_METHOD_FUNC(result_rows),      0);
-  rb_define_method(cSwiftResult, "columns",    RUBY_METHOD_FUNC(result_columns),   0);
-  rb_define_method(cSwiftResult, "fields",     RUBY_METHOD_FUNC(result_fields),    0);
+  rb_define_method(cSwiftResult, "clone",       RUBY_METHOD_FUNC(result_clone),       0);
+  rb_define_method(cSwiftResult, "dup",         RUBY_METHOD_FUNC(result_dup),         0);
+  rb_define_method(cSwiftResult, "each",        RUBY_METHOD_FUNC(result_each),        0);
+  rb_define_method(cSwiftResult, "insert_id",   RUBY_METHOD_FUNC(result_insert_id),   0);
+  rb_define_method(cSwiftResult, "rows",        RUBY_METHOD_FUNC(result_rows),        0);
+  rb_define_method(cSwiftResult, "columns",     RUBY_METHOD_FUNC(result_columns),     0);
+  rb_define_method(cSwiftResult, "fields",      RUBY_METHOD_FUNC(result_fields),      0);
+  rb_define_method(cSwiftResult, "field_types", RUBY_METHOD_FUNC(result_field_types), 0);
 }
 

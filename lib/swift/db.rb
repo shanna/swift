@@ -20,6 +20,10 @@ module Swift
           else super
         end
       end
+
+      def tables
+        execute("show tables")
+      end
     end # Mysql
 
     class Sqlite3 < Adapter::Sql
@@ -54,6 +58,10 @@ module Swift
           else 'text'
         end
       end
+
+      def tables
+        execute('select name from sqlite_master where type = ?', 'table')
+      end
     end # Sqlite3
 
     class Postgres < Adapter::Sql
@@ -70,6 +78,10 @@ module Swift
           when Type::IO then 'bytea'
           else super
         end
+      end
+
+      def tables
+        execute('select tablename from pg_tables where schemaname = current_schema')
       end
     end # Postgres
   end # DB
