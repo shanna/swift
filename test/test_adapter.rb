@@ -120,10 +120,18 @@ describe 'Adapter' do
         end
       end
 
+      describe 'schema information' do
+        it 'should list tables' do
+          assert_equal %w(users), @db.tables
+        end
 
-      #--
-      # TODO: Not sure how I feel about the block in write; feels like it's just there to get around the fields in the
-      # argument list. How about write('users', %w{name, email, balance}, data)?
+        it 'should list fields in a table with types' do
+          expect = {id: 'integer', name: 'text', email: 'text', created_at: 'timestamp'}
+          assert_equal expect, @db.fields('users')
+        end
+      end
+
+
       describe 'bulk writes!' do
         it 'writes from an IO object' do
           data = StringIO.new "Sally Arthurton\tsally@local\nJonas Arthurton\tjonas@local\n"

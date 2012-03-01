@@ -22,7 +22,7 @@ module Swift
       end
 
       def tables
-        execute("show tables")
+        execute("show tables").map(&:values).flatten
       end
     end # Mysql
 
@@ -60,7 +60,7 @@ module Swift
       end
 
       def tables
-        execute('select name from sqlite_master where type = ?', 'table')
+        execute('select name from sqlite_master where type = ?', 'table').map(&:values).flatten
       end
     end # Sqlite3
 
@@ -81,7 +81,7 @@ module Swift
       end
 
       def tables
-        execute('select tablename from pg_tables where schemaname = current_schema')
+        execute('select tablename from pg_tables where schemaname = current_schema').map(&:values).flatten
       end
     end # Postgres
   end # DB

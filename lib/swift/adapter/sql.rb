@@ -10,6 +10,12 @@ module Swift
       def tables
         raise NotImplementedError
       end
+
+      def fields table
+        result = execute("select * from #{table} limit 0")
+        Hash[result.fields.map(&:to_sym).zip(result.field_types)]
+      end
+
       protected
         def returning?
           raise NotImplementedError
