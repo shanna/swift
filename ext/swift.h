@@ -46,7 +46,6 @@ inline VALUE current_user() {
 #include "result.h"
 #include "statement.h"
 #include "request.h"
-#include "pool.h"
 #include "attribute.h"
 
 #undef SIZET2NUM

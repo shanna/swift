@@ -1,4 +1,7 @@
+// vim:ts=2:sts=2:sw=2:expandtab
+
 #include "adapter.h"
+#include "sys/select.h"
 
 // Extend the default dbi::FieldSet class with some ruby love.
 class Fields : public dbi::FieldSet {
@@ -393,6 +396,64 @@ static VALUE adapter_write(int argc, VALUE *argv, VALUE self) {
   CATCH_DBI_EXCEPTIONS();
 }
 
+/*
+  Returns the socket fileno for the connection.
+
+  @overload fileno()
+    @return [Fixnum]
+*/
+VALUE adapter_fileno(VALUE self) {
+  dbi::Handle *handle = adapter_handle(self);
+  return INT2NUM(handle->conn()->socket());
+}
+
+/*
+  Executes a query asynchronously and returns the result instance.
+
+  @example
+
+  @overload aexecute(statement = '', *binds, &block)
+    @param  [String]  statement Query statement.
+    @param  [*Object] binds     Bind values.
+    @return [Swift::Result]
+*/
+VALUE adapter_aexecute(int argc, VALUE *argv, VALUE self) {
+  VALUE statement, bind_values, block, scheme = Qnil, result;
+
+  dbi::Handle *handle = adapter_handle(self);
+  rb_scan_args(argc, argv, "1*&", &statement, &bind_values, &block);
+
+  if (TYPE(statement) == T_CLASS) {
+    scheme    = statement;
+    statement = rb_ary_shift(bind_values);
+  }
+
+  try {
+    dbi::AbstractResult *dbi_result;
+    if (RARRAY_LEN(bind_values) > 0) {
+      Query query;
+      query_bind_values(&query, bind_values);
+      dbi_result = handle->conn()->aexecute(CSTRING(statement), query.bind);
+    }
+    else
+      dbi_result = handle->conn()->aexecute(CSTRING(statement));
+
+    result = result_wrap_handle(cSwiftResult, self, dbi_result, true);
+    if (!NIL_P(scheme))
+      rb_iv_set(result, "@scheme", scheme);
+
+    // if block given, just use rb_thread_select
+    if (rb_block_given_p()) {
+      rb_thread_wait_fd(handle->socket());
+      while (dbi_result->consumeResult());
+      dbi_result->prepareResult();
+    }
+  }
+  CATCH_DBI_EXCEPTIONS();
+
+  return rb_block_given_p() ? result_each(result) : result;
+}
+
 void init_swift_adapter() {
   VALUE mSwift   = rb_define_module("Swift");
   cSwiftAdapter = rb_define_class_under(mSwift, "Adapter", rb_cObject);
@@ -411,6 +472,10 @@ void init_swift_adapter() {
   rb_define_method(cSwiftAdapter, "transaction", RUBY_METHOD_FUNC(adapter_transaction), -1);
   rb_define_method(cSwiftAdapter, "write",       RUBY_METHOD_FUNC(adapter_write),       -1);
   rb_define_method(cSwiftAdapter, "reconnect",   RUBY_METHOD_FUNC(adapter_reconnect),    0);
+
+  // stuff you need for async
+  rb_define_method(cSwiftAdapter, "fileno",      RUBY_METHOD_FUNC(adapter_fileno),       0);
+  rb_define_method(cSwiftAdapter, "aexecute",    RUBY_METHOD_FUNC(adapter_aexecute),    -1);
 
   rb_define_alloc_func(cSwiftAdapter, adapter_alloc);
 }
