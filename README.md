@@ -1,7 +1,8 @@
 Swift
 =====
 
-* http://github.com/shanna/swift
+* [source](http://github.com/shanna/swift)
+* [documentation](http://rubydoc.info/gems/swift/file/README.md)
 
 ## Description
 
