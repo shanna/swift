@@ -9,7 +9,7 @@ A rational rudimentary object relational mapper.
 == Dependencies
 
 * ruby   >= 1.9.1
-* dbic++ >= 0.5.11 (http://github.com/deepfryed/dbicpp)
+* dbic++ >= 0.6.0 (http://github.com/deepfryed/dbicpp)
 * mysql  >= 5.0.17, postgresql >= 8.4 or sqlite3 >= 3.7
 
 == Features
@@ -18,7 +18,7 @@ A rational rudimentary object relational mapper.
 * Prepared statements.
 * Bind values.
 * Transactions and named save points.
-* EventMachine asynchronous interface (mysql and postgresql).
+* Asynchronous API for PostgreSQL and MySQL.
 * IdentityMap.
 * Migrations.
 
@@ -195,6 +195,27 @@ But you can do it almost as fast in ruby,
 
 You are not just limited to files - you can stream data from anywhere into your database without
 creating temporary files.
+
+=== Asynchronous API
+
+  require 'swift'
+
+  pool = 3.times.map.with_index {|n| Swift.setup n, Swift::DB::Postgres, db: 'swift' }
+
+  Thread.new do
+    pool[0].aexecute('select pg_sleep(3), 1 as query_id') {|row| p row}
+  end
+
+  Thread.new do
+    pool[1].aexecute('select pg_sleep(2), 2 as query_id') {|row| p row}
+  end
+
+  Thread.new do
+    pool[2].aexecute('select pg_sleep(1), 3 as query_id') {|row| p row}
+  end
+
+  Thread.list.reject {|thread| Thread.current == thread}.each(&:join)
+
 
 == Performance
 

@@ -96,7 +96,6 @@ extern "C" {
 
     init_swift_adapter();
     init_swift_attribute();
-    init_swift_pool();
     init_swift_request();
     init_swift_result();
     init_swift_statement();

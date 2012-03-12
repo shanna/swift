@@ -324,6 +324,13 @@ VALUE result_fields(VALUE self) {
   CATCH_DBI_EXCEPTIONS();
 }
 
+VALUE result_retrieve(VALUE self) {
+  dbi::AbstractResult *result = result_handle(self);
+  while (result->consumeResult());
+  result->prepareResult();
+  return true;
+}
+
 void init_swift_result() {
   rb_require("bigdecimal");
   rb_require("stringio");
@@ -341,6 +348,7 @@ void init_swift_result() {
   rb_define_alloc_func(cSwiftResult, result_alloc);
   rb_include_module(cSwiftResult, CONST_GET(rb_mKernel, "Enumerable"));
 
+  rb_define_method(cSwiftResult, "retrieve",    RUBY_METHOD_FUNC(result_retrieve),    0);
   rb_define_method(cSwiftResult, "clone",       RUBY_METHOD_FUNC(result_clone),       0);
   rb_define_method(cSwiftResult, "dup",         RUBY_METHOD_FUNC(result_dup),         0);
   rb_define_method(cSwiftResult, "each",        RUBY_METHOD_FUNC(result_each),        0);
