@@ -214,8 +214,8 @@ creating temporary files.
 
 ### Asynchronous API
 
-Swift::Adapter#aexecute returns a Swift::Result instance. You can either poll the corresponding Swift::Adapter#fileno
-and then call Swift::Result#retrieve when ready of use a block form like below which implicitly uses rb_thread_wait_fd
+`Swift::Adapter#aexecute` returns a `Swift::Result` instance. You can either poll the corresponding `Swift::Adapter#fileno`
+and then call `Swift::Result#retrieve` when ready or use a block form like below which implicitly uses `rb_thread_wait_fd`
 
 ```ruby
   require 'swift'
