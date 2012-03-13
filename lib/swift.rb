@@ -1,3 +1,12 @@
+# try to require home_run in older rubies
+unless %r{^1\.9\.[3-9]|^2\.}.match(RUBY_VERSION)
+  begin
+    require 'home_run'
+  rescue LoadError => e
+    warn "WARNING: DateTime parsing will be slow without home_run gem on Rubies older than 1.9.3"
+  end
+end
+
 # Extension.
 require_relative '../ext/swift'
 require_relative 'swift/adapter'
@@ -66,7 +75,6 @@ module Swift
     # @option options [String]  :password ('')
     # @option options [String]  :host     ('localhost')
     # @option options [Integer] :port     (DB default)
-    # @option options [String]  :timezone (*nix TZ format) See http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
     # @return [Swift::Adapter]
     #
     # @see Swift::DB

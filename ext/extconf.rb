@@ -1,8 +1,10 @@
 #!/usr/bin/env ruby
 require 'mkmf'
 
-Config::CONFIG['CC']  = 'g++'
-Config::CONFIG['CPP'] = 'g++'
+ConfigClass = defined?(RbConfig) ? RbConfig : Config
+
+ConfigClass::CONFIG['CC']  = 'g++'
+ConfigClass::CONFIG['CPP'] = 'g++'
 
 $CFLAGS  = '-fPIC -Os -I/usr/include -I/opt/local/include -I/usr/local/include'
 
@@ -56,5 +58,4 @@ exit 1 unless library_installed? 'uuid',    apt_install_hint('uuid-dev')
 exit 1 unless library_installed? 'dbic++',  apt_install_hint('dbic++-dev')
 
 assert_dbicpp_version '0.6.0'
-
 create_makefile 'swift'

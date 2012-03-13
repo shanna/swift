@@ -221,7 +221,6 @@ static VALUE adapter_reconnect(VALUE self) {
     @option options [String]  :password ('')
     @option options [String]  :host     ('localhost')
     @option options [Integer] :port     (DB default)
-    @option options [String]  :timezone (*nix TZ format) See http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
     @return [Swift::Adapter]
 
   @see Swift::DB
@@ -244,7 +243,6 @@ static VALUE adapter_initialize(VALUE self, VALUE options) {
   rb_hash_delete(extra, ID2SYM(rb_intern("password")));
   rb_hash_delete(extra, ID2SYM(rb_intern("host")));
   rb_hash_delete(extra, ID2SYM(rb_intern("port")));
-  rb_hash_delete(extra, ID2SYM(rb_intern("timezone")));
 
   std::string extra_options_string = parse_extra_options(extra);
 
@@ -262,7 +260,6 @@ static VALUE adapter_initialize(VALUE self, VALUE options) {
   CATCH_DBI_EXCEPTIONS();
 
   rb_iv_set(self, "@options",  options);
-  rb_iv_set(self, "@timezone", rb_hash_aref(options, ID2SYM(rb_intern("timezone"))));
 
   return Qnil;
 }

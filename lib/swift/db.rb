@@ -51,7 +51,8 @@ module Swift
           when Type::Integer    then attribute.serial ? 'integer primary key' : 'integer'
           when Type::Float      then 'float'
           when Type::BigDecimal then 'numeric'
-          when Type::Time       then 'timestamp'
+          when Type::Time       then 'timestamp' # deprecated
+          when Type::DateTime   then 'timestamp'
           when Type::Date       then 'date'
           when Type::Boolean    then 'boolean'
           when Type::IO         then 'blob'

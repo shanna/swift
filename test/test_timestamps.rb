@@ -1,13 +1,18 @@
 require_relative 'helper'
-require 'date'
 
 describe 'Adapter' do
   supported_by Swift::DB::Postgres do
     %w(America/Chicago Australia/Melbourne).each do |timezone|
       describe 'time parsing in %s' % timezone do
         before do
-          @db = Swift.db
           ENV['TZ'] = ":#{timezone}"
+          @db = Swift.db
+          @db.execute 'create table datetime_test(id serial, ts timestamp with time zone)'
+          @db.execute "set time zone '#{timezone}'"
+        end
+
+        after do
+          @db.execute 'drop table datetime_test'
         end
 
         it 'should parse timestamps and do conversion accordingly' do
@@ -25,14 +30,19 @@ describe 'Adapter' do
           assert_timestamp_like time, fetch_timestamp_at(time), 'DST off'
         end
 
-        describe 'Adapter timezone' do
-          %w(+05:30 -05:30).each do |offset|
-            it 'should parse timestamps and do conversion accordingly for offset ' + offset do
-              @db = Swift::DB::Postgres.new(@db.options.merge(timezone: offset))
-              server = DateTime.parse('2010-01-01 10:00:00')
-              local  = DateTime.parse('2010-01-01 10:00:00 ' + offset)
-              assert_timestamp_like local, fetch_timestamp_at(server, ''), 'parses correctly'
-            end
+        it 'should store fractional seconds' do
+          time     = Time.now
+          datetime = time.to_datetime
+
+          @db.execute 'insert into datetime_test(ts) values (?), (?)', time, datetime
+          values = @db.execute('select ts from datetime_test').map(&:values).flatten
+
+          assert_equal 2, values.size
+
+          # postgres resolution is microsecond.
+          values.each do |value|
+            assert_equal datetime.strftime('%F %T %z'), value.strftime('%F %T %z')
+            assert_equal datetime.second_fraction.to_f.round(6), value.second_fraction.to_f.round(6)
           end
         end
 
@@ -49,8 +59,8 @@ describe 'Adapter' do
 
         def assert_timestamp_like expect, given, comment
           match = Regexp.new expect.to_time.strftime('%F %T')
-          assert_kind_of Time, given
-          assert_match match, given.strftime('%F %T'), comment
+          assert_kind_of DateTime, given
+          assert_match match, given.to_time.strftime('%F %T'), comment
         end
       end
     end

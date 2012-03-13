@@ -10,7 +10,7 @@ class User < Swift::Scheme
   attribute :id,         Swift::Type::Integer, serial: true, key: true
   attribute :name,       Swift::Type::String
   attribute :email,      Swift::Type::String
-  attribute :updated_at, Swift::Type::Time
+  attribute :updated_at, Swift::Type::DateTime
 end # User
 
 class Runner
@@ -61,7 +61,7 @@ class Runner
   end
 
   def run_writes
-    Swift.db.execute('truncate users')
+    Swift.db.execute('truncate users') rescue Swift.db.execute('delete from users') # sqlite3
     Benchmark.run('swift #write') do
       stream = StringIO.new rows.times.map {|n| "test #{n}\ttest@example.com\t#{Time.now}\n" }.join('')
       Swift.db.write(User, %w{name email updated_at}, stream)

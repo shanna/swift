@@ -24,7 +24,10 @@ A rational rudimentary object relational mapper.
 * IdentityMap.
 * Migrations.
 
-## Synopsis
+## Performance notes
+
+The current version creates DateTime objects for timestamp fields and this is roughly 80% slower on
+rubies older than 1.9.3.
 
 ### DB
 
@@ -74,7 +77,7 @@ primitive Ruby type conversion.
     attribute :id,         Swift::Type::Integer, serial: true, key: true
     attribute :name,       Swift::Type::String
     attribute :email,      Swift::Type::String
-    attribute :updated_at, Swift::Type::Time
+    attribute :updated_at, Swift::Type::DateTime
   end # User
 
   Swift.db do |db|
@@ -276,8 +279,12 @@ http://github.com/shanna/swift/tree/master/benchmarks
 
 #### ORM
 
-The following bechmarks were run on a machine with 4G ram, 5200rpm sata drive,
-Intel Core2Duo P8700 2.53GHz and stock PostgreSQL 8.4.1.
+The test environment:
+
+* ruby 1.9.3p0
+* Intel Core2Duo P8700 2.53GHz, 4G RAM and Kingston SATA2 SSD
+
+The test setup:
 
 * 10,000 rows are created once.
 * All the rows are selected once.
@@ -288,55 +295,27 @@ Intel Core2Duo P8700 2.53GHz and stock PostgreSQL 8.4.1.
   the actual memory consumption might be much lower than the numbers below.
 
 ```
-  ./simple.rb -n1 -r10000 -s ar -s dm -s sequel -s swift
+    ./simple.rb -n1 -r10000 -s ar -s dm -s sequel -s swift
 
-  benchmark       sys     user    total  real     rss
-  ar #create      1.01    7.91    8.92   11.426   406.22m
-  ar #select      0.02    0.31    0.33    0.378    40.69m
-  ar #update      0.88    9.64   10.52   13.908   504.93m
+    benchmark       sys     user    total  real      rss
+    ar #create      0.75    7.18    7.93   10.5043   366.95m
+    ar #select      0.07    0.26    0.33    0.3680    40.71m
+    ar #update      0.96    7.92    8.88   11.7537   436.38m
 
-  dm #create      0.23    3.52    3.75    5.405   211.00m
-  dm #select      0.11    1.67    1.78    1.912   114.57m
-  dm #update      0.54    7.34    7.88    9.453   531.30m
+    dm #create      0.33    3.73    4.06    5.0908   245.68m
+    dm #select      0.08    1.51    1.59    1.6154    87.95m
+    dm #update      0.44    7.09    7.53    8.8685   502.77m
 
-  sequel #create  0.77    4.61    5.38    8.194   235.50m
-  sequel #select  0.01    0.13    0.14    0.180    12.73m
-  sequel #update  0.64    4.76    5.40    7.790   229.69m
+    sequel #create  0.60    5.07    5.67    7.9804   236.69m
+    sequel #select  0.02    0.12    0.14    0.1778    12.75m
+    sequel #update  0.82    4.95    5.77    8.2062   230.00m
 
-  swift #create   0.13    0.66    0.79    1.463    85.77m
-  swift #select   0.01    0.10    0.11    0.135     8.92m
-  swift #update   0.14    0.75    0.89    1.585    59.56m
+    swift #create   0.27    0.59    0.86    1.5085    84.85m
+    swift #select   0.03    0.06    0.09    0.1037    11.24m
+    swift #update   0.20    0.69    0.89    1.5867    62.19m
 
-  -- bulk insert api --
-  swift #write    0.00    0.10    0.10    0.180    14.79m
-```
-
-
-#### Adapter
-
-The adapter level SELECT benchmarks without using ORM.
-
-* Same dataset as above.
-* All rows are selected 5 times.
-* The pg benchmark uses pg_typecast gem to provide typecasting support
-  for pg gem and also makes the benchmarks more fair.
-
-##### PostgreSQL
-
-```
-  benchmark       sys       user      total     real      rss
-  do #select      0.020000  1.250000  1.270000  1.441281  71.98m
-  pg #select      0.000000  0.580000  0.580000  0.769186  42.93m
-  swift #select   0.040000  0.510000  0.550000  0.627581  43.23m
-```
-
-##### MySQL
-
-```
-  benchmark       sys       user      total     real      rss
-  do #select      0.030000  1.130000  1.160000  1.172205  71.86m
-  mysql2 #select  0.040000  0.660000  0.700000  0.704414  72.72m
-  swift #select   0.010000  0.480000  0.490000  0.499643  42.03m
+    -- bulk insert api --
+    swift #write    0.04    0.06    0.10    0.1699    14.05m
 ```
 
 ## TODO

@@ -144,7 +144,7 @@ describe 'Adapter' do
         end
 
         it 'writes with no columns specified' do
-          ts   = DateTime.parse('2010-01-01 00:00:00').to_time
+          ts   = DateTime.parse('2010-01-01 00:00:00')
           data = "1\tSally Arthurton\tsally@local\t#{ts}\n"
           row  = {id: 1, name: 'Sally Arthurton', email: 'sally@local', created_at: ts}
 
