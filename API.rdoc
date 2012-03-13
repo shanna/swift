@@ -12,17 +12,18 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
 
     # Abstract.
     Adapter
-      .new         #=> Adapter
-      #begin       #=> Adapter
+      .new           #=> Adapter
+      #begin         #=> Adapter
       #commit
-      #create      #=> Scheme or Result
-      #delete      #=> Result
-      #execute     #=> Result
-      #get         #=> Scheme
-      #prepare     #=> Statement
+      #create        #=> Scheme or Result
+      #delete        #=> Result
+      #execute       #=> Result
+      #async_execute #=> Result
+      #get           #=> Scheme
+      #prepare       #=> Statement
       #rollback
-      #transaction #=> Adapter
-      #update      #=> Scheme or Result
+      #transaction   #=> Adapter
+      #update        #=> Scheme or Result
       #reconnect
 
     # Concrete.
@@ -33,9 +34,12 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
 
     # Enumerable collection of Scheme or Hash tuples.
     Result
-      .new       #=> Result
-      #insert_id #=> Numeric
-      #fields    #=> [Symbol, ...] # Field names identical to .first.keys if rows > 0
+      .new         #=> Result
+      #insert_id   #=> Numeric
+      #fields      #=> [Symbol, ...] # Field names identical to .first.keys if rows > 0
+      #field_types #=> [String, ...] # Type names: boolean, integer, float, numeric, timestamp, date, time, blob, text
+      #rows        #=> Fixnum
+      #columns     #=> Fixnum
 
     Statement
       .new     #=> Statement
