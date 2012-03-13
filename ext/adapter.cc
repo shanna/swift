@@ -409,12 +409,12 @@ VALUE adapter_fileno(VALUE self) {
 
   @example
 
-  @overload aexecute(statement = '', *binds, &block)
+  @overload async_execute(statement = '', *binds, &block)
     @param  [String]  statement Query statement.
     @param  [*Object] binds     Bind values.
     @return [Swift::Result]
 */
-VALUE adapter_aexecute(int argc, VALUE *argv, VALUE self) {
+VALUE adapter_async_execute(int argc, VALUE *argv, VALUE self) {
   VALUE statement, bind_values, block, scheme = Qnil, result;
 
   dbi::Handle *handle = adapter_handle(self);
@@ -471,8 +471,8 @@ void init_swift_adapter() {
   rb_define_method(cSwiftAdapter, "reconnect",   RUBY_METHOD_FUNC(adapter_reconnect),    0);
 
   // stuff you need for async
-  rb_define_method(cSwiftAdapter, "fileno",      RUBY_METHOD_FUNC(adapter_fileno),       0);
-  rb_define_method(cSwiftAdapter, "aexecute",    RUBY_METHOD_FUNC(adapter_aexecute),    -1);
+  rb_define_method(cSwiftAdapter, "fileno",         RUBY_METHOD_FUNC(adapter_fileno),         0);
+  rb_define_method(cSwiftAdapter, "async_execute",  RUBY_METHOD_FUNC(adapter_async_execute), -1);
 
   rb_define_alloc_func(cSwiftAdapter, adapter_alloc);
 }
