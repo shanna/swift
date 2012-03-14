@@ -217,8 +217,9 @@ creating temporary files.
 
 ### Asynchronous API
 
-`Swift::Adapter#aexecute` returns a `Swift::Result` instance. You can either poll the corresponding `Swift::Adapter#fileno`
-and then call `Swift::Result#retrieve` when ready or use a block form like below which implicitly uses `rb_thread_wait_fd`
+`Swift::Adapter#async_execute` returns a `Swift::Result` instance. You can either poll the corresponding
+`Swift::Adapter#fileno` and then call `Swift::Result#retrieve` when ready or use a block form like below
+which implicitly uses `rb_thread_wait_fd`
 
 ```ruby
   require 'swift'
@@ -226,15 +227,15 @@ and then call `Swift::Result#retrieve` when ready or use a block form like below
   pool = 3.times.map.with_index {|n| Swift.setup n, Swift::DB::Postgres, db: 'swift' }
 
   Thread.new do
-    pool[0].aexecute('select pg_sleep(3), 1 as query_id') {|row| p row}
+    pool[0].async_execute('select pg_sleep(3), 1 as qid') {|row| p row}
   end
 
   Thread.new do
-    pool[1].aexecute('select pg_sleep(2), 2 as query_id') {|row| p row}
+    pool[1].async_execute('select pg_sleep(2), 2 as qid') {|row| p row}
   end
 
   Thread.new do
-    pool[2].aexecute('select pg_sleep(1), 3 as query_id') {|row| p row}
+    pool[2].async_execute('select pg_sleep(1), 3 as qid') {|row| p row}
   end
 
   Thread.list.reject {|thread| Thread.current == thread}.each(&:join)
@@ -261,9 +262,9 @@ and then call `Swift::Result#retrieve` when ready or use a block form like below
   end
   
   EM.run do
-    EM.watch(pool[0].fileno, Handler, pool[0].aexecute('select pg_sleep(3), 1 as query_id')){|c| c.notify_readable = true}
-    EM.watch(pool[1].fileno, Handler, pool[1].aexecute('select pg_sleep(2), 2 as query_id')){|c| c.notify_readable = true}
-    EM.watch(pool[2].fileno, Handler, pool[2].aexecute('select pg_sleep(1), 3 as query_id')){|c| c.notify_readable = true}
+    EM.watch(pool[0].fileno, Handler, pool[0].async_execute('select pg_sleep(3), 1 as qid')){|c| c.notify_readable = true}
+    EM.watch(pool[1].fileno, Handler, pool[1].async_execute('select pg_sleep(2), 2 as qid')){|c| c.notify_readable = true}
+    EM.watch(pool[2].fileno, Handler, pool[2].async_execute('select pg_sleep(1), 3 as qid')){|c| c.notify_readable = true}
     EM.add_timer(4) { EM.stop }
   end
 ```
