@@ -13,7 +13,6 @@ begin
     gem.files.reject!{|f| f =~ %r{\.gitignore|examples|benchmarks|memory/.*}}
 
     gem.add_development_dependency 'minitest', '>= 1.7.0'
-    gem.add_development_dependency 'eventmachine'
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
