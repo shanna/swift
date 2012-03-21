@@ -26,8 +26,10 @@ A rational rudimentary object relational mapper.
 
 ## Performance notes
 
-The current version creates DateTime objects for timestamp fields and this is roughly 80% slower on
-rubies older than 1.9.3.
+1. The current version creates DateTime objects for timestamp fields and this is roughly 80% slower on
+   rubies older than 1.9.3.
+2. On rubies older than 1.9.3, Swift will try using [home_run](https://github.com/jeremyevans/home_run)
+   for performance.
 
 ### DB
 
