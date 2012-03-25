@@ -7,6 +7,13 @@ module Swift
     #
     # @abstract
     class Sql < Adapter
+      attr_reader :prepare_sql
+
+      def initialize options
+        @prepare_sql = options.key?(:prepare_sql) ? options.delete(:prepare_sql) : true
+        super(options)
+      end
+
       def tables
         raise NotImplementedError
       end
@@ -16,6 +23,25 @@ module Swift
         Hash[result.fields.map(&:to_sym).zip(result.field_types)]
       end
 
+      def clear_prepared_cache
+        @prepared = Hash.new{|h,k| h[k] = Hash.new}
+      end
+
+      # Send SQL without prepared statements, defered till execute() is called.
+      #
+      # @private
+      class Defer
+        def initialize adapter, scheme, sql
+          @adapter = adapter
+          @scheme  = scheme
+          @sql     = sql
+        end
+
+        def execute *args
+          @adapter.execute(@scheme, @sql, *args)
+        end
+      end
+
       protected
         def returning?
           raise NotImplementedError
@@ -23,7 +49,7 @@ module Swift
 
         def prepare_cached scheme, name, &block
           @prepared               ||= Hash.new{|h,k| h[k] = Hash.new}
-          @prepared[scheme][name] ||= prepare(scheme, yield)
+          @prepared[scheme][name] ||= prepare_sql ? prepare(scheme, yield) : Defer.new(self, scheme, yield)
         end
 
         def prepare_get scheme

@@ -30,6 +30,8 @@ A rational rudimentary object relational mapper.
    rubies older than 1.9.3.
 2. On rubies older than 1.9.3, Swift will try using [home_run](https://github.com/jeremyevans/home_run)
    for performance.
+3. Scheme operations use prepared statements when possible. If you would like to turn it off, you can
+   pass `:prepare_sql => false` in the `Adapter` connection options.
 
 ### DB
 

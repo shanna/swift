@@ -216,11 +216,12 @@ static VALUE adapter_reconnect(VALUE self) {
 
   @overload new(options = {})
     @param  [Hash]           options Connection options
-    @option options [String]  :db       Name.
-    @option options [String]  :user     (*nix login user)
-    @option options [String]  :password ('')
-    @option options [String]  :host     ('localhost')
-    @option options [Integer] :port     (DB default)
+    @option options [String]  :db           Name.
+    @option options [String]  :user        (*nix login user)
+    @option options [String]  :password    ('')
+    @option options [String]  :host        ('localhost')
+    @option options [Integer] :port        (DB default)
+    @option options [Boolean] :prepare_sql (true)
     @return [Swift::Adapter]
 
   @see Swift::DB
@@ -289,6 +290,7 @@ static VALUE adapter_prepare(int argc, VALUE *argv, VALUE self) {
   dbi::Handle *handle = adapter_handle(self);
   try {
     // TODO: Move to statement_* constructor.
+    if (dbi::_trace) dbi::logMessage(dbi::_trace_fd, (std::string("prepare ") + CSTRING(sql)).c_str());
     statement = handle->conn()->prepare(CSTRING(sql));
     prepared  = statement_wrap_handle(cSwiftStatement, self, statement);
     rb_iv_set(prepared, "@scheme",  scheme);
