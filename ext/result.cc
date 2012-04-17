@@ -195,8 +195,11 @@ VALUE result_field_types(VALUE self) {
 
 VALUE result_retrieve(VALUE self) {
   dbi::AbstractResult *result = result_handle(self);
-  while (result->consumeResult());
-  result->prepareResult();
+  try {
+    while (result->consumeResult());
+    result->prepareResult();
+  }
+  CATCH_DBI_EXCEPTIONS();
   return true;
 }
 
