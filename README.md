@@ -11,7 +11,7 @@ A rational rudimentary object relational mapper.
 ## Dependencies
 
 * ruby   >= 1.9.1
-* [dbic++](http://github.com/deepfryed/dbicpp) >= 0.6.0
+* [dbic++](http://github.com/deepfryed/dbicpp) >= 0.6.1
 * mysql  >= 5.0.17, postgresql >= 8.4 or sqlite3 >= 3.7
 
 ## Features
@@ -245,31 +245,43 @@ which implicitly uses `rb_thread_wait_fd`
   Thread.list.reject {|thread| Thread.current == thread}.each(&:join)
 ```
 
+or use the `swift/eventmachine` api.
+
 ```ruby
-  require 'swift'
-  require 'eventmachine'
-  
-  pool = 3.times.map.with_index {|n| Swift.setup n, Swift::DB::Postgres, db: 'swift'}
-  
-  module Handler
-    attr_reader :result
-  
-    def initialize result
-      @result = result
-    end
-  
-    def notify_readable
-      result.retrieve
-      result.each {|row| p row }
-      unbind
+  require 'swift/eventmachine'
+
+  EM.run do
+    pool = 3.times.map { Swift.setup(:default, Swift::DB::Postgres, db: "swift") }
+
+    3.times.each do |n|
+      defer = pool[n].execute("select pg_sleep(3 - #{n}), #{n + 1} as qid")
+
+      defer.callback do |res|
+        p res.first
+      end
+
+      defer.errback do |e|
+        p 'error', e
+      end
     end
   end
-  
+```
+
+or use the `em-synchrony` api for `swift`
+
+```ruby
+  require 'swift/synchrony'
+
   EM.run do
-    EM.watch(pool[0].fileno, Handler, pool[0].async_execute('select pg_sleep(3), 1 as qid')){|c| c.notify_readable = true}
-    EM.watch(pool[1].fileno, Handler, pool[1].async_execute('select pg_sleep(2), 2 as qid')){|c| c.notify_readable = true}
-    EM.watch(pool[2].fileno, Handler, pool[2].async_execute('select pg_sleep(1), 3 as qid')){|c| c.notify_readable = true}
-    EM.add_timer(4) { EM.stop }
+    3.times.each do |n|
+      EM.synchrony do
+        db     = Swift.setup(:default, Swift::DB::Postgres, db: "swift")
+        result = db.execute("select pg_sleep(3 - #{n}), #{n + 1} as qid")
+
+        p result.first
+        EM.stop if n == 0
+      end
+    end
   end
 ```
 
