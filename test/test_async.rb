@@ -5,7 +5,7 @@ describe 'Adapter' do
     describe 'async operations' do
       it 'can runs queries async' do
         rows = []
-        pool = 3.times.map.with_index {|n| Swift.setup n, Swift::DB::Postgres, db: 'swift' }
+        pool = 3.times.map.with_index {|n| Swift.setup n, Swift::DB::Postgres, db: 'swift_test' }
 
         Thread.new do
           pool[0].async_execute('select pg_sleep(0.3), 1 as query_id') {|row| rows << row[:query_id]}
