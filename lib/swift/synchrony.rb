@@ -5,7 +5,10 @@ module Swift
   class Adapter
     alias :aexecute :execute
     def execute *args
-      EM::Synchrony.sync aexecute(*args)
+      res = EM::Synchrony.sync aexecute(*args)
+      raise res if res.kind_of?(SwiftError)
+      yield res if block_given?
+      res
     end
   end
 end
