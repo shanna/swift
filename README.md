@@ -14,6 +14,44 @@ A rational rudimentary object relational mapper.
 * [dbic++](http://github.com/deepfryed/dbicpp) >= 0.6.1
 * mysql  >= 5.0.17, postgresql >= 8.4 or sqlite3 >= 3.7
 
+## Installation
+
+Install dbic++ first. Grab the latest [dbic++](https://github.com/deepfryed/dbicpp) source tarball and
+unpack it. Installation instructions for dbic++ under two most popular unices are given below.
+
+### dbic++ on Linux (debian flavours)
+
+```
+sudo apt-get install build-essential
+sudo apt-get install cmake libpcre3-dev uuid-dev
+sudo apt-get install libmysqlclient-dev libpq-dev libsqlite3-dev
+
+cd dbicpp/
+sudo ./build -i
+```
+
+### dbic++ on MacOSX
+
+Assuming you already have homebrew. If not head to https://github.com/mxcl/homebrew/wiki/installation
+
+```
+brew install cmake
+brew install pcre
+brew install ossp-uuid
+brew install postgresql
+brew install mysql
+brew install sqlite3
+
+cd dbicpp/
+sudo ./build -i
+```
+
+### Install swift
+
+```
+gem install swift
+```
+
 ## Features
 
 * Multiple databases.
