@@ -3,30 +3,28 @@ source 'http://rubygems.org'
 gem 'addressable', '2.2.4'
 
 # Persistence.
-do_version = '>= 0.10.3'
-gem 'data_objects', do_version
-gem 'do_postgres',  do_version
-gem 'do_mysql',     do_version
-gem 'do_sqlite3',   do_version
+gem 'data_objects'
+gem 'do_postgres'
+gem 'do_mysql'
+gem 'do_sqlite3'
 
-dm_version = '~> 1.1.0'
-gem 'dm-core', dm_version
-gem 'dm-do-adapter', dm_version
-gem 'dm-postgres-adapter', dm_version
-gem 'dm-mysql-adapter', dm_version
-gem 'dm-sqlite-adapter', dm_version
-gem 'dm-migrations', dm_version
+gem 'dm-core'
+gem 'dm-do-adapter'
+gem 'dm-postgres-adapter'
+gem 'dm-mysql-adapter'
+gem 'dm-sqlite-adapter'
+gem 'dm-migrations'
 
-gem 'activerecord', '3.0.5'
-gem 'pg', '0.10.1'
-gem 'mysql2', '0.2.6'
-gem 'i18n', '0.4.1'
-gem 'builder', '2.1.2'
+gem 'activerecord'
+gem 'pg'
+gem 'mysql2'
+gem 'i18n'
+gem 'builder'
 gem 'sqlite3-ruby'
 
-gem 'sequel',      '3.30.0'
-gem 'sequel_pg',   '1.2.0'
-gem 'pg_typecast', '0.1.1'
+gem 'sequel'
+gem 'sequel_pg'
+gem 'pg_typecast'
 gem 'home_run'
 
 gem 'swift-db-sqlite3',  git: 'http://github.com/deepfryed/swift-db-sqlite3'
