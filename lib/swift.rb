@@ -130,16 +130,8 @@ module Swift
       @schema ||= []
     end
 
-    # TODO: yuck - this needs proper adapter support
-    def trace
-      _execute = db.method(:execute)
-      db.instance_eval('class << self; self; end').send(:define_method, :execute) do |sql, *args|
-        puts sql, args
-        _execute.call(sql, *args)
-      end
-      yield
-    ensure
-      db.instance_eval('class << self; self; end').send(:define_method, :execute, &_execute)
+    def trace io = $stdout, &block
+      Swift.db.trace(io, &block)
     end
   end
 end # Swift

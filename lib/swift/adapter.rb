@@ -29,7 +29,7 @@ module Swift
     # NOTE: Not significantly shorter than Scheme.db.first(User, 'id = ?', 12)
     def get scheme, keys
       resource = scheme.new(keys)
-      execute(command_get(scheme), *resource.tuple.values_at(*scheme.header.keys)).first
+      execute(scheme, command_get(scheme), *resource.tuple.values_at(*scheme.header.keys)).first
     end
 
     # Create one or more.
@@ -156,13 +156,18 @@ module Swift
       scheme ? Statement.new(scheme, command) : db.prepare(command)
     end
 
-    def execute command, *bind
-      if command.kind_of?(Class) && command < Scheme
-        scheme  = command
-        command = bind.shift
-      end
+    def trace io = $stdout
+      @trace = io
+      yield
+      @trace = false
+    end
 
+    def execute command, *bind
+      start = Time.now
+      scheme, command = command, bind.shift if command.kind_of?(Class) && command < Scheme
       scheme ? Result.new(scheme, db.execute(command, *bind)) : db.execute(command, *bind)
+    ensure
+      @trace.print Time.now.strftime('%F %T.%N'), ' - ', (Time.now - start).to_f, ' - ', command, ' ', bind, $/ if @trace
     end
   end # Adapter
 end # Swift
