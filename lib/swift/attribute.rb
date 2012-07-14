@@ -29,6 +29,17 @@ module Swift
       define_scheme_methods(scheme)
     end
 
+    def default
+      case @default
+        when Numeric, Symbol, true, false, nil
+          @default
+        when Proc
+          @default.call
+        else
+          @default.dup
+      end
+    end
+
     # The attributes field.
     #
     # @return [String]

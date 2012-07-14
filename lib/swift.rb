@@ -8,11 +8,9 @@ unless %r{^1\.9\.[3-9]|^2\.}.match(RUBY_VERSION)
 end
 
 # Extension.
-require_relative '../ext/swift'
 require_relative 'swift/adapter'
 require_relative 'swift/adapter/sql'
 require_relative 'swift/attribute'
-require_relative 'swift/db'
 require_relative 'swift/header'
 require_relative 'swift/scheme'
 require_relative 'swift/type'
@@ -130,6 +128,18 @@ module Swift
     # @return [Array<Swift::Schema>]
     def schema
       @schema ||= []
+    end
+
+    # TODO: yuck - this needs proper adapter support
+    def trace
+      _execute = db.method(:execute)
+      db.instance_eval('class << self; self; end').send(:define_method, :execute) do |sql, *args|
+        puts sql, args
+        _execute.call(sql, *args)
+      end
+      yield
+    ensure
+      db.instance_eval('class << self; self; end').send(:define_method, :execute, &_execute)
     end
   end
 end # Swift

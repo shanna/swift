@@ -1,34 +1,11 @@
+require 'swift/db/sqlite3'
 require 'swift/adapter/sql'
 
 module Swift
-  module DB
-    class Mysql < Adapter::Sql
+  class Adapter
+    class Sqlite3 < Sql
       def initialize options = {}
-        super options.update(driver: 'mysql')
-      end
-
-      def returning?
-        false
-      end
-
-      # TODO Swift::Type::Bignum ?
-      # serial is an alias for bigint in mysql, we want integer type to be migrated as integer
-      # type in the database (not bigint or smallint or shortint or whatever).
-      def field_type attribute
-        case attribute
-          when Type::Integer then attribute.serial ? 'integer auto_increment' : 'integer'
-          else super
-        end
-      end
-
-      def tables
-        execute("show tables").map(&:values).flatten
-      end
-    end # Mysql
-
-    class Sqlite3 < Adapter::Sql
-      def initialize options = {}
-        super options.update(driver: 'sqlite3')
+        super Swift::DB::Sqlite3.new(options)
       end
 
       def returning?
@@ -63,27 +40,17 @@ module Swift
       def tables
         execute('select name from sqlite_master where type = ?', 'table').map(&:values).flatten
       end
-    end # Sqlite3
 
-    class Postgres < Adapter::Sql
-      def initialize options = {}
-        super options.update(driver: 'postgresql')
-      end
+      def write table, fields, io
+        statement = prepare("insert into #{table}(#{fields.join(',')}) values (%s)" % (['?'] * fields.size).join(','))
 
-      def returning?
-        true
-      end
-
-      def field_type attribute
-        case attribute
-          when Type::IO then 'bytea'
-          else super
+        r  = 0
+        io = io.read if io.respond_to?(:read)
+        io.split(/\n+/).each do |line|
+          r += statement.execute(*line.split(/\t/).map {|value| value == '\N' ? nil : value}).affected_rows
         end
+        r
       end
-
-      def tables
-        execute('select tablename from pg_tables where schemaname = current_schema').map(&:values).flatten
-      end
-    end # Postgres
-  end # DB
+    end # Sqlite3
+  end # Adapter
 end # Swift

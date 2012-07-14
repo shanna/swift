@@ -1,0 +1,29 @@
+GIT
+  remote: http://github.com/deepfryed/swift-db-mysql
+  revision: fba2e6d40f30fede4d9195c068ecea1bcb92c04c
+  specs:
+    swift-db-mysql (0.1.0)
+
+GIT
+  remote: http://github.com/deepfryed/swift-db-postgres
+  revision: c522300c6443c72410c74fc9d41d768182dd3c8b
+  specs:
+    swift-db-postgres (0.1.0)
+
+GIT
+  remote: http://github.com/deepfryed/swift-db-sqlite3
+  revision: a091340fd86b9ecd1e44709f131881881dda38c6
+  specs:
+    swift-db-sqlite3 (0.1.0)
+
+GEM
+  remote: http://rubygems.org/
+  specs:
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  swift-db-mysql!
+  swift-db-postgres!
+  swift-db-sqlite3!

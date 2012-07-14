@@ -3,6 +3,9 @@ $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'benchmark'
 require 'stringio'
 require 'swift'
+require 'swift/adapter/mysql'
+require 'swift/adapter/postgres'
+require 'swift/adapter/sqlite3'
 require 'swift/migrations'
 
 class User < Swift::Scheme
@@ -15,12 +18,12 @@ end # User
 
 class Runner
   attr_reader :tests, :driver, :runs, :rows
-  def initialize opts={}
+  def initialize opts = {}
     @driver = opts[:driver]
     klass = case @driver
-      when /postgresql/ then Swift::DB::Postgres
-      when /mysql/      then Swift::DB::Mysql
-      when /sqlite3/    then Swift::DB::Sqlite3
+      when /postgresql/ then Swift::Adapter::Postgres
+      when /mysql/      then Swift::Adapter::Mysql
+      when /sqlite3/    then Swift::Adapter::Sqlite3
     end
 
     %w(tests runs rows).each do |name|

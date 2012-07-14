@@ -21,3 +21,5 @@ benchmarks/adapters/pg_ext/Makefile
 doc/*
 benchmarks/.bundle/*
 benchmarks/gems/*
+gems/
+.bundle/

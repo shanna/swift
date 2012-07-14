@@ -1,3 +1,6 @@
+require 'swift/result'
+require 'swift/statement'
+
 module Swift
 
   # Adapter.
@@ -5,7 +8,11 @@ module Swift
   # @abstract
   # @see      Swift::DB See Swift::DB for concrete adapters.
   class Adapter
-    attr_reader :options
+    attr_reader :db
+
+    def initialize db
+      @db = db
+    end
 
     # Select by id(s).
     #
@@ -22,7 +29,7 @@ module Swift
     # NOTE: Not significantly shorter than Scheme.db.first(User, 'id = ?', 12)
     def get scheme, keys
       resource = scheme.new(keys)
-      prepare_get(scheme).execute(*resource.tuple.values_at(*scheme.header.keys)).first
+      execute(command_get(scheme), *resource.tuple.values_at(*scheme.header.keys)).first
     end
 
     # Create one or more.
@@ -50,10 +57,9 @@ module Swift
     # @note   Passing a scalar will result in a scalar.
     # @see    Swift::Scheme.create
     def create scheme, resources
-      statement = prepare_create(scheme)
-      result    = [resources].flatten.map do |resource|
+      result = [resources].flatten.map do |resource|
         resource = scheme.new(resource) unless resource.kind_of?(scheme)
-        result   = statement.execute(*resource.tuple.values_at(*scheme.header.insertable))
+        result   = execute(command_create(scheme), *resource.tuple.values_at(*scheme.header.insertable))
         resource.tuple[scheme.header.serial] = result.insert_id if scheme.header.serial
         resource
       end
@@ -90,8 +96,7 @@ module Swift
     # @note   Passing a scalar will result in a scalar.
     # @see    Swift::Scheme#update
     def update scheme, resources
-      statement = prepare_update(scheme)
-      result    = [resources].flatten.map do |resource|
+      result = [resources].flatten.map do |resource|
         resource = scheme.new(resource) unless resource.kind_of?(scheme)
         keys     = resource.tuple.values_at(*scheme.header.keys)
 
@@ -99,7 +104,7 @@ module Swift
         raise ArgumentError, "#{scheme} resource has incomplete key: #{resource.inspect}" \
           unless keys.select(&:nil?).empty?
 
-        statement.execute(*resource.tuple.values_at(*scheme.header.updatable), *keys)
+        execute(command_update(scheme), *resource.tuple.values_at(*scheme.header.updatable), *keys)
         resource
       end
       resources.kind_of?(Array) ? result : result.first
@@ -131,8 +136,7 @@ module Swift
     # @note   Passing a scalar will result in a scalar.
     # @see    Swift::Scheme#delete
     def delete scheme, resources
-      statement = prepare_delete(scheme)
-      result    = [resources].flatten.map do |resource|
+      result = [resources].flatten.map do |resource|
         resource = scheme.new(resource) unless resource.kind_of?(scheme)
         keys     = resource.tuple.values_at(*scheme.header.keys)
 
@@ -140,7 +144,7 @@ module Swift
         raise ArgumentError, "#{scheme} resource has incomplete key: #{resource.inspect}" \
           unless keys.select(&:nil?).empty?
 
-        if result = statement.execute(*keys)
+        if result = execute(command_delete(scheme), *keys)
           resource.freeze
         end
         result
@@ -148,22 +152,17 @@ module Swift
       resources.kind_of?(Array) ? result : result.first
     end
 
-    protected
-      def prepare_get scheme
-        raise NotImplementedError
+    def prepare scheme = nil, command
+      scheme ? Statement.new(scheme, command) : db.prepare(command)
+    end
+
+    def execute command, *bind
+      if command.kind_of?(Class) && command < Scheme
+        scheme  = command
+        command = bind.shift
       end
 
-      def prepare_create scheme
-        raise NotImplementedError
-      end
-
-      def prepare_update scheme
-        raise NotImplementedError
-      end
-
-      def prepare_delete scheme
-        raise NotImplementedError
-      end
-
+      scheme ? Result.new(scheme, db.execute(command, *bind)) : db.execute(command, *bind)
+    end
   end # Adapter
 end # Swift

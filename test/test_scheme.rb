@@ -57,7 +57,7 @@ describe 'scheme' do
     end
   end
 
-  supported_by Swift::DB::Postgres, Swift::DB::Mysql, Swift::DB::Sqlite3 do
+  supported_by Swift::Adapter::Postgres, Swift::Adapter::Mysql, Swift::Adapter::Sqlite3 do
     describe 'adapter operations' do
       before do
         Swift.db.migrate! @user
@@ -77,12 +77,12 @@ describe 'scheme' do
       end
 
       it 'adapter should barf when trying to delete an invalid instance' do
-        assert_raises(ArgumentError) { Swift.db.delete @user, {id: nil, name: 'foo'} }
+        assert_raises(Swift::ArgumentError) { Swift.db.delete @user, {id: nil, name: 'foo'} }
       end
 
       it 'should not update without valid keys' do
         user = @user.new
-        assert_raises(ArgumentError) { user.update(name: 'dave') }
+        assert_raises(Swift::ArgumentError) { user.update(name: 'dave') }
       end
 
       it 'should update with valid keys' do

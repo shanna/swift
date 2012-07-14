@@ -143,10 +143,10 @@ module Swift
       # @param  [*Object] binds     Bind values.
       # @yield  [Swift::Result]
       # @return [Swift::Result]
-      def execute statement = '', *binds, &block
-        Swift.db.execute(self, statement, *binds, &block)
+      def execute statement = '', *binds
+        Swift.db.prepare(self, statement, *binds)
+        Swift::Result.new(self, Swift.db.execute(statement, *binds))
       end
     end
   end # Scheme
 end # Swift
-
