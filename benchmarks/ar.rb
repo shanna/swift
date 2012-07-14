@@ -34,9 +34,7 @@ class Runner
   end
 
   def migrate!
-    ActiveRecord::Base.connection.execute("set client_min_messages=WARNING")
-
-    orig_stdout, $stdout = $stdout, StringIO.new
+    ActiveRecord::Base.connection.execute("set client_min_messages=WARNING") rescue nil
     ActiveRecord::Schema.define do
       execute 'drop table if exists users'
       create_table :users do |t|
@@ -45,9 +43,6 @@ class Runner
         t.column :updated_at, :timestamp
       end
     end
-
-    ensure
-      $stdout = orig_stdout
   end
 
   def run_creates

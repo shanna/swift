@@ -1,5 +1,6 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
+require 'bundler/setup'
 require 'benchmark'
 require 'stringio'
 require 'swift'
@@ -38,7 +39,8 @@ class Runner
     yield run_creates if tests.include?(:create)
     yield run_selects if tests.include?(:select)
     yield run_updates if tests.include?(:update)
-    yield run_writes  if tests.include?(:update)
+    # TODO
+    # yield run_writes  if tests.include?(:update)
   end
 
   def run_creates
@@ -49,14 +51,14 @@ class Runner
 
   def run_selects
     Benchmark.run('swift #select') do
-      runs.times{ User.execute("select * from #{User}"){|m| [m.id, m.name, m.email, m.updated_at]}}
+      runs.times{ User.execute("select * from #{User}").each {|m| [m.id, m.name, m.email, m.updated_at] }}
     end
   end
 
   def run_updates
     Benchmark.run('swift #update') do
       runs.times do |n|
-        User.execute("select * from #{User}") do |m|
+        User.execute("select * from #{User}").each do |m|
           m.update(name: 'foo', email: 'foo@example.com', updated_at: Time.now)
         end
       end

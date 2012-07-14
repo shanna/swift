@@ -1,14 +1,26 @@
+$:.unshift(File.join(File.dirname(__FILE__), '..', '..', 'lib'))
+
 require 'benchmark'
-require_relative '../../lib/swift'
+require 'bundler/setup'
+
+require 'swift'
+require 'swift/adapter/mysql'
+require 'swift/adapter/postgres'
+require 'swift/adapter/sqlite3'
 
 class Runner
   attr_reader :tests, :driver, :runs, :rows
-  def initialize opts={}
-    @driver  = opts[:driver] =~ /postgresql/ ? Swift::DB::Postgres : Swift::DB::Mysql
-    %w(tests runs rows).each do |name|
-      instance_variable_set("@#{name}", opts[name.to_sym])
+  def initialize options = {}
+    klass = case @driver = options[:driver]
+      when /postgresql/ then Swift::Adapter::Postgres
+      when /mysql/      then Swift::Adapter::Mysql
+      when /sqlite3/    then Swift::Adapter::Sqlite3
     end
-    Swift.setup :default, @driver, db: 'swift'
+
+    %w(tests runs rows).each do |name|
+      instance_variable_set("@#{name}", options[name.to_sym])
+    end
+    Swift.setup :default, klass, db: 'swift'
   end
 
   def run
@@ -36,7 +48,7 @@ class Runner
     Benchmark.run("swift #select") do
       db = Swift.db
       fields = %w(id name email updated_at).map(&:to_sym)
-      runs.times { db.execute('select * from users') {|m| m.values_at(*fields) } }
+      runs.times { db.execute('select * from users').each {|m| m.values_at(*fields) } }
     end
   end
 end
