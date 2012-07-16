@@ -28,26 +28,26 @@ module Swift
           raise NotImplementedError
         end
 
-        def command_get scheme
-          where = scheme.header.keys.map{|key| "#{key} = ?"}.join(' and ')
-          "select * from #{scheme.store} where #{where} limit 1"
+        def command_get record
+          where = record.header.keys.map{|key| "#{key} = ?"}.join(' and ')
+          "select * from #{record.store} where #{where} limit 1"
         end
 
-        def command_create scheme
-          values    = (['?'] * scheme.header.insertable.size).join(', ')
-          returning = "returning #{scheme.header.serial}" if scheme.header.serial and returning?
-          "insert into #{scheme.store} (#{scheme.header.insertable.join(', ')}) values (#{values}) #{returning}"
+        def command_create record
+          values    = (['?'] * record.header.insertable.size).join(', ')
+          returning = "returning #{record.header.serial}" if record.header.serial and returning?
+          "insert into #{record.store} (#{record.header.insertable.join(', ')}) values (#{values}) #{returning}"
         end
 
-        def command_update scheme
-          set   = scheme.header.updatable.map{|field| "#{field} = ?"}.join(', ')
-          where = scheme.header.keys.map{|key| "#{key} = ?"}.join(' and ')
-          "update #{scheme.store} set #{set} where #{where}"
+        def command_update record
+          set   = record.header.updatable.map{|field| "#{field} = ?"}.join(', ')
+          where = record.header.keys.map{|key| "#{key} = ?"}.join(' and ')
+          "update #{record.store} set #{set} where #{where}"
         end
 
-        def command_delete scheme
-          where = scheme.header.keys.map{|key| "#{key} = ?"}.join(' and ')
-          "delete from #{scheme.store} where #{where}"
+        def command_delete record
+          where = record.header.keys.map{|key| "#{key} = ?"}.join(' and ')
+          "delete from #{record.store} where #{where}"
         end
 
         def field_definition attribute

@@ -12,7 +12,7 @@ require_relative 'swift/adapter'
 require_relative 'swift/adapter/sql'
 require_relative 'swift/attribute'
 require_relative 'swift/header'
-require_relative 'swift/scheme'
+require_relative 'swift/record'
 require_relative 'swift/type'
 
 # A rational rudimentary object relational mapper.
@@ -24,7 +24,7 @@ require_relative 'swift/type'
 #   Swift.trace true # Debugging.
 #   Swift.setup :default, Swift::DB::Postgres, db: 'swift'
 #
-#   class User < Swift::Scheme
+#   class User < Swift::Record
 #     store     :users
 #     attribute :id,    Swift::Type::Integer, serial: true, key: true
 #     attribute :name,  Swift::Type::String

@@ -10,7 +10,7 @@ require 'swift/migrations'
 adapter = ARGV.first =~ /mysql/i ? Swift::DB::Mysql : Swift::DB::Postgres
 Swift.setup :default, adapter, db: 'swift'
 
-class User < Swift::Scheme
+class User < Swift::Record
   store     :users
   attribute :id,         Swift::Type::Integer, serial: true, key: true
   attribute :name,       Swift::Type::String

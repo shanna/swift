@@ -9,7 +9,7 @@ require 'swift/adapter/postgres'
 require 'swift/adapter/sqlite3'
 require 'swift/migrations'
 
-class User < Swift::Scheme
+class User < Swift::Record
   store     :users
   attribute :id,         Swift::Type::Integer, serial: true, key: true
   attribute :name,       Swift::Type::String

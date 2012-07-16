@@ -7,14 +7,14 @@ module Swift
 
     def_delegators :@result, :select_rows, :affected_rows, :fields, :types, :insert_id
 
-    def initialize scheme, result
-      @scheme = scheme
+    def initialize record, result
+      @record = record
       @result = result
     end
 
     def each
       @result.each do |tuple|
-        yield @scheme.allocate.tap {|s| s.tuple = tuple}
+        yield @record.allocate.tap {|s| s.tuple = tuple}
       end
     end
   end # Result

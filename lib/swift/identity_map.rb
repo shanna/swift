@@ -33,17 +33,17 @@ module Swift
     end
   end
 
-  class Scheme
+  class Record
     #--
     # TODO: Redefined method :(
     def self.load tuple
       im = [self, *tuple.values_at(*header.keys)]
-      unless scheme = Swift.db.identity_map.get(im)
-        scheme       = allocate
-        scheme.tuple = tuple
-        Swift.db.identity_map.set(im, scheme)
+      unless record = Swift.db.identity_map.get(im)
+        record       = allocate
+        record.tuple = tuple
+        Swift.db.identity_map.set(im, record)
       end
-      scheme
+      record
     end
-  end # Scheme
+  end # Record
 end # Swift

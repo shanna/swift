@@ -12,14 +12,14 @@ module Swift
         false
       end
 
-      def migrate! scheme
-        keys   =  scheme.header.keys
-        serial =  scheme.header.find(&:serial)
-        fields =  scheme.header.map{|p| field_definition(p)}.join(', ')
+      def migrate! record
+        keys   =  record.header.keys
+        serial =  record.header.find(&:serial)
+        fields =  record.header.map{|p| field_definition(p)}.join(', ')
         fields += ", primary key (#{keys.join(', ')})" unless serial or keys.empty?
 
-        execute("drop table if exists #{scheme.store}")
-        execute("create table #{scheme.store} (#{fields})")
+        execute("drop table if exists #{record.store}")
+        execute("create table #{record.store} (#{fields})")
       end
 
       def field_type attribute

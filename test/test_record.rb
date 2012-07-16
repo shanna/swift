@@ -1,8 +1,8 @@
 require_relative 'helper'
 
-describe 'scheme' do
+describe 'record' do
   before do
-    @user = Class.new(Swift::Scheme) do
+    @user = Class.new(Swift::Record) do
       store     :users
       attribute :id,         Swift::Type::Integer,  serial: true, key: true
       attribute :name,       Swift::Type::String,   default: "dave"
@@ -63,7 +63,7 @@ describe 'scheme' do
         Swift.db.migrate! @user
       end
 
-      it 'should return scheme instance when given scheme in #execute' do
+      it 'should return record instance when given record in #execute' do
         user = @user.create
         assert_equal 1, Swift.db.execute(@user, 'select * from users').first.id
       end

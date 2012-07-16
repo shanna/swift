@@ -7,7 +7,7 @@ module Swift
     end
   end # Errors
 
-  class Scheme
+  class Record
     def self.validations &validations
       define_method :validate do
         errors = Errors.new(self)
@@ -23,5 +23,5 @@ module Swift
     def valid?
       validate.empty?
     end
-  end # Scheme
+  end # Record
 end # Swift

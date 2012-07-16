@@ -68,7 +68,7 @@ gem install swift
    rubies older than 1.9.3.
 2. On rubies older than 1.9.3, Swift will try using [home_run](https://github.com/jeremyevans/home_run)
    for performance.
-3. Scheme operations use prepared statements when possible. If you would like to turn it off, you can
+3. Record operations use prepared statements when possible. If you would like to turn it off, you can
    pass `prepare_sql: false` in the `Adapter` connection options.
 
 ### DB
@@ -102,7 +102,7 @@ gem install swift
   end
 ```
 
-### DB Scheme Operations
+### DB Record Operations
 
 Rudimentary object mapping. Provides a definition to the db methods for prepared (and cached) statements plus native
 primitive Ruby type conversion.
@@ -114,7 +114,7 @@ primitive Ruby type conversion.
   Swift.trace true # Debugging.
   Swift.setup :default, Swift::DB::Postgres, db: 'swift'
 
-  class User < Swift::Scheme
+  class User < Swift::Record
     store     :users
     attribute :id,         Swift::Type::Integer, serial: true, key: true
     attribute :name,       Swift::Type::String
@@ -125,7 +125,7 @@ primitive Ruby type conversion.
   Swift.db do |db|
     db.migrate! User
 
-    # Select Scheme instance (relation) instead of Hash.
+    # Select Record instance (relation) instead of Hash.
     users = db.prepare(User, 'select * from users limit 1').execute
 
     # Make a change and update.
@@ -138,9 +138,9 @@ primitive Ruby type conversion.
   end
 ```
 
-### Scheme CRUD
+### Record CRUD
 
-Scheme/relation level helpers.
+Record/relation level helpers.
 
 ```ruby
   require 'swift'
@@ -149,7 +149,7 @@ Scheme/relation level helpers.
   Swift.trace true # Debugging.
   Swift.setup :default, Swift::DB::Postgres, db: 'swift'
 
-  class User < Swift::Scheme
+  class User < Swift::Record
     store     :users
     attribute :id,    Swift::Type::Integer, serial: true, key: true
     attribute :name,  Swift::Type::String
@@ -182,7 +182,7 @@ SQL is easy and most people know it so Swift ORM provides simple #to_s
 attribute to table and field name typecasting.
 
 ```ruby
-  class User < Swift::Scheme
+  class User < Swift::Record
     store     :users
     attribute :id,    Swift::Type::Integer, serial: true, key: true
     attribute :age,   Swift::Type::Integer, field: 'ega'
@@ -207,7 +207,7 @@ Swift comes with a simple identity map. Just require it after you load swift.
   require 'swift/identity_map'
   require 'swift/migrations'
 
-  class User < Swift::Scheme
+  class User < Swift::Record
     store     :users
     attribute :id,    Swift::Type::Integer, serial: true, key: true
     attribute :age,   Swift::Type::Integer, field: 'ega'
