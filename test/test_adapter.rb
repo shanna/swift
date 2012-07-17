@@ -22,17 +22,11 @@ describe 'Adapter' do
         end
       end
 
-     #it 'reconnects to db' do
-     #  Swift.trace true, open('/dev/null', 'w')
-     #  assert_block { @db.reconnect }
-     #  Swift.trace false
-     #end
-
-     #it 'records closed state' do
-     #  assert !Swift.db.closed?
-     #  Swift.db.close
-     #  assert Swift.db.closed?
-     #end
+      it 'records closed state' do
+        assert !Swift.db.closed?
+        Swift.db.close
+        assert Swift.db.closed?
+      end
 
       describe 'execute' do
         it 'executes without bind values' do
@@ -126,8 +120,8 @@ describe 'Adapter' do
         end
       end
 
-
-      describe 'bulk writes!' do
+      # TODO
+      # describe 'bulk writes!' do
       # it 'writes from an IO object' do
       #   data = StringIO.new "Sally Arthurton\tsally@local\nJonas Arthurton\tjonas@local\n"
       #   assert_equal 2, @db.write('users', %w{name email}, data)
@@ -146,7 +140,7 @@ describe 'Adapter' do
       #   assert_equal 1,   @db.write('users', [], data)
       #   assert_equal row, @db.execute('select * from users limit 1').first
       # end
-      end
+      # end
     end
   end
 end

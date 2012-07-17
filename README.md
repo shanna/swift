@@ -77,7 +77,7 @@ gem install swift
   require 'swift'
 
   Swift.trace true # Debugging.
-  Swift.setup :default, Swift::DB::Postgres, db: 'swift'
+  Swift.setup :default, Swift::Adapter::Postgres, db: 'swift'
 
   # Block form db context.
   Swift.db do |db|
@@ -112,7 +112,7 @@ primitive Ruby type conversion.
   require 'swift/migrations'
 
   Swift.trace true # Debugging.
-  Swift.setup :default, Swift::DB::Postgres, db: 'swift'
+  Swift.setup :default, Swift::Adapter::Postgres, db: 'swift'
 
   class User < Swift::Record
     store     :users
@@ -147,7 +147,7 @@ Record/relation level helpers.
   require 'swift/migrations'
 
   Swift.trace true # Debugging.
-  Swift.setup :default, Swift::DB::Postgres, db: 'swift'
+  Swift.setup :default, Swift::Adapter::Postgres, db: 'swift'
 
   class User < Swift::Record
     store     :users
@@ -244,7 +244,7 @@ But you can do it almost as fast in ruby,
 ```ruby
   require 'swift'
 
-  Swift.setup :default, Swift::DB::Mysql, db: 'swift'
+  Swift.setup :default, Swift::Adapter::Mysql, db: 'swift'
 
   # MySQL packet size is the usual limit, 8k is the packet size by default.
   Swift.db do |db|
@@ -266,7 +266,7 @@ which implicitly uses `rb_thread_wait_fd`
 ```ruby
   require 'swift'
 
-  pool = 3.times.map.with_index {|n| Swift.setup n, Swift::DB::Postgres, db: 'swift' }
+  pool = 3.times.map.with_index {|n| Swift.setup n, Swift::Adapter::Postgres, db: 'swift' }
 
   Thread.new do
     pool[0].async_execute('select pg_sleep(3), 1 as qid') {|row| p row}
@@ -289,7 +289,7 @@ or use the `swift/eventmachine` api.
   require 'swift/eventmachine'
 
   EM.run do
-    pool = 3.times.map { Swift.setup(:default, Swift::DB::Postgres, db: "swift") }
+    pool = 3.times.map { Swift.setup(:default, Swift::Adapter::Postgres, db: "swift") }
 
     3.times.each do |n|
       defer = pool[n].execute("select pg_sleep(3 - #{n}), #{n + 1} as qid")
@@ -313,7 +313,7 @@ or use the `em-synchrony` api for `swift`
   EM.run do
     3.times.each do |n|
       EM.synchrony do
-        db     = Swift.setup(:default, Swift::DB::Postgres, db: "swift")
+        db     = Swift.setup(:default, Swift::Adapter::Postgres, db: "swift")
         result = db.execute("select pg_sleep(3 - #{n}), #{n + 1} as qid")
 
         p result.first

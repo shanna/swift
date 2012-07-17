@@ -6,9 +6,12 @@ module Swift
     alias :aexecute :execute
     def execute *args
       res = EM::Synchrony.sync aexecute(*args)
-      raise res if res.kind_of?(SwiftError)
+      raise res if res.kind_of?(Error)
       yield res if block_given?
       res
+    rescue => e
+      $stderr.puts e, e.backtrace.join($/)
+      nil
     end
   end
 end

@@ -162,12 +162,20 @@ module Swift
       @trace = false
     end
 
+    def trace?
+      !!@trace
+    end
+
     def execute command, *bind
       start = Time.now
       record, command = command, bind.shift if command.kind_of?(Class) && command < Record
       record ? Result.new(record, db.execute(command, *bind)) : db.execute(command, *bind)
     ensure
-      @trace.print Time.now.strftime('%F %T.%N'), ' - ', (Time.now - start).to_f, ' - ', command, ' ', bind, $/ if @trace
+      log_command(start, command, bind) if @trace
+    end
+
+    def log_command start, command, bind
+      @trace.print Time.now.strftime('%F %T.%N'), ' - ', (Time.now - start).to_f, ' - ', command, ' ', bind, $/
     end
   end # Adapter
 end # Swift

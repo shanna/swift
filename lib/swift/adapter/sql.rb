@@ -8,7 +8,7 @@ module Swift
     # @abstract
     class Sql < Adapter
       extend Forwardable
-      def_delegators :db, :begin, :commit, :rollback, :close, :closed?
+      def_delegators :db, :begin, :commit, :rollback, :close, :closed?, :query, :fileno, :result
 
       def tables
         raise NotImplementedError
