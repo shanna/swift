@@ -2,9 +2,9 @@ require 'swift/result'
 
 module Swift
   class Statement
-    def initialize record, statement
+    def initialize record, command
       @record    = record
-      @statement = Swift.db.prepare(statement)
+      @statement = Swift.db.prepare(command)
     end
 
     def execute *bind, &block

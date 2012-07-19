@@ -1,12 +1,12 @@
 GIT
   remote: http://github.com/deepfryed/swift-db-mysql
-  revision: b36933236f705be488a49ef35f6fd36f43777a66
+  revision: 86f3fa46ab38047d0081c1dafd36aae090fabe6d
   specs:
     swift-db-mysql (0.1.0)
 
 GIT
   remote: http://github.com/deepfryed/swift-db-postgres
-  revision: 1da04b79544d482493971169abe7155927cc535a
+  revision: 78a1985a3cf3320e7c4dacacc94309f161874304
   specs:
     swift-db-postgres (0.1.0)
 

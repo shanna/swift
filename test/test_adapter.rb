@@ -1,8 +1,6 @@
 require_relative 'helper'
 require 'stringio'
 
-GC.disable
-
 describe 'Adapter' do
   supported_by Swift::Adapter::Postgres, Swift::Adapter::Mysql, Swift::Adapter::Sqlite3 do
     describe 'db' do
@@ -120,27 +118,26 @@ describe 'Adapter' do
         end
       end
 
-      # TODO
-      # describe 'bulk writes!' do
-      # it 'writes from an IO object' do
-      #   data = StringIO.new "Sally Arthurton\tsally@local\nJonas Arthurton\tjonas@local\n"
-      #   assert_equal 2, @db.write('users', %w{name email}, data)
-      # end
+      describe 'bulk writes' do
+        it 'writes from an IO object' do
+          data = StringIO.new "Sally Arthurton\tsally@local\nJonas Arthurton\tjonas@local\n"
+          assert_equal 2, @db.write('users', %w{name email}, data).affected_rows
+        end
 
-      # it 'writes from a string' do
-      #   data = "Sally Arthurton\tsally@local\nJonas Arthurton\tjonas@local\n"
-      #   assert_equal 2, @db.write('users', %w{name email}, data)
-      # end
+        it 'writes from a string' do
+          data = "Sally Arthurton\tsally@local\nJonas Arthurton\tjonas@local\n"
+          assert_equal 2, @db.write('users', %w{name email}, data).affected_rows
+        end
 
-      # it 'writes with no columns specified' do
-      #   ts   = DateTime.parse('2010-01-01 00:00:00')
-      #   data = "1\tSally Arthurton\tsally@local\t#{ts}\n"
-      #   row  = {id: 1, name: 'Sally Arthurton', email: 'sally@local', created_at: ts}
+        it 'writes with no columns specified' do
+          ts   = DateTime.parse('2010-01-01 00:00:00')
+          data = "1\tSally Arthurton\tsally@local\t#{ts}\n"
+          row  = {id: 1, name: 'Sally Arthurton', email: 'sally@local', created_at: ts}
 
-      #   assert_equal 1,   @db.write('users', [], data)
-      #   assert_equal row, @db.execute('select * from users limit 1').first
-      # end
-      # end
+          assert_equal 1,   @db.write('users', data).affected_rows
+          assert_equal row, @db.execute('select * from users limit 1').first
+        end
+      end
     end
   end
 end

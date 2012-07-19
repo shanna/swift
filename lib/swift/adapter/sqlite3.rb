@@ -41,7 +41,8 @@ module Swift
         execute('select name from sqlite_master where type = ?', 'table').map(&:values).flatten
       end
 
-      def write table, fields, io
+      def write table, fields = nil, io
+        fields    = execute("select * from #{table} limit 0").fields if fields.nil? or fields.empty?
         statement = prepare("insert into #{table}(#{fields.join(',')}) values (%s)" % (['?'] * fields.size).join(','))
 
         r  = 0
@@ -49,7 +50,9 @@ module Swift
         io.split(/\n+/).each do |line|
           r += statement.execute(*line.split(/\t/).map {|value| value == '\N' ? nil : value}).affected_rows
         end
-        r
+
+        # TODO: a better way to return a pretend result
+        Struct.new(:affected_rows).new(r)
       end
     end # Sqlite3
   end # Adapter
