@@ -1,6 +1,9 @@
 require 'forwardable'
 
 module Swift
+  # Result.
+  #
+  # Wrapper for command result. It lazily instantiates a new Swift::Record instance for each result row.
   class Result
     include Enumerable
     extend  Forwardable
