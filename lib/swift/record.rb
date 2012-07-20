@@ -102,7 +102,7 @@ module Swift
       #     updated_at: Time.now
       #   )
       #
-      # @param [Hash, Array<Hash>] options Create with attributes. <tt>{name: value}</tt>
+      # @param [Hash, Array<Hash>] resources Create with attributes. <tt>{name: value}</tt>
       def create resources = {}
         Swift.db.create(self, resources)
       end

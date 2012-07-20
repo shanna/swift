@@ -8,7 +8,7 @@ module Swift
       #     end
       #   end
       #
-      # @param [Proc] &migrations
+      # @param [Proc] migrations
       #
       # @see Swift::Record
       def migrations &migrations

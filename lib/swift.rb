@@ -97,8 +97,8 @@ module Swift
     #     other_users.execute(32)
     #   end
     #
-    # @param  [Symbol] name   Adapter name.
-    # @param  [Proc]   &block Scope this block to the named adapter instead of <tt>:default</tt>.
+    # @param  [Symbol] name     Adapter name.
+    # @param  [Proc]   block    Scope this block to the named adapter instead of <tt>:default</tt>.
     # @return [Swift::Adapter]
     #--
     # I pilfered the logic from DM but I don't really understand what is/isn't thread safe.
