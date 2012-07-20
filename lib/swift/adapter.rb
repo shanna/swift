@@ -152,20 +152,56 @@ module Swift
       resources.kind_of?(Array) ? result : result.first
     end
 
+    # Create a server side prepared statement
+    #
+    # @example
+    #   finder = Swift.db.prepare(User, "select * from users where id > ?")
+    #   user   = finder.execute(1).first
+    #   user.id
+    #
+    # @param  [Swift::Record]       record    Concrete record subclass to load (optional)
+    # @param  [String]              command   Command to be prepared by the underlying concrete adapter.
+    # @return [Swift::Statement, Swift::DB::Mysql::Statement, Swift::DB::Sqlite3::Statement, ...]
     def prepare record = nil, command
       record ? Statement.new(record, command) : db.prepare(command)
     end
 
+    # Trace commands being executed.
+    #
+    # @example
+    #   Swift.db.trace { Swift.db.execute("select * from users") }
+    # @example
+    #   Swift.db.trace(StringIO.new) { Swift.db.execute("select * from users") }
+    # @example
+    #   Swift.db.trace(File.open('command.log', 'w')) { Swift.db.execute("select * from users") }
+    #
+    # @param  [IO]      io      An optional IO object to log commands
+    # @return [Object]  result  Result from the block yielded to
     def trace io = $stdout
       @trace = io
-      yield
+      result = yield
       @trace = false
+      result
     end
 
+    # Check if the adapter commands are being traced.
+    #
+    # @return [TrueClass, FalseClass]
     def trace?
       !!@trace
     end
 
+    # Execute a command using the underlying concrete adapter.
+    #
+    # @example
+    #   Swift.db.execute("select * from users")
+    # @example
+    #   Swift.db.execute(User, "select * from users where id = ?", 1)
+    #
+    # @param  [Swift::Record]       record    Concrete record subclass to load (optional)
+    # @param  [String]              command   Command to be executed by the adapter.
+    # @param  [*Object]             bind      Bind values
+    # @return [Swift::Result, Swift::DB::Mysql::Result, Swift::DB::Sqlite3::Result, ...]
     def execute command, *bind
       start = Time.now
       record, command = command, bind.shift if command.kind_of?(Class) && command < Record
@@ -173,6 +209,8 @@ module Swift
     ensure
       log_command(start, command, bind) if @trace
     end
+
+    private
 
     def log_command start, command, bind
       @trace.print Time.now.strftime('%F %T.%N'), ' - ', (Time.now - start).to_f, ' - ', command, ' ', bind, $/
