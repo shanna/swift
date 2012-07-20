@@ -20,7 +20,7 @@ class Runner
     %w(tests runs rows).each do |name|
       instance_variable_set("@#{name}", options[name.to_sym])
     end
-    Swift.setup :default, klass, db: 'swift'
+    Swift.setup :default, klass, db: 'swift', ssl: {sslmode: 'disable'}
   end
 
   def run

@@ -31,7 +31,7 @@ class Runner
       instance_variable_set("@#{name}", opts[name.to_sym])
     end
 
-    Swift.setup :default, klass, db: @driver == 'sqlite3' ? ':memory:' : 'swift'
+    Swift.setup :default, klass, db: @driver == 'sqlite3' ? ':memory:' : 'swift', ssl: {sslmode: 'disable'}
   end
 
   def run
@@ -39,8 +39,7 @@ class Runner
     yield run_creates if tests.include?(:create)
     yield run_selects if tests.include?(:select)
     yield run_updates if tests.include?(:update)
-    # TODO
-    # yield run_writes  if tests.include?(:update)
+    yield run_writes  if tests.include?(:update)
   end
 
   def run_creates
