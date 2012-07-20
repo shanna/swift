@@ -159,8 +159,12 @@ module Swift
     #   user   = finder.execute(1).first
     #   user.id
     #
-    # @param  [Swift::Record]       record    Concrete record subclass to load (optional)
-    # @param  [String]              command   Command to be prepared by the underlying concrete adapter.
+    # @overload prepare(record, command)
+    #   @param  [Swift::Record]       record    Concrete record subclass to load.
+    #   @param  [String]              command   Command to be prepared by the underlying concrete adapter.
+    # @overload prepare(command)
+    #   @param  [String]              command   Command to be prepared by the underlying concrete adapter.
+    #
     # @return [Swift::Statement, Swift::DB::Mysql::Statement, Swift::DB::Sqlite3::Statement, ...]
     def prepare record = nil, command
       record ? Statement.new(record, command) : db.prepare(command)
@@ -198,9 +202,14 @@ module Swift
     # @example
     #   Swift.db.execute(User, "select * from users where id = ?", 1)
     #
-    # @param  [Swift::Record]       record    Concrete record subclass to load (optional)
-    # @param  [String]              command   Command to be executed by the adapter.
-    # @param  [*Object]             bind      Bind values
+    # @overload execute(record, command, *bind)
+    #   @param  [Swift::Record]       record    Concrete record subclass to load.
+    #   @param  [String]              command   Command to be executed by the adapter.
+    #   @param  [*Object]             bind      Bind values.
+    # @overload execute(command, *bind)
+    #   @param  [String]              command   Command to be executed by the adapter.
+    #   @param  [*Object]             bind      Bind values.
+    #
     # @return [Swift::Result, Swift::DB::Mysql::Result, Swift::DB::Sqlite3::Result, ...]
     def execute command, *bind
       start = Time.now

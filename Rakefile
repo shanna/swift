@@ -29,5 +29,5 @@ task :default => :test
 
 require 'yard'
 YARD::Rake::YardocTask.new do |yard|
-  yard.files   = ['lib/**/*.rb']
+  yard.files = Dir["lib/**/*.rb"].reject {|file| %r{eventmachine|synchrony}.match(file)}
 end
