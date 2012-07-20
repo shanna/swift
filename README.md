@@ -10,43 +10,22 @@ A rational rudimentary object relational mapper.
 
 ## Dependencies
 
-* ruby   >= 1.9.1
-* [dbic++](http://github.com/deepfryed/dbicpp) >= 0.6.1
-* mysql  >= 5.0.17, postgresql >= 8.4 or sqlite3 >= 3.7
+* MRI Ruby >= 1.9.1
+* swift-db-sqlite3 or swift-db-postgres or swift-db-mysql
 
 ## Installation
 
-Install dbic++ first. Grab the latest [dbic++](https://github.com/deepfryed/dbicpp) source tarball and
-unpack it. Installation instructions for dbic++ under two most popular unices are given below.
+### Dependencies
 
-### dbic++ on Linux (debian flavours)
-
-```
-sudo apt-get install build-essential
-sudo apt-get install cmake libpcre3-dev uuid-dev
-sudo apt-get install libmysqlclient-dev libpq-dev libsqlite3-dev
-
-cd dbicpp/
-sudo ./build -i
-```
-
-### dbic++ on MacOSX
-
-Assuming you already have homebrew. If not head to https://github.com/mxcl/homebrew/wiki/installation
+Install one of the following drivers you would like to use.
 
 ```
-brew install cmake
-brew install pcre
-brew install ossp-uuid
-brew install postgresql
-brew install mysql
-brew install sqlite3
-
-cd dbicpp/
-sudo ./build -i
+gem install swift-db-sqlite3
+gem install swift-db-postgres
+gem install swift-db-mysql
 ```
 
-### Install swift
+### Install Swift
 
 ```
 gem install swift
@@ -61,15 +40,6 @@ gem install swift
 * Asynchronous API for PostgreSQL and MySQL.
 * IdentityMap.
 * Migrations.
-
-## Performance notes
-
-1. The current version creates DateTime objects for timestamp fields and this is roughly 80% slower on
-   rubies older than 1.9.3.
-2. On rubies older than 1.9.3, Swift will try using [home_run](https://github.com/jeremyevans/home_run)
-   for performance.
-3. Record operations use prepared statements when possible. If you would like to turn it off, you can
-   pass `prepare_sql: false` in the `Adapter` connection options.
 
 ### DB
 
