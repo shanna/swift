@@ -9,7 +9,7 @@ module Swift
   class Adapter
     alias :aexecute :execute
 
-    # Execute a command asynchronously and pause the Fiber until the command to returns.
+    # Execute a command asynchronously and pause the Fiber until the command finishes.
     #
     # @example
     #   EM.run do
