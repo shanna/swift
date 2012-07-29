@@ -8,7 +8,7 @@ module Swift
     include Enumerable
     extend  Forwardable
 
-    def_delegators :@result, :select_rows, :affected_rows, :fields, :types, :insert_id
+    def_delegators :@result, :selected_rows, :affected_rows, :fields, :types, :insert_id
 
     def initialize record, result
       @record = record
