@@ -1,8 +1,8 @@
 require_relative 'helper'
 
-describe 'scheme' do
+describe 'record' do
   before do
-    @user = Class.new(Swift::Scheme) do
+    @user = Class.new(Swift::Record) do
       store     :users
       attribute :id,         Swift::Type::Integer,  serial: true, key: true
       attribute :name,       Swift::Type::String,   default: "dave"
@@ -57,13 +57,13 @@ describe 'scheme' do
     end
   end
 
-  supported_by Swift::DB::Postgres, Swift::DB::Mysql, Swift::DB::Sqlite3 do
+  supported_by Swift::Adapter::Postgres, Swift::Adapter::Mysql, Swift::Adapter::Sqlite3 do
     describe 'adapter operations' do
       before do
         Swift.db.migrate! @user
       end
 
-      it 'should return scheme instance when given scheme in #execute' do
+      it 'should return record instance when given record in #execute' do
         user = @user.create
         assert_equal 1, Swift.db.execute(@user, 'select * from users').first.id
       end
@@ -77,12 +77,12 @@ describe 'scheme' do
       end
 
       it 'adapter should barf when trying to delete an invalid instance' do
-        assert_raises(ArgumentError) { Swift.db.delete @user, {id: nil, name: 'foo'} }
+        assert_raises(Swift::ArgumentError) { Swift.db.delete @user, {id: nil, name: 'foo'} }
       end
 
       it 'should not update without valid keys' do
         user = @user.new
-        assert_raises(ArgumentError) { user.update(name: 'dave') }
+        assert_raises(Swift::ArgumentError) { user.update(name: 'dave') }
       end
 
       it 'should update with valid keys' do

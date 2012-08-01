@@ -1,13 +1,13 @@
 require_relative 'helper'
 
 describe 'Adapter' do
-  supported_by Swift::DB::Postgres, Swift::DB::Mysql, Swift::DB::Sqlite3 do
+  supported_by Swift::Adapter::Postgres, Swift::Adapter::Mysql, Swift::Adapter::Sqlite3 do
     describe 'typecasting' do
       before do
         @db = Swift.db
         @db.execute %q{drop table if exists users}
         serial = case @db
-          when Swift::DB::Sqlite3 then 'integer primary key'
+          when Swift::Adapter::Sqlite3 then 'integer primary key'
           else 'serial'
         end
         @db.execute %Q{
@@ -40,7 +40,7 @@ describe 'Adapter' do
         assert_kind_of DateTime,   result[:updated]
 
         assert_equal   dt,         result[:updated].strftime('%F %T')
-        assert_equal   65000,      result[:updated].to_time.usec unless @db.kind_of?(Swift::DB::Mysql)
+        assert_equal   65000,      result[:updated].to_time.usec unless @db.kind_of?(Swift::Adapter::Mysql)
       end
     end
   end

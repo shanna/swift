@@ -1,7 +1,7 @@
 require_relative 'helper'
 
 describe 'Adapter' do
-  supported_by Swift::DB::Postgres, Swift::DB::Mysql, Swift::DB::Sqlite3 do
+  supported_by Swift::Adapter::Postgres, Swift::Adapter::Mysql, Swift::Adapter::Sqlite3 do
     describe 'character encoding' do
       before do
         Swift.db do |db|
@@ -9,7 +9,7 @@ describe 'Adapter' do
           db.execute %q{create table users(name text)}
 
           # Mysql on debian at least doesn't default to utf8.
-          if db.kind_of? Swift::DB::Mysql
+          if db.kind_of? Swift::Adapter::Mysql
             db.execute %q{alter table users default character set utf8}
             db.execute %q{alter table users change name name text charset utf8}
           end

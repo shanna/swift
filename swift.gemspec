@@ -4,51 +4,41 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{swift}
+  s.name = "swift"
   s.version = "0.14.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = [%q{Shane Hanna}, %q{Bharanee 'Barney' Rathna}]
-  s.date = %q{2012-03-21}
-  s.description = %q{A rational rudimentary database abstraction.}
-  s.email = [%q{shane.hanna@gmail.com}, %q{deepfryed@gmail.com}]
-  s.extensions = [%q{ext/extconf.rb}]
+  s.authors = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
+  s.date = "2012-07-28"
+  s.description = "A rational rudimentary database abstraction."
+  s.email = ["shane.hanna@gmail.com", "deepfryed@gmail.com"]
   s.extra_rdoc_files = [
     "LICENSE",
     "README.md"
   ]
   s.files = [
     "API.rdoc",
+    "Gemfile",
+    "Gemfile.lock",
     "LICENSE",
     "README.md",
     "Rakefile",
     "VERSION",
-    "ext/adapter.cc",
-    "ext/adapter.h",
-    "ext/adapter_io.cc",
-    "ext/adapter_io.h",
-    "ext/attribute.cc",
-    "ext/attribute.h",
-    "ext/datetime.cc",
-    "ext/datetime.h",
-    "ext/extconf.rb",
-    "ext/query.cc",
-    "ext/query.h",
-    "ext/result.cc",
-    "ext/result.h",
-    "ext/statement.cc",
-    "ext/statement.h",
-    "ext/swift.cc",
-    "ext/swift.h",
     "lib/swift.rb",
     "lib/swift/adapter.rb",
+    "lib/swift/adapter/mysql.rb",
+    "lib/swift/adapter/postgres.rb",
     "lib/swift/adapter/sql.rb",
+    "lib/swift/adapter/sqlite3.rb",
     "lib/swift/attribute.rb",
-    "lib/swift/db.rb",
+    "lib/swift/eventmachine.rb",
     "lib/swift/header.rb",
     "lib/swift/identity_map.rb",
     "lib/swift/migrations.rb",
-    "lib/swift/scheme.rb",
+    "lib/swift/record.rb",
+    "lib/swift/result.rb",
+    "lib/swift/statement.rb",
+    "lib/swift/synchrony.rb",
     "lib/swift/type.rb",
     "lib/swift/validations.rb",
     "swift.gemspec",
@@ -62,17 +52,17 @@ Gem::Specification.new do |s|
     "test/test_error.rb",
     "test/test_identity_map.rb",
     "test/test_io.rb",
-    "test/test_scheme.rb",
+    "test/test_record.rb",
     "test/test_swift.rb",
     "test/test_timestamps.rb",
     "test/test_transactions.rb",
     "test/test_types.rb",
     "test/test_validations.rb"
   ]
-  s.homepage = %q{http://github.com/shanna/swift}
-  s.require_paths = [%q{lib}]
-  s.rubygems_version = %q{1.8.2}
-  s.summary = %q{A rational rudimentary database abstraction.}
+  s.homepage = "http://github.com/shanna/swift"
+  s.require_paths = ["lib"]
+  s.rubygems_version = "1.8.24"
+  s.summary = "A rational rudimentary database abstraction."
 
   if s.respond_to? :specification_version then
     s.specification_version = 3

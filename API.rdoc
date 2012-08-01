@@ -7,7 +7,7 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
   Swift
     .setup  #=> Adapter
     .db     #=> Adapter
-    .schema #=> [Scheme, ...]
+    .schema #=> [Record, ...]
     .trace
 
     # Abstract.
@@ -15,15 +15,15 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
       .new           #=> Adapter
       #begin         #=> Adapter
       #commit
-      #create        #=> Scheme or Result
+      #create        #=> Record or Result
       #delete        #=> Result
       #execute       #=> Result
       #async_execute #=> Result
-      #get           #=> Scheme
+      #get           #=> Record
       #prepare       #=> Statement
       #rollback
       #transaction   #=> Adapter
-      #update        #=> Scheme or Result
+      #update        #=> Record or Result
       #reconnect
 
     # Concrete.
@@ -32,7 +32,7 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
       Postgres < Adapter::Sql
       Sqlite3  < Adapter::Sql
 
-    # Enumerable collection of Scheme or Hash tuples.
+    # Enumerable collection of Record or Hash tuples.
     Result
       .new         #=> Result
       #insert_id   #=> Numeric
@@ -46,21 +46,21 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
       #execute #=> Result
       #command #=> String # The SQL command executed or to be executed
 
-    Scheme
+    Record
       .attribute #=> Type
-      .create    #=> Scheme or Result
-      .get       #=> Scheme
+      .create    #=> Record or Result
+      .get       #=> Record
       .header    #=> Header
-      .load      #=> Scheme
-      .new       #=> Scheme
+      .load      #=> Record
+      .new       #=> Record
       .store     #=> Symbol
       #execute   #=> Result
       #prepare   #=> Statement
-      #scheme    #=> Alias for self.class
+      #record    #=> Alias for self.class
       #tuple     #=> Hash
-      #update    #=> Scheme or Result
+      #update    #=> Record or Result
 
-    # Enumerable collection of Types for Scheme.
+    # Enumerable collection of Types for Record.
     Header
       .new        #=> Header
       #all        #=> [Type, ...]
@@ -79,7 +79,7 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
       #key                   #=> true or false
       #serial                #=> Symbol or nil
       #default               #=> Object
-      #define_scheme_methods
+      #define_record_methods
 
     # Concrete.
     Type

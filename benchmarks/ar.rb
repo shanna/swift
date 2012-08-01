@@ -1,16 +1,14 @@
-require 'bundler'
-Bundler.setup(:default)
+require 'bundler/setup'
 
 require 'etc'
 require 'pg'
 require 'mysql2'
 require 'i18n'
-require 'stringio'
 require 'active_support'
 require 'active_record'
 
 class User < ActiveRecord::Base
-  set_table_name 'users'
+  self.table_name = 'users'
 end # User
 
 class Runner
@@ -34,20 +32,17 @@ class Runner
   end
 
   def migrate!
-    ActiveRecord::Base.connection.execute("set client_min_messages=WARNING")
-
-    orig_stdout, $stdout = $stdout, StringIO.new
-    ActiveRecord::Schema.define do
-      execute 'drop table if exists users'
-      create_table :users do |t|
-        t.column :name,       :string
-        t.column :email,      :string
-        t.column :updated_at, :timestamp
+    ActiveRecord::Base.connection.execute("set client_min_messages=WARNING") rescue nil
+    ActiveRecord::Migration.suppress_messages do
+      ActiveRecord::Schema.define do
+        execute 'drop table if exists users'
+        create_table :users do |t|
+          t.column :name,       :string
+          t.column :email,      :string
+          t.column :updated_at, :timestamp
+        end
       end
     end
-
-    ensure
-      $stdout = orig_stdout
   end
 
   def run_creates

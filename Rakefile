@@ -9,8 +9,7 @@ begin
     gem.email       = %w{shane.hanna@gmail.com deepfryed@gmail.com}
     gem.homepage    = 'http://github.com/shanna/swift'
     gem.authors     = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-    gem.extensions = FileList['ext/extconf.rb']
-    gem.files.reject!{|f| f =~ %r{\.gitignore|examples|benchmarks|memory/.*}}
+    gem.files.reject!{|f| f =~ %r{\.gitignore|examples|benchmarks|memory|gems/|Gemfile/.*}}
 
     gem.add_development_dependency 'minitest', '>= 1.7.0'
   end
@@ -26,11 +25,9 @@ Rake::TestTask.new(:test) do |test|
   test.verbose = true
 end
 
-task :test    => :check_dependencies
 task :default => :test
 
 require 'yard'
 YARD::Rake::YardocTask.new do |yard|
-  yard.files   = ['lib/**/*.rb', 'ext/*.cc']
+  yard.files = Dir["lib/**/*.rb"].reject {|file| %r{eventmachine|synchrony}.match(file)}
 end
-

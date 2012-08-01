@@ -1,7 +1,7 @@
 require_relative 'helper'
 
 describe 'Adapter' do
-  supported_by Swift::DB::Postgres, Swift::DB::Mysql, Swift::DB::Sqlite3 do
+  supported_by Swift::Adapter::Postgres, Swift::Adapter::Mysql, Swift::Adapter::Sqlite3 do
     describe 'transactions' do
       before do
         @name = 'test1 - transaction 1'
@@ -10,7 +10,7 @@ describe 'Adapter' do
         @db.execute %q{create table users(name text, created_at timestamp)}
 
         # In case of MyISAM default.
-        @db.kind_of?(Swift::DB::Mysql) && @db.execute('alter table users engine=innodb')
+        @db.kind_of?(Swift::Adapter::Mysql) && @db.execute('alter table users engine=innodb')
 
         @sth = @db.prepare('select count(*) as c from users where name = ?')
       end

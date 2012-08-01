@@ -2,17 +2,17 @@ module Swift
 
   # A resource (instance) definition.
   #
-  # @example A user scheme.
-  #   class User < Swift::Scheme
+  # @example A user record.
+  #   class User < Swift::Record
   #     store     :users
   #     attribute :id,         Swift::Type::Integer, serial: true, key: true
   #     attribute :name,       Swift::Type::String
   #     attribute :email,      Swift::Type::String
   #     attribute :updated_at, Swift::Type::Time
   #   end # User
-  class Scheme
+  class Record
     attr_accessor :tuple
-    alias_method :scheme, :class
+    alias_method :record, :class
 
     # @example
     #   User.new(
@@ -22,7 +22,7 @@ module Swift
     #   )
     # @param [Hash] options Create resource and set attributes. <tt>{name: value}</tt>
     def initialize options = {}
-      @tuple = scheme.header.new_tuple
+      @tuple = record.header.new_tuple
       options.each{|k, v| public_send(:"#{k}=", v)}
     end
 
@@ -37,7 +37,7 @@ module Swift
     # @param [Hash] options Update attributes. <tt>{name: value}</tt>
     def update options = {}
       options.each{|k, v| public_send(:"#{k}=", v)}
-      Swift.db.update(scheme, self)
+      Swift.db.update(record, self)
     end
 
     # @example
@@ -48,7 +48,7 @@ module Swift
     #   )
     #   apple.delete
     def delete resources = self
-      Swift.db.delete(scheme, resources)
+      Swift.db.delete(record, resources)
     end
 
     class << self
@@ -65,12 +65,12 @@ module Swift
       end
 
       def load tuple
-        scheme       = allocate
-        scheme.tuple = tuple
-        scheme
+        record       = allocate
+        record.tuple = tuple
+        record
       end
 
-      # Define a new attribute for this scheme.
+      # Define a new attribute for this record.
       #
       # @see Swift::Attribute#new
       def attribute name, type, options = {}
@@ -102,7 +102,7 @@ module Swift
       #     updated_at: Time.now
       #   )
       #
-      # @param [Hash, Array<Hash>] options Create with attributes. <tt>{name: value}</tt>
+      # @param [Hash, Array<Hash>] resources Create with attributes. <tt>{name: value}</tt>
       def create resources = {}
         Swift.db.create(self, resources)
       end
@@ -115,7 +115,7 @@ module Swift
       #   UserAddress.get(user_id: 12, address_id: 15)
       #
       # @param  [Hash] keys Hash of id(s) <tt>{id_name: value}</tt>.
-      # @return [Swift::Scheme, nil]
+      # @return [Swift::Record, nil]
       def get keys
         Swift.db.get(self, keys)
       end
@@ -143,10 +143,9 @@ module Swift
       # @param  [*Object] binds     Bind values.
       # @yield  [Swift::Result]
       # @return [Swift::Result]
-      def execute statement = '', *binds, &block
-        Swift.db.execute(self, statement, *binds, &block)
+      def execute statement = '', *binds
+        Swift::Result.new(self, Swift.db.execute(statement, *binds))
       end
     end
-  end # Scheme
+  end # Record
 end # Swift
-

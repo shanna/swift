@@ -10,43 +10,22 @@ A rational rudimentary object relational mapper.
 
 ## Dependencies
 
-* ruby   >= 1.9.1
-* [dbic++](http://github.com/deepfryed/dbicpp) >= 0.6.1
-* mysql  >= 5.0.17, postgresql >= 8.4 or sqlite3 >= 3.7
+* MRI Ruby >= 1.9.1
+* swift-db-sqlite3 or swift-db-postgres or swift-db-mysql
 
 ## Installation
 
-Install dbic++ first. Grab the latest [dbic++](https://github.com/deepfryed/dbicpp) source tarball and
-unpack it. Installation instructions for dbic++ under two most popular unices are given below.
+### Dependencies
 
-### dbic++ on Linux (debian flavours)
-
-```
-sudo apt-get install build-essential
-sudo apt-get install cmake libpcre3-dev uuid-dev
-sudo apt-get install libmysqlclient-dev libpq-dev libsqlite3-dev
-
-cd dbicpp/
-sudo ./build -i
-```
-
-### dbic++ on MacOSX
-
-Assuming you already have homebrew. If not head to https://github.com/mxcl/homebrew/wiki/installation
+Install one of the following drivers you would like to use.
 
 ```
-brew install cmake
-brew install pcre
-brew install ossp-uuid
-brew install postgresql
-brew install mysql
-brew install sqlite3
-
-cd dbicpp/
-sudo ./build -i
+gem install swift-db-sqlite3
+gem install swift-db-postgres
+gem install swift-db-mysql
 ```
 
-### Install swift
+### Install Swift
 
 ```
 gem install swift
@@ -62,22 +41,13 @@ gem install swift
 * IdentityMap.
 * Migrations.
 
-## Performance notes
-
-1. The current version creates DateTime objects for timestamp fields and this is roughly 80% slower on
-   rubies older than 1.9.3.
-2. On rubies older than 1.9.3, Swift will try using [home_run](https://github.com/jeremyevans/home_run)
-   for performance.
-3. Scheme operations use prepared statements when possible. If you would like to turn it off, you can
-   pass `prepare_sql: false` in the `Adapter` connection options.
-
 ### DB
 
 ```ruby
   require 'swift'
 
   Swift.trace true # Debugging.
-  Swift.setup :default, Swift::DB::Postgres, db: 'swift'
+  Swift.setup :default, Swift::Adapter::Postgres, db: 'swift'
 
   # Block form db context.
   Swift.db do |db|
@@ -102,7 +72,7 @@ gem install swift
   end
 ```
 
-### DB Scheme Operations
+### DB Record Operations
 
 Rudimentary object mapping. Provides a definition to the db methods for prepared (and cached) statements plus native
 primitive Ruby type conversion.
@@ -112,9 +82,9 @@ primitive Ruby type conversion.
   require 'swift/migrations'
 
   Swift.trace true # Debugging.
-  Swift.setup :default, Swift::DB::Postgres, db: 'swift'
+  Swift.setup :default, Swift::Adapter::Postgres, db: 'swift'
 
-  class User < Swift::Scheme
+  class User < Swift::Record
     store     :users
     attribute :id,         Swift::Type::Integer, serial: true, key: true
     attribute :name,       Swift::Type::String
@@ -125,7 +95,7 @@ primitive Ruby type conversion.
   Swift.db do |db|
     db.migrate! User
 
-    # Select Scheme instance (relation) instead of Hash.
+    # Select Record instance (relation) instead of Hash.
     users = db.prepare(User, 'select * from users limit 1').execute
 
     # Make a change and update.
@@ -138,18 +108,18 @@ primitive Ruby type conversion.
   end
 ```
 
-### Scheme CRUD
+### Record CRUD
 
-Scheme/relation level helpers.
+Record/relation level helpers.
 
 ```ruby
   require 'swift'
   require 'swift/migrations'
 
   Swift.trace true # Debugging.
-  Swift.setup :default, Swift::DB::Postgres, db: 'swift'
+  Swift.setup :default, Swift::Adapter::Postgres, db: 'swift'
 
-  class User < Swift::Scheme
+  class User < Swift::Record
     store     :users
     attribute :id,    Swift::Type::Integer, serial: true, key: true
     attribute :name,  Swift::Type::String
@@ -182,7 +152,7 @@ SQL is easy and most people know it so Swift ORM provides simple #to_s
 attribute to table and field name typecasting.
 
 ```ruby
-  class User < Swift::Scheme
+  class User < Swift::Record
     store     :users
     attribute :id,    Swift::Type::Integer, serial: true, key: true
     attribute :age,   Swift::Type::Integer, field: 'ega'
@@ -207,7 +177,7 @@ Swift comes with a simple identity map. Just require it after you load swift.
   require 'swift/identity_map'
   require 'swift/migrations'
 
-  class User < Swift::Scheme
+  class User < Swift::Record
     store     :users
     attribute :id,    Swift::Type::Integer, serial: true, key: true
     attribute :age,   Swift::Type::Integer, field: 'ega'
@@ -244,7 +214,7 @@ But you can do it almost as fast in ruby,
 ```ruby
   require 'swift'
 
-  Swift.setup :default, Swift::DB::Mysql, db: 'swift'
+  Swift.setup :default, Swift::Adapter::Mysql, db: 'swift'
 
   # MySQL packet size is the usual limit, 8k is the packet size by default.
   Swift.db do |db|
@@ -266,7 +236,7 @@ which implicitly uses `rb_thread_wait_fd`
 ```ruby
   require 'swift'
 
-  pool = 3.times.map.with_index {|n| Swift.setup n, Swift::DB::Postgres, db: 'swift' }
+  pool = 3.times.map.with_index {|n| Swift.setup n, Swift::Adapter::Postgres, db: 'swift' }
 
   Thread.new do
     pool[0].async_execute('select pg_sleep(3), 1 as qid') {|row| p row}
@@ -289,7 +259,7 @@ or use the `swift/eventmachine` api.
   require 'swift/eventmachine'
 
   EM.run do
-    pool = 3.times.map { Swift.setup(:default, Swift::DB::Postgres, db: "swift") }
+    pool = 3.times.map { Swift.setup(:default, Swift::Adapter::Postgres, db: "swift") }
 
     3.times.each do |n|
       defer = pool[n].execute("select pg_sleep(3 - #{n}), #{n + 1} as qid")
@@ -313,7 +283,7 @@ or use the `em-synchrony` api for `swift`
   EM.run do
     3.times.each do |n|
       EM.synchrony do
-        db     = Swift.setup(:default, Swift::DB::Postgres, db: "swift")
+        db     = Swift.setup(:default, Swift::Adapter::Postgres, db: "swift")
         result = db.execute("select pg_sleep(3 - #{n}), #{n + 1} as qid")
 
         p result.first
@@ -336,8 +306,35 @@ http://github.com/shanna/swift/tree/master/benchmarks
 
 The test environment:
 
-* ruby 1.9.3p0
-* Intel Core2Duo P8700 2.53GHz, 4G RAM and Kingston SATA2 SSD
+```
+$ uname -a
+
+Linux deepfryed.local 3.0.0-1-amd64 #1 SMP Sun Jul 24 02:24:44 UTC 2011 x86_64 GNU/Linux
+
+$ cat /proc/cpuinfo | grep "processor\|model name"
+
+processor    : 0
+model name   : Intel(R) Core(TM) i7-2677M CPU @ 1.80GHz
+processor    : 1
+model name   : Intel(R) Core(TM) i7-2677M CPU @ 1.80GHz
+processor    : 2
+model name   : Intel(R) Core(TM) i7-2677M CPU @ 1.80GHz
+processor    : 3
+model name   : Intel(R) Core(TM) i7-2677M CPU @ 1.80GHz
+
+$ ruby -v
+
+ruby 1.9.3p125 (2012-02-16 revision 34643) [x86_64-linux]
+```
+
+PostgreSQL config:
+
+```
+shared_buffers           = 800MB     # min 128kB
+effective_cache_size     = 512MB
+work_mem                 = 64MB      # min 64kB
+maintenance_work_mem     = 64MB      # min 1MB
+```
 
 The test setup:
 
@@ -352,25 +349,25 @@ The test setup:
 ```
     ./simple.rb -n1 -r10000 -s ar -s dm -s sequel -s swift
 
-    benchmark       sys     user    total  real      rss
-    ar #create      0.75    7.18    7.93   10.5043   366.95m
-    ar #select      0.07    0.26    0.33    0.3680    40.71m
-    ar #update      0.96    7.92    8.88   11.7537   436.38m
+    benchmark           sys         user       total       real        rss
 
-    dm #create      0.33    3.73    4.06    5.0908   245.68m
-    dm #select      0.08    1.51    1.59    1.6154    87.95m
-    dm #update      0.44    7.09    7.53    8.8685   502.77m
+    ar #create          1.960000    15.81000   17.770000   22.753109   266.21m
+    ar #select          0.020000     0.38000    0.400000    0.433041    50.82m
+    ar #update          2.000000    17.90000   19.900000   26.674921   317.48m
 
-    sequel #create  0.60    5.07    5.67    7.9804   236.69m
-    sequel #select  0.02    0.12    0.14    0.1778    12.75m
-    sequel #update  0.82    4.95    5.77    8.2062   230.00m
+    dm #create          0.660000    11.55000   12.210000   15.592424   236.86m
+    dm #select          0.030000     1.30000    1.330000    1.351911    87.18m
+    dm #update          0.950000    17.25000   18.200000   22.109859   474.81m
 
-    swift #create   0.27    0.59    0.86    1.5085    84.85m
-    swift #select   0.03    0.06    0.09    0.1037    11.24m
-    swift #update   0.20    0.69    0.89    1.5867    62.19m
+    sequel #create      1.960000    14.48000   16.440000   23.004864   226.68m
+    sequel #select      0.000000     0.09000    0.090000    0.134619    12.77m
+    sequel #update      1.900000    14.37000   16.270000   22.945636   200.20m
 
-    -- bulk insert api --
-    swift #write    0.04    0.06    0.10    0.1699    14.05m
+    swift #create       0.520000     1.95000    2.470000    5.828846    75.26m
+    swift #select       0.010000    0.070000    0.080000    0.095124    11.23m
+    swift #update       0.440000     1.95000    2.390000    6.044971    59.35m
+    swift #write        0.010000    0.050000    0.060000    0.117195    13.46m
+
 ```
 
 ## TODO

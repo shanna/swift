@@ -1,7 +1,7 @@
 require_relative 'helper'
 
 describe 'Adapter' do
-  supported_by Swift::DB::Postgres do
+  supported_by Swift::Adapter::Postgres do
     %w(America/Chicago Australia/Melbourne).each do |timezone|
       describe 'time parsing in %s' % timezone do
         before do

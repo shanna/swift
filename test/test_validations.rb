@@ -3,7 +3,7 @@ require 'swift/validations'
 
 describe 'validations' do
   before do
-    @user = Class.new(Swift::Scheme) do
+    @user = Class.new(Swift::Record) do
       store     :users
       attribute :id,   Swift::Type::Integer, serial: true, key: true
       attribute :name, Swift::Type::String
@@ -40,7 +40,7 @@ describe 'validations' do
 
   describe 'errors' do
     it 'has relation' do
-      assert_kind_of Swift::Scheme, @user.new.validate.relation
+      assert_kind_of Swift::Record, @user.new.validate.relation
     end
   end
 end

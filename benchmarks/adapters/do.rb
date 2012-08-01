@@ -1,9 +1,9 @@
-require 'bundler'
-Bundler.setup(:default)
+require 'bundler/setup'
 
 require 'data_objects'
 require 'do_mysql'
 require 'do_postgres'
+require 'do_sqlite3'
 
 module DataObjects
   class Connection
@@ -22,8 +22,8 @@ class Runner
     %w(driver tests runs rows).each do |name|
       instance_variable_set("@#{name}", opts[name.to_sym])
     end
-    @driver = @driver =~ /postgres/ ? 'postgres' : driver
-    @adapter = DataObjects::Connection.new("#{driver}://127.0.0.1/swift")
+    @driver  = @driver =~ /postgres/ ? 'postgres' : driver
+    @adapter = DataObjects::Connection.new(@driver =~ /sqlite/ ? 'sqlite3://:memory:' : "#{driver}://127.0.0.1/swift")
   end
 
   def run

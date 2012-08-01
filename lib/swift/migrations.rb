@@ -2,15 +2,15 @@ module Swift
   module Migrations
     module ClassMethods
       # @example
-      #   class User < Swift::Scheme
+      #   class User < Swift::Record
       #     migrations do |db|
       #       db.execute %q{create table users(id serial, name text, age int)}
       #     end
       #   end
       #
-      # @param [Proc] &migrations
+      # @param [Proc] migrations
       #
-      # @see Swift::Scheme
+      # @see Swift::Record
       def migrations &migrations
         define_singleton_method(:migrate!, lambda{|db = Swift.db| migrations.call(db)})
       end
@@ -20,7 +20,7 @@ module Swift
       #
       # @param [Swift::Adapter] db
       #
-      # @see Swift::Scheme
+      # @see Swift::Record
       def migrate! db = Swift.db
         db.migrate! self
       end
@@ -30,25 +30,25 @@ module Swift
       # @example
       #   db.migrate! User
       #
-      # @param [Swift::Scheme] scheme
+      # @param [Swift::Record] record
       #
       # @see Swift::Adapter::Sql
-      def migrate! scheme
-        keys   =  scheme.header.keys
-        fields =  scheme.header.map{|p| field_definition(p)}.join(', ')
+      def migrate! record
+        keys   =  record.header.keys
+        fields =  record.header.map{|p| field_definition(p)}.join(', ')
         fields += ", primary key (#{keys.join(', ')})" unless keys.empty?
 
-        execute("drop table if exists #{scheme.store} cascade")
-        execute("create table #{scheme.store} (#{fields})")
+        execute("drop table if exists #{record.store} cascade")
+        execute("create table #{record.store} (#{fields})")
       end
     end # InstanceMethods
   end # Migrations
 
   def self.migrate! name = nil
-    schema.each{|scheme| scheme.migrate!(db(name)) }
+    schema.each{|record| record.migrate!(db(name)) }
   end
 
-  class Scheme
+  class Record
     extend Migrations::ClassMethods
   end
 

@@ -8,13 +8,11 @@ unless %r{^1\.9\.[3-9]|^2\.}.match(RUBY_VERSION)
 end
 
 # Extension.
-require_relative '../ext/swift'
 require_relative 'swift/adapter'
 require_relative 'swift/adapter/sql'
 require_relative 'swift/attribute'
-require_relative 'swift/db'
 require_relative 'swift/header'
-require_relative 'swift/scheme'
+require_relative 'swift/record'
 require_relative 'swift/type'
 
 # A rational rudimentary object relational mapper.
@@ -26,7 +24,7 @@ require_relative 'swift/type'
 #   Swift.trace true # Debugging.
 #   Swift.setup :default, Swift::DB::Postgres, db: 'swift'
 #
-#   class User < Swift::Scheme
+#   class User < Swift::Record
 #     store     :users
 #     attribute :id,    Swift::Type::Integer, serial: true, key: true
 #     attribute :name,  Swift::Type::String
@@ -99,8 +97,8 @@ module Swift
     #     other_users.execute(32)
     #   end
     #
-    # @param  [Symbol] name   Adapter name.
-    # @param  [Proc]   &block Scope this block to the named adapter instead of <tt>:default</tt>.
+    # @param  [Symbol] name     Adapter name.
+    # @param  [Proc]   block    Scope this block to the named adapter instead of <tt>:default</tt>.
     # @return [Swift::Adapter]
     #--
     # I pilfered the logic from DM but I don't really understand what is/isn't thread safe.
@@ -130,6 +128,10 @@ module Swift
     # @return [Array<Swift::Schema>]
     def schema
       @schema ||= []
+    end
+
+    def trace io = $stdout, &block
+      Swift.db.trace(io, &block)
     end
   end
 end # Swift

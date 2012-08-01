@@ -1,19 +1,26 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'test'))
 
-require 'minitest/spec'
-require 'minitest/unit'
+require 'bundler/setup'
+
+require 'etc'
+require 'minitest/autorun'
 require 'minitest_teardown_hack'
 require 'swift'
+require 'swift/adapter/mysql'
+require 'swift/adapter/postgres'
+require 'swift/adapter/sqlite3'
 require 'swift/migrations'
-require 'etc'
 
 class MiniTest::Spec
   def self.supported_by *adapters, &block
-    adapter_defaults    = { Swift::DB::Sqlite3 => { db: ':memory:' } }
+    adapter_defaults    = { Swift::Adapter::Sqlite3 => { db: ':memory:' } }
     connection_defaults = { db: 'swift_test', user: Etc.getlogin, host: '127.0.0.1' }
     adapters.each do |adapter|
       begin
+        #next if Swift::Adapter::Sqlite3 == adapter
+        #next if Swift::Adapter::Mysql == adapter
+        #next if Swift::Adapter::Postgres == adapter
         Swift.setup :default, adapter, connection_defaults.merge(adapter_defaults.fetch(adapter, {}))
       rescue => error
         warn "Unable to setup 'swift_test' db for #{adapter}, #{error.message}. Skipping..."
@@ -32,5 +39,3 @@ class MiniTest::Spec
     end
   end
 end
-
-MiniTest::Unit.autorun

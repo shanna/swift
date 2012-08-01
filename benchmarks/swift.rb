@@ -1,11 +1,15 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
+require 'bundler/setup'
 require 'benchmark'
 require 'stringio'
 require 'swift'
+require 'swift/adapter/mysql'
+require 'swift/adapter/postgres'
+require 'swift/adapter/sqlite3'
 require 'swift/migrations'
 
-class User < Swift::Scheme
+class User < Swift::Record
   store     :users
   attribute :id,         Swift::Type::Integer, serial: true, key: true
   attribute :name,       Swift::Type::String
@@ -15,19 +19,19 @@ end # User
 
 class Runner
   attr_reader :tests, :driver, :runs, :rows
-  def initialize opts={}
+  def initialize opts = {}
     @driver = opts[:driver]
     klass = case @driver
-      when /postgresql/ then Swift::DB::Postgres
-      when /mysql/      then Swift::DB::Mysql
-      when /sqlite3/    then Swift::DB::Sqlite3
+      when /postgresql/ then Swift::Adapter::Postgres
+      when /mysql/      then Swift::Adapter::Mysql
+      when /sqlite3/    then Swift::Adapter::Sqlite3
     end
 
     %w(tests runs rows).each do |name|
       instance_variable_set("@#{name}", opts[name.to_sym])
     end
 
-    Swift.setup :default, klass, db: @driver == 'sqlite3' ? ':memory:' : 'swift'
+    Swift.setup :default, klass, db: @driver == 'sqlite3' ? ':memory:' : 'swift', ssl: {sslmode: 'disable'}
   end
 
   def run
@@ -46,14 +50,14 @@ class Runner
 
   def run_selects
     Benchmark.run('swift #select') do
-      runs.times{ User.execute("select * from #{User}"){|m| [m.id, m.name, m.email, m.updated_at]}}
+      runs.times{ User.execute("select * from #{User}").each {|m| [m.id, m.name, m.email, m.updated_at] }}
     end
   end
 
   def run_updates
     Benchmark.run('swift #update') do
       runs.times do |n|
-        User.execute("select * from #{User}") do |m|
+        User.execute("select * from #{User}").each do |m|
           m.update(name: 'foo', email: 'foo@example.com', updated_at: Time.now)
         end
       end
