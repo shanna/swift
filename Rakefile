@@ -9,7 +9,7 @@ begin
     gem.email       = %w{shane.hanna@gmail.com deepfryed@gmail.com}
     gem.homepage    = 'http://github.com/shanna/swift'
     gem.authors     = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-    gem.files.reject!{|f| f =~ %r{\.gitignore|examples|benchmarks|memory/.*}}
+    gem.files.reject!{|f| f =~ %r{\.gitignore|examples|benchmarks|memory|gems/|Gemfile/.*}}
 
     gem.add_development_dependency 'minitest', '>= 1.7.0'
   end
