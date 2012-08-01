@@ -21,6 +21,7 @@ benchmarks/adapters/pg_ext/Makefile
 doc/*
 benchmarks/.bundle/*
 benchmarks/gems/*
+bin/
 gems/
 .bundle/
 tmp/

@@ -30,7 +30,7 @@ group :test do
   gem 'home_run'
   
   # swift drivers
-  gem 'swift-db-sqlite3',  git: 'http://github.com/deepfryed/swift-db-sqlite3'
-  gem 'swift-db-postgres', git: 'http://github.com/deepfryed/swift-db-postgres'
-  gem 'swift-db-mysql',    git: 'http://github.com/deepfryed/swift-db-mysql'
+  gem 'swift-db-sqlite3'
+  gem 'swift-db-postgres'
+  gem 'swift-db-mysql'
 end
