@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "swift"
-  s.version = "0.14.0"
+  s.version = "1.0.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-  s.date = "2012-07-28"
+  s.date = "2012-08-01"
   s.description = "A rational rudimentary database abstraction."
   s.email = ["shane.hanna@gmail.com", "deepfryed@gmail.com"]
   s.extra_rdoc_files = [
@@ -18,8 +18,6 @@ Gem::Specification.new do |s|
   ]
   s.files = [
     "API.rdoc",
-    "Gemfile",
-    "Gemfile.lock",
     "LICENSE",
     "README.md",
     "Rakefile",
@@ -61,7 +59,7 @@ Gem::Specification.new do |s|
   ]
   s.homepage = "http://github.com/shanna/swift"
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.24"
+  s.rubygems_version = "1.8.23"
   s.summary = "A rational rudimentary database abstraction."
 
   if s.respond_to? :specification_version then
