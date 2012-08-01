@@ -1,5 +1,4 @@
-require 'bundler'
-Bundler.setup(:default)
+require 'bundler/setup'
 
 require 'data_objects'
 require 'do_mysql'

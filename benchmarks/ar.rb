@@ -1,5 +1,4 @@
-require 'bundler'
-Bundler.setup(:default)
+require 'bundler/setup'
 
 require 'etc'
 require 'pg'

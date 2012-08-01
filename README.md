@@ -306,8 +306,35 @@ http://github.com/shanna/swift/tree/master/benchmarks
 
 The test environment:
 
-* ruby 1.9.3p0
-* Intel Core2Duo P8700 2.53GHz, 4G RAM and Kingston SATA2 SSD
+```
+$ uname -a
+
+Linux deepfryed.local 3.0.0-1-amd64 #1 SMP Sun Jul 24 02:24:44 UTC 2011 x86_64 GNU/Linux
+
+$ cat /proc/cpuinfo | grep "processor\|model name"
+
+processor    : 0
+model name   : Intel(R) Core(TM) i7-2677M CPU @ 1.80GHz
+processor    : 1
+model name   : Intel(R) Core(TM) i7-2677M CPU @ 1.80GHz
+processor    : 2
+model name   : Intel(R) Core(TM) i7-2677M CPU @ 1.80GHz
+processor    : 3
+model name   : Intel(R) Core(TM) i7-2677M CPU @ 1.80GHz
+
+$ ruby -v
+
+ruby 1.9.3p125 (2012-02-16 revision 34643) [x86_64-linux]
+```
+
+PostgreSQL config:
+
+```
+shared_buffers           = 800MB     # min 128kB
+effective_cache_size     = 512MB
+work_mem                 = 64MB      # min 64kB
+maintenance_work_mem     = 64MB      # min 1MB
+```
 
 The test setup:
 
@@ -322,25 +349,25 @@ The test setup:
 ```
     ./simple.rb -n1 -r10000 -s ar -s dm -s sequel -s swift
 
-    benchmark       sys     user    total  real      rss
-    ar #create      0.75    7.18    7.93   10.5043   366.95m
-    ar #select      0.07    0.26    0.33    0.3680    40.71m
-    ar #update      0.96    7.92    8.88   11.7537   436.38m
+    benchmark           sys         user       total       real        rss
 
-    dm #create      0.33    3.73    4.06    5.0908   245.68m
-    dm #select      0.08    1.51    1.59    1.6154    87.95m
-    dm #update      0.44    7.09    7.53    8.8685   502.77m
+    ar #create          1.960000    15.81000   17.770000   22.753109   266.21m
+    ar #select          0.020000     0.38000    0.400000    0.433041    50.82m
+    ar #update          2.000000    17.90000   19.900000   26.674921   317.48m
 
-    sequel #create  0.60    5.07    5.67    7.9804   236.69m
-    sequel #select  0.02    0.12    0.14    0.1778    12.75m
-    sequel #update  0.82    4.95    5.77    8.2062   230.00m
+    dm #create          0.660000    11.55000   12.210000   15.592424   236.86m
+    dm #select          0.030000     1.30000    1.330000    1.351911    87.18m
+    dm #update          0.950000    17.25000   18.200000   22.109859   474.81m
 
-    swift #create   0.27    0.59    0.86    1.5085    84.85m
-    swift #select   0.03    0.06    0.09    0.1037    11.24m
-    swift #update   0.20    0.69    0.89    1.5867    62.19m
+    sequel #create      1.960000    14.48000   16.440000   23.004864   226.68m
+    sequel #select      0.000000     0.09000    0.090000    0.134619    12.77m
+    sequel #update      1.900000    14.37000   16.270000   22.945636   200.20m
 
-    -- bulk insert api --
-    swift #write    0.04    0.06    0.10    0.1699    14.05m
+    swift #create       0.520000     1.95000    2.470000    5.828846    75.26m
+    swift #select       0.010000    0.070000    0.080000    0.095124    11.23m
+    swift #update       0.440000     1.95000    2.390000    6.044971    59.35m
+    swift #write        0.010000    0.050000    0.060000    0.117195    13.46m
+
 ```
 
 ## TODO
