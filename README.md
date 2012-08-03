@@ -45,6 +45,7 @@ gem install swift
 
 ```ruby
   require 'swift'
+  require 'swift/adapter/postgres'
 
   Swift.trace true # Debugging.
   Swift.setup :default, Swift::Adapter::Postgres, db: 'swift'
@@ -79,6 +80,7 @@ primitive Ruby type conversion.
 
 ```ruby
   require 'swift'
+  require 'swift/adapter/postgres'
   require 'swift/migrations'
 
   Swift.trace true # Debugging.
@@ -114,6 +116,7 @@ Record/relation level helpers.
 
 ```ruby
   require 'swift'
+  require 'swift/adapter/postgres'
   require 'swift/migrations'
 
   Swift.trace true # Debugging.
@@ -174,8 +177,11 @@ Swift comes with a simple identity map. Just require it after you load swift.
 
 ```ruby
   require 'swift'
+  require 'swift/adapter/postgres'
   require 'swift/identity_map'
   require 'swift/migrations'
+
+  Swift.setup :default, Swift::Adapter::Postgres, db: 'swift'
 
   class User < Swift::Record
     store     :users
@@ -213,6 +219,7 @@ But you can do it almost as fast in ruby,
 
 ```ruby
   require 'swift'
+  require 'swift/adapter/mysql'
 
   Swift.setup :default, Swift::Adapter::Mysql, db: 'swift'
 
