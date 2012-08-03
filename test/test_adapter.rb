@@ -26,6 +26,11 @@ describe 'Adapter' do
         assert Swift.db.closed?
       end
 
+      it 'should escape text' do
+        text = "foo 'bar"
+        assert_match %r{^foo [\\']'bar$}, @db.escape(text), "expected #{text} to be escaped"
+      end
+
       describe 'execute' do
         it 'executes without bind values' do
           assert @db.execute %q{select count(*) from users}
