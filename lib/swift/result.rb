@@ -17,7 +17,7 @@ module Swift
 
     def each
       @result.each do |tuple|
-        yield @record.allocate.tap {|s| s.tuple = tuple}
+        yield @record.load(tuple)
       end
     end
   end # Result

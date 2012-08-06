@@ -96,6 +96,13 @@ describe 'record' do
         assert user.update(name: 'dave')
         assert user.delete
       end
+
+      it 'should use Record.load to create new instances from database' do
+        klass = Class.new(@user) { def self.load tuple; super.tap {|i| i.tuple[:name] = 'test'}; end }
+        user = klass.create(name: 'dan')
+        user = klass.get(id: user.id)
+        assert_equal 'test', user.name
+      end
     end
   end
 end
