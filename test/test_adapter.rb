@@ -36,6 +36,12 @@ describe 'Adapter' do
         end
       end
 
+      describe 'escape' do
+        it 'escapes strings' do
+          assert_match %r{foo.'bar}, @db.escape("foo'bar")
+        end
+      end
+
       describe 'prepared statements' do
         it 'executes via Adapter#prepare' do
           result = []
