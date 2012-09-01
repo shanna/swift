@@ -222,7 +222,9 @@ module Swift
     private
 
     def log_command start, command, bind
-      @trace.print Time.now.strftime('%F %T.%N'), ' - ', (Time.now - start).to_f, ' - ', command, ' ', bind, $/
+      @trace.print Time.now.strftime('%F %T.%N'), ' - %.9f' % (Time.now - start).to_f, ' - ', command
+      @trace.print ' ', bind if bind && bind.size > 0
+      @trace.print $/
     end
   end # Adapter
 end # Swift

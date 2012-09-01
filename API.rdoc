@@ -13,18 +13,26 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
     # Abstract.
     Adapter
       .new           #=> Adapter
-      #begin         #=> Adapter
-      #commit
       #create        #=> Record or Result
       #delete        #=> Result
       #execute       #=> Result
-      #async_execute #=> Result
       #get           #=> Record
       #prepare       #=> Statement
+      #update        #=> Record or Result
+
+    # Adapter::Sql
+      #begin
+      #commit
       #rollback
       #transaction   #=> Adapter
-      #update        #=> Record or Result
-      #reconnect
+      #ping          #=> true or false
+      #close         #=> true or false
+      #closed?       #=> true or false
+      #escape        #=> String
+      #query
+      #fileno        #=> Integer
+      #result        #=> Result
+      #write         #=> Result
 
     # Concrete.
     DB
@@ -34,17 +42,16 @@ Public API minus the optional stuff like Pool, IdentityMap, Migrations etc.
 
     # Enumerable collection of Record or Hash tuples.
     Result
-      .new         #=> Result
-      #insert_id   #=> Numeric
-      #fields      #=> [Symbol, ...] # Field names identical to .first.keys if rows > 0
-      #field_types #=> [String, ...] # Type names: boolean, integer, float, numeric, timestamp, date, time, blob, text
-      #rows        #=> Fixnum
-      #columns     #=> Fixnum
+      .new           #=> Result
+      #insert_id     #=> Numeric
+      #fields        #=> [Symbol, ...] # Field names identical to .first.keys if rows > 0
+      #types         #=> [String, ...] # Type names: boolean, integer, float, numeric, timestamp, date, time, blob, text
+      #selected_rows #=> Fixnum
+      #affected_rows #=> Fixnum
 
     Statement
       .new     #=> Statement
       #execute #=> Result
-      #command #=> String # The SQL command executed or to be executed
 
     Record
       .attribute #=> Type

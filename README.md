@@ -236,25 +236,26 @@ creating temporary files.
 
 ### Asynchronous API
 
-`Swift::Adapter#async_execute` returns a `Swift::Result` instance. You can either poll the corresponding
-`Swift::Adapter#fileno` and then call `Swift::Result#retrieve` when ready or use a block form like below
+`Swift::Adapter::Sql#query` runs a query asynchronously. You can either poll the corresponding
+`Swift::Adapter::Sql#fileno` and then call `Swift::Adapter::Sql#result` when ready or use a block form like below
 which implicitly uses `rb_thread_wait_fd`
 
 ```ruby
   require 'swift'
+  require 'swift/adapter/postgres'
 
   pool = 3.times.map.with_index {|n| Swift.setup n, Swift::Adapter::Postgres, db: 'swift' }
 
   Thread.new do
-    pool[0].async_execute('select pg_sleep(3), 1 as qid') {|row| p row}
+    pool[0].query('select pg_sleep(3), 1 as qid') {|row| p row}
   end
 
   Thread.new do
-    pool[1].async_execute('select pg_sleep(2), 2 as qid') {|row| p row}
+    pool[1].query('select pg_sleep(2), 2 as qid') {|row| p row}
   end
 
   Thread.new do
-    pool[2].async_execute('select pg_sleep(1), 3 as qid') {|row| p row}
+    pool[2].query('select pg_sleep(1), 3 as qid') {|row| p row}
   end
 
   Thread.list.reject {|thread| Thread.current == thread}.each(&:join)
@@ -264,6 +265,7 @@ or use the `swift/eventmachine` api.
 
 ```ruby
   require 'swift/eventmachine'
+  require 'swift/adapter/postgres'
 
   EM.run do
     pool = 3.times.map { Swift.setup(:default, Swift::Adapter::Postgres, db: "swift") }
@@ -286,6 +288,7 @@ or use the `em-synchrony` api for `swift`
 
 ```ruby
   require 'swift/synchrony'
+  require 'swift/adapter/postgres'
 
   EM.run do
     3.times.each do |n|

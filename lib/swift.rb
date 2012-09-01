@@ -1,12 +1,3 @@
-# try to require home_run in older rubies
-unless %r{^1\.9\.[3-9]|^2\.}.match(RUBY_VERSION)
-  begin
-    require 'home_run'
-  rescue LoadError => e
-    warn "WARNING: DateTime parsing will be slow without home_run gem on Rubies older than 1.9.3"
-  end
-end
-
 # Extension.
 require_relative 'swift/adapter'
 require_relative 'swift/adapter/sql'
@@ -75,7 +66,6 @@ module Swift
     # @option options [Integer] :port     (DB default)
     # @return [Swift::Adapter]
     #
-    # @see Swift::DB
     # @see Swift::Adapter
     def setup name, type, options = {}
       unless type.kind_of?(Class) && type < Swift::Adapter

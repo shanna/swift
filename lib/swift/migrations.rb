@@ -34,8 +34,8 @@ module Swift
       #
       # @see Swift::Adapter::Sql
       def migrate! record
-        keys   =  record.header.keys
-        fields =  record.header.map{|p| field_definition(p)}.join(', ')
+        keys    = record.header.keys
+        fields  = record.header.map{|p| field_definition(p)}.join(', ')
         fields += ", primary key (#{keys.join(', ')})" unless keys.empty?
 
         execute("drop table if exists #{record.store} cascade")
@@ -45,7 +45,7 @@ module Swift
   end # Migrations
 
   def self.migrate! name = nil
-    schema.each{|record| record.migrate!(db(name)) }
+    schema.each {|record| record.migrate!(db(name))}
   end
 
   class Record
