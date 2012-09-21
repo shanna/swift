@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "swift"
-  s.version = "1.0.2"
+  s.version = "1.0.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-  s.date = "2012-08-24"
+  s.date = "2012-09-21"
   s.description = "A rational rudimentary database abstraction."
   s.email = ["shane.hanna@gmail.com", "deepfryed@gmail.com"]
   s.extra_rdoc_files = [
