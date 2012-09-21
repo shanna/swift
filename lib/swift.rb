@@ -71,7 +71,7 @@ module Swift
       unless type.kind_of?(Class) && type < Swift::Adapter
         raise TypeError, "Expected +type+ Swift::Adapter subclass but got #{type.inspect}"
       end
-      (@repositories ||= {})[name] = type.new(options)
+      repositories[name] = type.new(options)
     end
 
     # Fetch or scope a block to a specific DB by name.
@@ -90,14 +90,9 @@ module Swift
     # @param  [Symbol] name     Adapter name.
     # @param  [Proc]   block    Scope this block to the named adapter instead of <tt>:default</tt>.
     # @return [Swift::Adapter]
-    #--
-    # I pilfered the logic from DM but I don't really understand what is/isn't thread safe.
     def db name = nil, &block
-      repository = if name || scopes.empty?
-        @repositories[name || :default] or raise "Unknown db '#{name || :default}', did you forget to #setup ?"
-      else
-        scopes.last
-      end
+      repository = name || scopes.size < 1 ? repositories[name ||= :default] : scopes.last
+      repository or raise "Unknown db '#{name}', did you forget to #setup ?"
 
       if block_given?
         begin
@@ -119,10 +114,22 @@ module Swift
       @schema ||= []
     end
 
+    # Trace the command execution in currently scoped adapter
+    #
+    # @example
+    #   Swift.trace { Swift.db.execute("select * from users") }
+    #
+    # @see Swift::Adapter#trace
     def trace io = $stdout, &block
       Swift.db.trace(io, &block)
     end
 
+    # @private
+    def repositories
+      @repositories ||= {}
+    end
+
+    # @private
     def scopes
       Thread.current[:swift_db] ||= []
     end
