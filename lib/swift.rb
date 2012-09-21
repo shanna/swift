@@ -93,9 +93,8 @@ module Swift
     #--
     # I pilfered the logic from DM but I don't really understand what is/isn't thread safe.
     def db name = nil, &block
-      scopes     = (Thread.current[:swift_db] ||= [])
       repository = if name || scopes.empty?
-        @repositories[name || :default] or raise "Unknown db '#{name || :default}', did you forget to #setup?"
+        @repositories[name || :default] or raise "Unknown db '#{name || :default}', did you forget to #setup ?"
       else
         scopes.last
       end
@@ -123,5 +122,12 @@ module Swift
     def trace io = $stdout, &block
       Swift.db.trace(io, &block)
     end
+
+    def scopes
+      Thread.current[:swift_db] ||= []
+    end
   end
+
+  class Error        < StandardError; end
+  class RuntimeError < Error; end
 end # Swift

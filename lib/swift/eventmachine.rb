@@ -17,6 +17,7 @@ module Swift
 
       def notify_readable
         detach
+        @adapter.pending.shift
         begin
           @defer.succeed(@record ? Result.new(@record, @adapter.result) : @adapter.result)
         rescue Exception => e
@@ -38,12 +39,20 @@ module Swift
     #
     # @see  [Swift::Adapter]
     def execute command, *bind
-      start = Time.now
+      raise RuntimeError, 'Command already in progress' unless pending.empty?
+
+      pending << command
+      start    = Time.now
       record, command = command, bind.shift if command.kind_of?(Class) && command < Record
       query(command, *bind)
+
       EM::DefaultDeferrable.new.tap do |defer|
         EM.watch(fileno, EMHandler, self, record, defer) {|c| c.notify_readable = true }
       end
+    end
+
+    def pending
+      @pending ||= []
     end
   end
 end
