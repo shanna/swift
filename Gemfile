@@ -33,4 +33,8 @@ group :test do
   gem 'swift-db-sqlite3'
   gem 'swift-db-postgres'
   gem 'swift-db-mysql'
+
+  # async
+  gem 'eventmachine'
+  gem 'em-synchrony'
 end

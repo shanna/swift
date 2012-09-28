@@ -303,6 +303,24 @@ or use the `em-synchrony` api for `swift`
   end
 ```
 
+### Fibers and Connection Pools
+
+If you intend to use `Swift::Record` with `em-synchrony` you will need to use a fiber aware connection pool.
+
+```ruby
+require 'swift/fiber_connection_pool'
+
+EM.run do
+  Swift.setup_connection_pool 5, :default, Swift::Adapter::Postgres, db: 'swift'
+
+  5.times do
+    EM.synchrony do
+      p User.execute("select * from users").entries
+    end
+  end
+end
+```
+
 ## Performance
 
 Swift prefers performance when it doesn't compromise the Ruby-ish interface. It's unfair to compare Swift to DataMapper

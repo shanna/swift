@@ -1,19 +1,9 @@
-ext/*
-!ext/*.cc
-!ext/*.h
-!ext/*.rb
-!ext/swift
-ext/swift/*
-!ext/swift/*.cc
-!ext/swift/*.rb
 benchmarks/gems/ruby/1.9.1/*
 !benchmarks/gems/ruby/1.9.1/cache
 benchmarks/vendor/*
 benchmarks/gems/environment.rb
 benchmarks/bin
 pkg/*
-memory/driver
-memory/driver.o
 dbtest.rb
 benchmarks/adapters/pg_ext/*.*o
 benchmarks/adapters/pg_ext/Makefile
@@ -25,3 +15,4 @@ bin/
 gems/
 .bundle/
 tmp/
+*.gem
