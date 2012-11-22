@@ -37,4 +37,9 @@ group :test do
   # async
   gem 'eventmachine'
   gem 'em-synchrony'
+
+  # rake
+  gem 'rake'
+  gem 'jeweler'
+  gem 'yard'
 end
