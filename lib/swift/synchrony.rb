@@ -27,7 +27,10 @@ module Swift
     # @see [Swift::Adapter]
     def execute *args
       res = EM::Synchrony.sync aexecute(*args)
-      raise res if res.kind_of?(Error)
+      if res.kind_of?(Error)
+        res.set_backtrace caller.reject {|subject| subject =~ %r{swift/fiber_connection_pool}}
+        raise res
+      end
       yield res if block_given?
       res
     end
