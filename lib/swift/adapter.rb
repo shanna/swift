@@ -219,8 +219,7 @@ module Swift
       log_command(start, command, bind) if @trace
     end
 
-    private
-
+    # :nodoc:
     def log_command start, command, bind
       @trace.print Time.now.strftime('%F %T.%N'), ' - %.9f' % (Time.now - start).to_f, ' - ', command
       @trace.print ' ', bind if bind && bind.size > 0

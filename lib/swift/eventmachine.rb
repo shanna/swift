@@ -10,6 +10,7 @@ module Swift
 
     class EMHandler < EM::Connection
       def initialize adapter, record, defer
+        @started = Time.now
         @adapter = adapter
         @record  = record
         @defer   = defer
@@ -17,7 +18,9 @@ module Swift
 
       def notify_readable
         detach
-        @adapter.pending.shift
+        start, command, bind = @adapter.pending.shift
+        @adapter.log_command(start, command, bind) if @adapter.trace?
+
         begin
           @defer.succeed(@record ? Result.new(@record, @adapter.result) : @adapter.result)
         rescue Exception => e
@@ -41,9 +44,9 @@ module Swift
     def execute command, *bind
       raise RuntimeError, 'Command already in progress' unless pending.empty?
 
-      pending << command
-      start    = Time.now
+      start = Time.now
       record, command = command, bind.shift if command.kind_of?(Class) && command < Record
+      pending << [start, command, bind]
       query(command, *bind)
 
       EM::DefaultDeferrable.new.tap do |defer|
