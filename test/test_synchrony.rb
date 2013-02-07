@@ -23,7 +23,7 @@ describe 'fiber connection pool' do
 
   it 'can synchronize queries across fibers' do
     EM.run do
-      Swift.setup_connection_pool 2, :default, Swift::Adapter::Postgres, db: 'swift_test'
+      Swift.setup(:default) { Swift::FiberConnectionPool.new(size: 2) {Swift::Adapter::Postgres.new(db: 'swift_test')}}
 
       @counts = []
       5.times do
@@ -42,7 +42,7 @@ describe 'fiber connection pool' do
   it 'sets appropriate backtrace for errors' do
     EM.synchrony do
       error = nil
-      Swift.setup_connection_pool 2, :default, Swift::Adapter::Postgres, db: 'swift_test'
+      Swift.setup(:default) { Swift::FiberConnectionPool.new(size: 2) {Swift::Adapter::Postgres.new(db: 'swift_test')}}
 
       begin
         Swift.db.execute 'foo bar baz'

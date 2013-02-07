@@ -9,9 +9,23 @@ module Swift
       @reserved  = {}   # map of in-progress connections
       @available = []   # pool of free connections
       @pending   = []   # pending reservations (FIFO)
+      @trace     = nil
 
       opts[:size].times do
         @available.push(block.call)
+      end
+    end
+
+    def trace io = $stdout
+      if block_given?
+        begin
+          _io, @trace = @trace, io
+          yield
+        ensure
+          @trace = _io
+        end
+      else
+        @trace = io
       end
     end
 
@@ -54,14 +68,14 @@ module Swift
       # Allow the pool to behave as the underlying connection
       def method_missing method, *args, &blk
         __reserve__ do |conn|
-          conn.__send__(method, *args, &blk)
+          if @trace
+            conn.trace(@trace) {conn.__send__(method, *args, &blk)}
+          else
+            conn.__send__(method, *args, &blk)
+          end
         end
       end
   end # FiberConnectionPool
-
-  def self.setup_connection_pool size, name, klass, *args
-    (@repositories ||= {})[name] = FiberConnectionPool.new(size: size) {klass.new(*args)}
-  end
 
   class Adapter::Sql
     def serialized_transaction &block

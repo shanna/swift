@@ -67,11 +67,15 @@ module Swift
     # @return [Swift::Adapter]
     #
     # @see Swift::Adapter
-    def setup name, type, options = {}
-      unless type.kind_of?(Class) && type < Swift::Adapter
-        raise TypeError, "Expected +type+ Swift::Adapter subclass but got #{type.inspect}"
+    def setup name, type = nil, options = {}
+      if block_given?
+        repositories[name] = yield
+      else
+        unless type.kind_of?(Class) && type < Swift::Adapter
+          raise TypeError, "Expected +type+ Swift::Adapter subclass but got #{type.inspect}"
+        end
+        repositories[name] = type.new(options)
       end
-      repositories[name] = type.new(options)
     end
 
     # Fetch or scope a block to a specific DB by name.
