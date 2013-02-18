@@ -311,7 +311,9 @@ If you intend to use `Swift::Record` with `em-synchrony` you will need to use a 
 require 'swift/fiber_connection_pool'
 
 EM.run do
-  Swift.setup_connection_pool 5, :default, Swift::Adapter::Postgres, db: 'swift'
+  Swift.setup(:default) do
+    Swift::FiberConnectionPool.new(size: 5) {Swift::Adapter::Postgres.new(db: 'swift')}
+  end
 
   5.times do
     EM.synchrony do

@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "swift"
-  s.version = "1.0.3"
+  s.version = "1.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-  s.date = "2012-09-21"
+  s.date = "2013-02-18"
   s.description = "A rational rudimentary database abstraction."
   s.email = ["shane.hanna@gmail.com", "deepfryed@gmail.com"]
   s.extra_rdoc_files = [
@@ -30,6 +30,7 @@ Gem::Specification.new do |s|
     "lib/swift/adapter/sqlite3.rb",
     "lib/swift/attribute.rb",
     "lib/swift/eventmachine.rb",
+    "lib/swift/fiber_connection_pool.rb",
     "lib/swift/header.rb",
     "lib/swift/identity_map.rb",
     "lib/swift/migrations.rb",
@@ -52,6 +53,7 @@ Gem::Specification.new do |s|
     "test/test_io.rb",
     "test/test_record.rb",
     "test/test_swift.rb",
+    "test/test_synchrony.rb",
     "test/test_timestamps.rb",
     "test/test_transactions.rb",
     "test/test_types.rb",
