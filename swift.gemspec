@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "swift"
-  s.version = "1.1.0"
+  s.version = "1.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Shane Hanna", "Bharanee 'Barney' Rathna"]
-  s.date = "2013-02-18"
+  s.date = "2013-03-10"
   s.description = "A rational rudimentary database abstraction."
   s.email = ["shane.hanna@gmail.com", "deepfryed@gmail.com"]
   s.extra_rdoc_files = [
@@ -24,12 +24,17 @@ Gem::Specification.new do |s|
     "VERSION",
     "lib/swift.rb",
     "lib/swift/adapter.rb",
+    "lib/swift/adapter/em/mysql.rb",
+    "lib/swift/adapter/em/postgres.rb",
+    "lib/swift/adapter/eventmachine.rb",
     "lib/swift/adapter/mysql.rb",
     "lib/swift/adapter/postgres.rb",
     "lib/swift/adapter/sql.rb",
     "lib/swift/adapter/sqlite3.rb",
+    "lib/swift/adapter/synchrony.rb",
+    "lib/swift/adapter/synchrony/mysql.rb",
+    "lib/swift/adapter/synchrony/postgres.rb",
     "lib/swift/attribute.rb",
-    "lib/swift/eventmachine.rb",
     "lib/swift/fiber_connection_pool.rb",
     "lib/swift/header.rb",
     "lib/swift/identity_map.rb",
@@ -37,7 +42,6 @@ Gem::Specification.new do |s|
     "lib/swift/record.rb",
     "lib/swift/result.rb",
     "lib/swift/statement.rb",
-    "lib/swift/synchrony.rb",
     "lib/swift/type.rb",
     "lib/swift/validations.rb",
     "swift.gemspec",
