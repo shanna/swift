@@ -1,10 +1,10 @@
 require 'helper'
+require 'swift/fiber_connection_pool'
+require 'swift/adapter/synchrony/postgres'
 
 describe 'fiber connection pool' do
   before do
-    skip 'swift/synchrony re-defines Adapter#execute' unless ENV['TEST_SWIFT_SYNCHRONY']
 
-    require 'swift/fiber_connection_pool'
     EM.synchrony do
       Swift.setup(:default, Swift::Adapter::Postgres, db: 'swift_test')
       Swift.db.execute('drop table if exists users')
@@ -17,21 +17,25 @@ describe 'fiber connection pool' do
       end
 
       10.times { @user.create(name: 'test') }
+
+      # async on from now on
+      Swift.setup(:default) do
+        Swift::FiberConnectionPool.new(size: 2) do
+          Swift::Adapter::Synchrony::Postgres.new(db: 'swift_test')
+        end
+      end
       EM.stop
     end
   end
 
   it 'can synchronize queries across fibers' do
     EM.run do
-      Swift.setup(:default) { Swift::FiberConnectionPool.new(size: 2) {Swift::Adapter::Postgres.new(db: 'swift_test')}}
-
       @counts = []
       5.times do
         EM.synchrony do
           @counts << @user.execute('select * from users').selected_rows
         end
       end
-
       EM.add_timer(0.2) { EM.stop }
     end
 
@@ -42,7 +46,6 @@ describe 'fiber connection pool' do
   it 'sets appropriate backtrace for errors' do
     EM.synchrony do
       error = nil
-      Swift.setup(:default) { Swift::FiberConnectionPool.new(size: 2) {Swift::Adapter::Postgres.new(db: 'swift_test')}}
 
       begin
         Swift.db.execute 'foo bar baz'
@@ -51,7 +54,7 @@ describe 'fiber connection pool' do
       end
 
       assert error
-      assert_match %r{test/test_synchrony.rb:48}, error.backtrace.first
+      assert_match %r{test/test_synchrony.rb}, error.backtrace[0]
       EM.stop
     end
   end

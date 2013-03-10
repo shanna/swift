@@ -264,11 +264,11 @@ which implicitly uses `rb_thread_wait_fd`
 or use the `swift/eventmachine` api.
 
 ```ruby
-  require 'swift/eventmachine'
-  require 'swift/adapter/postgres'
+  require 'swift'
+  require 'swift/adapter/em/postgres'
 
   EM.run do
-    pool = 3.times.map { Swift.setup(:default, Swift::Adapter::Postgres, db: "swift") }
+    pool = 3.times.map { Swift.setup(:default, Swift::Adapter::EM::Postgres, db: "swift") }
 
     3.times.each do |n|
       defer = pool[n].execute("select pg_sleep(3 - #{n}), #{n + 1} as qid")
@@ -287,13 +287,13 @@ or use the `swift/eventmachine` api.
 or use the `em-synchrony` api for `swift`
 
 ```ruby
-  require 'swift/synchrony'
-  require 'swift/adapter/postgres'
+  require 'swift'
+  require 'swift/adapter/synchrony/postgres'
 
   EM.run do
     3.times.each do |n|
       EM.synchrony do
-        db     = Swift.setup(:default, Swift::Adapter::Postgres, db: "swift")
+        db     = Swift.setup(:default, Swift::Adapter::Synchrony::Postgres, db: "swift")
         result = db.execute("select pg_sleep(3 - #{n}), #{n + 1} as qid")
 
         p result.first
@@ -312,7 +312,7 @@ require 'swift/fiber_connection_pool'
 
 EM.run do
   Swift.setup(:default) do
-    Swift::FiberConnectionPool.new(size: 5) {Swift::Adapter::Postgres.new(db: 'swift')}
+    Swift::FiberConnectionPool.new(size: 5) {Swift::Adapter::Synchrony::Postgres.new(db: 'swift')}
   end
 
   5.times do

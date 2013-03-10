@@ -1,7 +1,5 @@
 # Based on EM::Synchrony::ConnectionPool
 
-require 'swift/synchrony'
-
 module Swift
   class FiberConnectionPool
 
@@ -76,19 +74,4 @@ module Swift
         end
       end
   end # FiberConnectionPool
-
-  class Adapter::Sql
-    def serialized_transaction &block
-      Swift.scopes.push(self)
-      execute('begin')
-      res = yield(self)
-      execute('commit')
-      res
-    rescue => e
-      execute('rollback')
-      raise e
-    ensure
-      Swift.scopes.pop
-    end
-  end # Adapter::Sql
 end # Swift
