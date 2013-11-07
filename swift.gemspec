@@ -6,7 +6,6 @@ Gem::Specification.new do |s|
   s.description           = 'A rational rudimentary database abstraction.'
   s.summary               = 'A rational rudimentary database abstraction.'
   s.email                 = ['shane.hanna@gmail.com', 'deepfryed@gmail.com']
-  s.files                 = []
   s.licenses              = %w{MIT}
   s.homepage              = 'http://github.com/shanna/swift'
   s.require_paths         = %w{lib}
