@@ -2,10 +2,9 @@ $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'test'))
 
 require 'bundler/setup'
-
 require 'etc'
 require 'minitest/autorun'
-require 'minitest_teardown_hack'
+
 require 'swift'
 require 'swift/adapter/mysql'
 require 'swift/adapter/postgres'
