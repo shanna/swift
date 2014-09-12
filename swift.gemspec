@@ -18,34 +18,6 @@ Gem::Specification.new do |s|
   # testing
   s.add_development_dependency 'minitest', '>= 1.7.0'
 
-  # dm
-  s.add_development_dependency 'dm-core'
-  s.add_development_dependency 'dm-do-adapter'
-  s.add_development_dependency 'dm-postgres-adapter'
-  s.add_development_dependency 'dm-mysql-adapter'
-  s.add_development_dependency 'dm-sqlite-adapter'
-  s.add_development_dependency 'dm-migrations'
-
-  # dm drivers
-  s.add_development_dependency 'data_objects'
-  s.add_development_dependency 'do_postgres'
-  s.add_development_dependency 'do_mysql'
-  s.add_development_dependency 'do_sqlite3'
-
-  # ar
-  s.add_development_dependency 'activerecord'
-  s.add_development_dependency 'pg'
-  s.add_development_dependency 'mysql2'
-  s.add_development_dependency 'i18n'
-  s.add_development_dependency 'builder'
-  s.add_development_dependency 'sqlite3-ruby'
-
-  # sequel
-  s.add_development_dependency 'sequel'
-  s.add_development_dependency 'sequel_pg'
-  s.add_development_dependency 'pg_typecast'
-  s.add_development_dependency 'home_run'
-
   # swift drivers
   s.add_development_dependency 'swift-db-sqlite3'
   s.add_development_dependency 'swift-db-postgres'
