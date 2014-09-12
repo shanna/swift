@@ -58,6 +58,25 @@ describe 'record' do
   end
 
   supported_by Swift::Adapter::Postgres, Swift::Adapter::Mysql, Swift::Adapter::Sqlite3 do
+    describe 'field name customization' do
+      before do
+        @user = Class.new(Swift::Record) do
+          store     :users
+          attribute :id,   Swift::Type::Integer, serial: true, key: true, field: 'field_id'
+          attribute :name, Swift::Type::String, field: 'field_name'
+        end
+
+        Swift.db.migrate! @user
+      end
+
+      it 'should fetch and create by fields correctly' do
+        @user.create(name: 'dave')
+        user = @user.execute("select * from #{@user} limit 1").first
+        assert_equal 'dave', user.name
+        assert_equal 1, user.id
+      end
+    end
+
     describe 'adapter operations' do
       before do
         Swift.db.migrate! @user

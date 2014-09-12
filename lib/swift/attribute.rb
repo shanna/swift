@@ -23,7 +23,7 @@ module Swift
     def initialize record, name, options = {}
       @name    = name
       @default = options.fetch(:default, nil)
-      @field   = options.fetch(:field,   name)
+      @field   = options.fetch(:field,   name).to_sym
       @key     = options.fetch(:key,     false)
       @serial  = options.fetch(:serial,  false)
       define_record_methods(record)
