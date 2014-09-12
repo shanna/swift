@@ -5,6 +5,7 @@ require_relative 'swift/attribute'
 require_relative 'swift/header'
 require_relative 'swift/record'
 require_relative 'swift/type'
+require_relative 'swift/version'
 
 # A rational rudimentary object relational mapper.
 #
