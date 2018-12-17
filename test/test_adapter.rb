@@ -46,7 +46,7 @@ describe 'Adapter' do
         it 'executes via Adapter#prepare' do
           result = []
           @db.prepare('select count(*) as n from users').execute.each {|r| result << r[:n] }
-          assert_kind_of Fixnum, result[0]
+          assert_kind_of Integer, result[0]
         end
 
         it 'executes without bind values' do

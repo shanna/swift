@@ -83,7 +83,7 @@ module Swift
       # @param  [Symbol] name Storage name.
       # @return [Symbol]
       def store name = nil
-        name ? @store = name : @store
+        name ? @store = name : (@store ||= nil)
       end
 
       # Store (table) name.

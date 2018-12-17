@@ -4,7 +4,7 @@ module Swift
 
     def initialize *attributes
       @attributes = {}
-      push *attributes unless attributes.empty?
+      push(*attributes) unless attributes.empty?
     end
 
     def new_tuple

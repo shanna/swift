@@ -28,8 +28,6 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<swift-db-sqlite3>, [">= 0"])
       s.add_development_dependency(%q<swift-db-postgres>, [">= 0"])
       s.add_development_dependency(%q<swift-db-mysql>, [">= 0"])
-      s.add_development_dependency(%q<eventmachine>, [">= 0"])
-      s.add_development_dependency(%q<em-synchrony>, [">= 0"])
       s.add_development_dependency(%q<rake>, [">= 0"])
       s.add_development_dependency(%q<yard>, [">= 0"])
     else
@@ -37,8 +35,6 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<swift-db-sqlite3>, [">= 0"])
       s.add_dependency(%q<swift-db-postgres>, [">= 0"])
       s.add_dependency(%q<swift-db-mysql>, [">= 0"])
-      s.add_dependency(%q<eventmachine>, [">= 0"])
-      s.add_dependency(%q<em-synchrony>, [">= 0"])
       s.add_dependency(%q<rake>, [">= 0"])
       s.add_dependency(%q<yard>, [">= 0"])
     end
@@ -47,8 +43,6 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<swift-db-sqlite3>, [">= 0"])
     s.add_dependency(%q<swift-db-postgres>, [">= 0"])
     s.add_dependency(%q<swift-db-mysql>, [">= 0"])
-    s.add_dependency(%q<eventmachine>, [">= 0"])
-    s.add_dependency(%q<em-synchrony>, [">= 0"])
     s.add_dependency(%q<rake>, [">= 0"])
     s.add_dependency(%q<yard>, [">= 0"])
   end

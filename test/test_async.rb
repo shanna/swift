@@ -5,7 +5,8 @@ describe 'Adapter' do
     describe 'async operations' do
       it 'can runs queries async' do
         rows = []
-        pool = 3.times.map.with_index {|n| Swift.setup n, Swift.db.class, db: 'swift_test' }
+        pool = 3.times.map.with_index{|n| Swift.setup(n, Swift.db.class, ADAPTER_DEFAULTS[Swift.db.class])}
+
         func = case Swift.db
           when Swift::Adapter::Mysql    then 'sleep'
           when Swift::Adapter::Postgres then 'pg_sleep'

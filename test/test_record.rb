@@ -36,11 +36,11 @@ describe 'record' do
       assert_kind_of @user, user
       assert_kind_of Time,  user.created_at
 
-      assert_equal nil,    user.id
+      assert_nil user.id
       assert_equal 'dave', user.name
       assert_equal 18,     user.age
       assert_equal 172.25, user.height
-      assert_equal nil,    user.email
+      assert_nil user.email
       assert_equal false,  user.verified
     end
 
@@ -50,7 +50,7 @@ describe 'record' do
       assert_kind_of @user, user
       assert_kind_of Time,  user.created_at
 
-      assert_equal nil,          user.id
+      assert_nil user.id
       assert_equal 'cary',       user.name
       assert_equal 22,           user.age
       assert_equal 'cary@local', user.email

@@ -11,6 +11,7 @@ module Swift
     attr_reader :db
 
     def initialize db
+      @trace = false
       @db = db
     end
 
